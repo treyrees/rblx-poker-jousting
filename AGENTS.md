@@ -48,8 +48,8 @@ else. If you think one is missing, say so in chat or the PR and leave this secti
 ## Borrowing from rblx-joust-tourney
 
 GAME_SPEC §9: Turbo Jousting is "a parts bin, not a rulebook." Take practical pieces only: the ones
-the §9 *Take* table lists (for example the Magnet wheel physics from the `ring-spin-ui-feel` branch,
-and the headless Lune sim and test harness), or ones Trey names. Take the code or mechanism, not
+the §9 *Take* table lists (for example the Magnet wheel physics from the
+`claude/ring-spin-ui-feel-xpatk4` branch, and the headless Lune sim and test harness), or ones Trey names. Take the code or mechanism, not
 Turbo Jousting's invariants, ADRs, vocabulary, conventions or design reasoning. Every PR that
 borrows names the source repo, branch and file.
 

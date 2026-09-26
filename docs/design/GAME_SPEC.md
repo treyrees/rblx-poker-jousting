@@ -41,11 +41,11 @@ Also important: **learnability** (for example, betting is beginner-ignorable, §
 | The yard: deal, prefold, matchmaking | §2 | Settled in shape |
 | Preflop redraw for a price | §11 | Open |
 | Betting | §2 | Settled |
-| Standard dial: notches, sectors, Neutral, held aim, aim lock | §3 | Settled for v1, numbers tunable |
-| Suits as stats on the dial's axes | §4 | Settled |
-| The four stats: what they are and what they do | §4 | Open |
+| Standard dial: layout, outcome table, sectors, Neutral, held aim, aim lock | §3 | Settled for v1, numbers tunable |
+| Suits as stats; offense stats on the dial's axes | §4 | Settled |
+| The four stats: what they are and what they do | §4 | Settled in shape; ♠ pay-later open |
 | Numeric Power curve and suit split | §4 | Proposed, needs sim |
-| Contact resolution, Seat and Score | §4 | Proposed, needs sim |
+| Contact resolution, Posture and Score | §4 | Proposed, needs sim |
 | Broadway effects | §5 | Proposed, needs sim |
 | Tricks: ladder, ownership, held and unleash rules, effects | §6 | Open |
 | Board-made tricks | §6 | Proposed, needs sim |
@@ -94,14 +94,14 @@ matched.
 | Bet 4 | Stay / Raise / Yield | n/a |
 | Pass 4 (showdown) | Charge with full information; unused tricks auto-fire | All 7 cards |
 
-Street multipliers apply to all Seat damage and Score gained in that pass: Pass 1 = 0.5,
+Street multipliers apply to all Posture damage and Score gained in that pass: Pass 1 = 0.5,
 Pass 2 = 0.75, Pass 3 = 1.0, Pass 4 = 1.25. Early passes rarely unhorse; the hand builds
 toward the river.
 
 ### Win conditions
 
-1. A rider whose Seat reaches 0 is unhorsed. The other rider wins the pot immediately.
-2. If both riders are unhorsed on the same contact, the rider with more Seat before the
+1. A rider whose Posture reaches 0 is unhorsed. The other rider wins the pot immediately.
+2. If both riders are unhorsed on the same contact, the rider with more Posture before the
    pass wins; if equal, split.
 3. If no one is unhorsed after Pass 4, the higher Score wins.
 4. Score tie: compare poker hands with kickers. Still tied: split the pot.
@@ -122,27 +122,84 @@ toward the river.
 ## 3. The standard dial (v1)
 
 Every rider uses the same dial in v1. One input, the aim, sets offense and defense
-together: you are exposed where you strike, and your Guard sits opposite.
+together: where you strike decides where you are exposed and where your Guard sits.
 
 ### Layout
 
-- 8 notches: 4 cardinals (Up, Out, Down, In, self-relative) and 4 diagonals between them.
+- 8 directions: 4 cardinals (Up, Out, Down, In, self-relative) and 4 diagonals between them.
+- Aim resolves in half steps between directions: 16 aim positions. Sector widths are painted
+  in the same half steps. The dial presents as snappy and granular with 8 labeled
+  directions, not as 16 hard notches.
 - Plus Neutral, the default state at the start of every pass.
-- Aim snaps to notches (hard snapping). The needle may animate smoothly; the state is
-  always one of 9 values.
-- Input: a circular touch wheel (drag to aim, flick to spin past notches). Port the Magnet
-  wheel physics from the `ring-spin-ui-feel` branch.
+- Aim snaps to aim positions. The needle may animate smoothly; the state is always one of
+  the 16 aim positions or Neutral.
+- The sweep runs in label order, Up → Up-Out → Out → Out-Down → Down → Down-In → In →
+  In-Up, the same for both riders. A rider's screen may mirror the ring (for example so In
+  faces the opponent); the sweep stays in label order.
+- Your ring shows the opponent's sectors projected onto it, so your needle reads directly as
+  the tier you would land.
+- Input: a circular touch wheel (drag to aim, flick to spin past positions, tap the hub for
+  Neutral). Port the Magnet wheel from rblx-joust-tourney, branch
+  `claude/ring-spin-ui-feel-xpatk4`: `src/shared/WheelPhysics.luau`, with the Magnet preset
+  in `Constants.WHEEL` (`src/shared/Constants.luau`).
+
+### Outcome table
+
+Each exchange pairs where your strike lands on the opponent's sectors with where theirs
+lands on yours. All six combinations are possible.
+
+| Combination | What it is | Share |
+| --- | --- | --- |
+| CN: one rider crits, the other lands Normal | The clean read | 37.5% |
+| NB: one rider lands Normal, the other hits their Guard | The defensive read | 25% |
+| CB: one rider crits and blocks the other's strike | The perfect read | 12.5% |
+| NN: both land Normal | The plain trade | 12.5% |
+| CC: both crit | Crossed lances | 6.25% |
+| BB: both hit a Guard | The clash | 6.25% |
+
+Shares are the baseline when both riders aim at random, and each one-sided share splits
+evenly between the riders. One-sided rows (CN, NB, CB) are 75% and mutual rows 25%. In real
+time aim is public and the last mover picks the row, so the shares price the stats and hold
+(below) prices the last move.
 
 ### Sectors (derived from aim, automatic)
 
-| Sector | Size | Position | Hit on it resolves as |
-| --- | --- | --- | --- |
-| Vulnerable (exposure) | 3 notches | The aim notch plus the next 2 notches clockwise | Crit |
-| Defensive (Guard) | 1 notch | Directly opposite the aim notch | Block (may leak, see Suits section) |
-| Negative (ordinary) | 4 notches | Everything else | Normal hit |
+Positions count in half steps from your aim, along the sweep.
 
-The exposure is chiral (it sweeps one way), so a correct read can land a crit that is not
-traded back. The standard dial sweeps clockwise; v2 dials may mirror it.
+| Positions from your aim | Sector | A hit there resolves as |
+| --- | --- | --- |
+| 0–4 (your aim through 2 directions on) | Exposure | Crit |
+| 5–7 | Ordinary | Normal |
+| 8 (opposite your aim) | Guard | Block: a hit into your Guard armor (§4) |
+| 9 | Ordinary | Normal |
+| 10–12 | Guard | Block |
+| 13–15 | Ordinary | Normal |
+
+In all: exposure 2.5 directions, Guard 2 directions in two parts, ordinary 3.5 directions.
+
+**Rows by offset.** Offset is your aim position minus the opponent's, in half steps along
+the sweep.
+
+| Offset | Your strike lands | Theirs lands |
+| --- | --- | --- |
+| 0 (same aim) | Crit | Crit |
+| 1–3 | Crit | Normal |
+| 4 (a right angle ahead) | Crit | Block |
+| 5–6 | Normal | Block |
+| 7 | Normal | Normal |
+| 8 (opposite) | Block | Block |
+| 9 | Normal | Normal |
+| 10–11 | Block | Normal |
+| 12 | Block | Crit |
+| 13–15 | Normal | Crit |
+
+The layout is chiral: ahead of the opponent's aim along the sweep is good for you, behind is
+good for them. Rows grade by distance: crits close, the perfect read at a right angle, the
+defensive read beyond it, the clash opposite.
+
+A CB row lands a crit and blocks at once. Guard armor scales with hold (§4), so a CB taken
+by a last-instant switch blocks weakly and plays about like a CN; a CB read early and held
+is the perfect read.
 
 ### Neutral
 
@@ -150,49 +207,82 @@ traded back. The standard dial sweeps clockwise; v2 dials may mirror it.
 - Neutral has no Guard. Every incoming hit on a neutral rider resolves as Normal.
 - Neutral is where the run-up starts, so the first frame leaks nothing. When a rider first
   leaves Neutral is itself a tell.
+- Neutral has no axis, so which offense stat its strike uses is open (§11).
 
 ### Held aim (the windup)
 
-- Hold fraction h = the fraction of the run-up the final aim notch was held (0 to 1).
-  Changing notch resets h for the new notch.
-- Strike power and Guard hardness both scale by the hold multiplier: `0.4 + 0.6 × h`.
+- Hold fraction h = the fraction of the run-up, from the start of the charge to aim lock,
+  that the final aim position was held (0 to 1). Changing aim position resets h for the new
+  position. How slow-motion time counts is open (§11).
+- Strike power and Guard armor both scale by the hold multiplier: `0.4 + 0.6 × h`.
 - The hold meter is public. Holding is the value bet; a late switch is the bluff, and it costs
   power. This is a price, not a lock: players commit by degrees, which keeps bluffing a dial
   instead of a yes/no.
-- The 0.4 floor is a placeholder. Turbo Jousting's sim found a floor can collapse half-held
-  aims toward last-instant flicks; re-check in the sim.
+- The 0.4 floor is a placeholder. Because aim is public, a last-instant switch onto a held
+  aim wins the exchange when the floor is above what the holder deals back divided by what
+  the switch deals: Normal/Crit = 1/3 on a CN row, lower on a CB row. Turbo Jousting's sim
+  found a floor can collapse half-held aims toward last-instant flicks; the sim sweeps it
+  (§11).
 
 ### Aim lock
 
-Aim locks 0.3 s before contact. After lock, no input changes the outcome. This prevents
-ping wars.
+Aim locks 0.3 s before contact. After lock, no input changes the outcome, so resolution is
+server-side and the setup/counter animation can start. The lock doesn't remove latency: the
+last inputs before it are blind to the opponent, and a rider with higher ping has to commit
+about one ping earlier.
 
 ### Public vs hidden
 
 | Public | Hidden |
 | --- | --- |
-| Aim notch, and so both sectors | Hole cards |
-| Hold meter | Which stance your cards actually load |
-| Seat and Score | Whether you hold a trick |
-| Board cards and arena effects | Your hand's exact suit mix |
-| Lance and shield colors (see Information design) | True colors behind a jack |
+| Aim position, and so all sectors | Hole cards |
+| Aim timing: when each rider moved | Which stance your cards actually load |
+| Hold meter | Whether you hold a trick |
+| Posture and Score | Your hand's exact suit mix |
+| Board cards and arena effects | True colors behind a jack |
+| Lance and shield colors (see Information design) | |
+
+A hit's size is public, so after contact it shows the attacker's stat on that hit. Whether
+one hit can identify a hand's rank at display precision is open (§11).
 
 ## 4. Suits, stats and stances
 
-Each suit is one stat, and each stat lives on one axis of the dial. Because the Guard sits
-opposite the aim, aiming on an axis activates that axis's offense stat on your strike and its
-defense stat on your Guard at the same time.
+Each suit is one stat: two offense and two defense. In each pair, one stat is raw and linear
+and the other is circumstantial.
 
-| Axis | Canonical aim (offense) | Guard lands on (defense) | Contest |
+### The four stats
+
+| | Raw, linear | Circumstantial |
+| --- | --- | --- |
+| Offense | ♣ Knockoff | ♠ Pierce |
+| Defense | ♥ Sturdiness | ♦ Armor |
+
+- **♥ Sturdiness is Posture.** Max and starting Posture grow with ♥. When a reveal raises ♥,
+  you gain the difference. When a reveal lowers it, your max drops but your current Posture
+  isn't taken away.
+- **♦ Armor** is a flat reduction per hit, mapped onto your dial: thick on your Guard, thin on
+  your ordinary positions, none on your exposure. A Block is a hit into thick armor. Guard
+  armor scales with hold. Its value depends on how damage arrives: it erases a grind of
+  small hits and does nothing against the crit that finds your exposure.
+- **♣ Knockoff** is raw damage: it scales your hits linearly.
+- **♠ Pierce** is the crit stat. It pierces armor and pays later, through crits: Trey's
+  proposal is that non-crit hits build a buff that later crits spend. The details are open
+  (§11).
+
+### Stances
+
+Your offense stat follows your aim's axis. Your defense stats don't follow aim: ♥ is always
+on, and ♦ follows your sectors.
+
+| Axis | Aim | Offense stat | Contest |
 | --- | --- | --- | --- |
-| Vertical | Up: ♣ Knockoff | Down: ♥ Sturdiness | Seat (unhorsing) |
-| Horizontal | Out: ♠ Pierce | In: ♦ Armor | Score (damage) |
+| Vertical | Up or Down | ♣ Knockoff | Posture (unhorsing) |
+| Horizontal | Out or In | ♠ Pierce | Score (damage) |
 
-**Axis rule (decided for v1).** Stats apply by axis, not by single direction. Aiming Up or Down
-both use the vertical stance (♣ strike, ♥ Guard). Aiming Out or In both use the horizontal
-stance (♠ strike, ♦ Guard). Up vs Down is then a pure read on the opponent's sectors, not
-a stat choice. Diagonals use the average of both axes and split their output 50/50 between
-Seat and Score.
+**Axis rule (decided for v1).** Stats apply by axis, not by single direction. Up vs Down is
+then a pure read on the opponent's sectors, not a stat choice. Diagonals use the average of
+both offense stats and split their output 50/50 between Posture and Score. How the half steps
+between directions use the two offense stats is open (§11).
 
 Color pairing: black suits (♣ ♠) are offense, red suits (♥ ♦) are defense.
 
@@ -230,34 +320,34 @@ Base 20 is the "cardless jouster" floor. Board-only cards contribute to both rid
 
 ### Contact resolution (A strikes B; both directions resolve simultaneously)
 
-1. Find the tier: look up A's aim notch on B's sectors. Guard = Block, Vulnerable = Crit,
-   Negative = Normal. A in Neutral = Weak.
+1. Find the tier: look up A's aim position on B's sectors (§3). Guard = Block, exposure =
+   Crit, ordinary = Normal. A in Neutral = Weak.
 2. Base values: Weak 4, Normal 10, Crit 30.
 3. Hit output:
    ```
    Out = Base · (S_off,A / 20) · (0.4 + 0.6·h_A) · Street · Mods
    ```
-4. Block leak: when the tier is Block, compare offense against Guard hardness.
-   ```
-   Leak = max(0, S_off,A·(0.4 + 0.6·h_A) − S_def,B·(0.4 + 0.6·h_B)) · 0.5 · Street
-   ```
-   If Leak is 0, it is a clean block: B restores 3 Seat.
-5. Route the output by axis: vertical output is Seat damage to B, horizontal output is Score
+   This linear form is ♣'s. ♠'s form (crit scaling, piercing, the pay-later buff) is open
+   (§11).
+4. Armor: B's ♦ armor at the sector hit is subtracted from the output: thick on the Guard
+   (scaled by B's hold multiplier), thin on ordinary positions, none on the exposure. A Block
+   that nothing gets through is a clean block: B restores 3 Posture.
+5. Route the output by axis: vertical output is Posture damage to B, horizontal output is Score
    for A, diagonal splits 50/50.
 
 ### Tracks
 
-- **Seat:** starts at 100. Reaches 0 = unhorsed. Heals only from clean blocks and queen
-  effects, capped at 100.
+- **Posture:** starts at 100 plus the ♥ bonus. Reaches 0 = unhorsed. Heals only from clean
+  blocks, queen effects and ♥ gains on a reveal, capped at max Posture.
 - **Score:** starts at 0, only goes up. Decides the hand after Pass 4 if no one is unhorsed.
 
 ### Sanity checks (to confirm in sim)
 
-- Pass 1 normal hit, high card, half hold: about 10 × 1.0 × 0.7 × 0.5 = 3.5 Seat. Early
+- Pass 1 normal hit, high card, half hold: about 10 × 1.0 × 0.7 × 0.5 = 3.5 Posture. Early
   knockouts are near impossible.
-- Pass 3 crit, trips-loaded axis, full hold: about 30 × 1.45 × 1.0 × 1.0 = 43 Seat. Two such
+- Pass 3 crit, trips-loaded axis, full hold: about 30 × 1.45 × 1.0 × 1.0 = 43 Posture. Two such
   reads unhorse.
-- Pass 4 crit with the same: about 54 Seat.
+- Pass 4 crit with the same: about 54 Posture.
 
 ## 5. Broadway cards
 
@@ -270,7 +360,7 @@ both riders and appears in the arena.
 | Card | In your hole cards | On the board (both riders) |
 | --- | --- | --- |
 | J | That card's displayed color is randomized each hand | All lance and shield colors show gray this hand |
-| Q | Restore 6 Seat at the start of Passes 2, 3 and 4 | Restore 3 |
+| Q | Restore 6 Posture at the start of Passes 2, 3 and 4 | Restore 3 |
 | K | Opponent's aim locks 0.15 s earlier (felt, not shown) | Both riders lock 0.08 s earlier |
 | A | Your Crit base rises from 30 to 35 | Both riders' Crit base +2 |
 
@@ -279,7 +369,7 @@ both riders and appears in the arena.
 | Pair | Name | Effect |
 | --- | --- | --- |
 | JJ | Masquerade | Both colors randomized, and your public hold meter displays with a 0.5 s lag |
-| QQ | Twin Favor | Restore 10 per pass; the first unhorse this hand is negated and Seat is set to 20 |
+| QQ | Twin Favor | Restore 10 per pass; the first unhorse this hand is negated and Posture is set to 20 |
 | KK | High Court | Opponent's aim locks 0.3 s earlier, and their block leak against you is halved |
 | AA | Champion | Crit base 40, and your Normal hits on the exposure's edge notch also count as Crit |
 
@@ -315,7 +405,7 @@ Frequency: a player finishes with a straight or better in about 10.5% of 7-card 
 - Rides as its best non-trick sub-hand for stats (a full house rides as trips, a straight with
   no pair rides as high card).
 - Adds a small held passive, sized to look like a good numeric hand.
-- Seat cannot drop below 1 while holding a trick. This makes slow-playing safe from being
+- Posture cannot drop below 1 while holding a trick. This makes slow-playing safe from being
   unhorsed, at the cost of a tell: a weak-looking rider who won't fall. Tunable; remove if
   slow-play is too safe.
 
@@ -335,14 +425,14 @@ Frequency: a player finishes with a straight or better in about 10.5% of 7-card 
 | Flush: Suit Ascendant | +4 to the flush suit's stat | The flush suit's stat ×2 on its axis. Suit is revealed on declaration. Diagonals get half the bonus. | Opponent knows which axis you want and can Guard it. Holder can hedge on a diagonal at partial power. |
 | Full house: Fortress | +4 Sturdiness and +4 Armor | Your Guard covers 7 of 8 notches. You secretly pick the one gap at declaration. A hit on the gap is a Crit. | Find the gap: 1 in 8, narrowed by tells and aim |
 | Quads: Four Lances | +4 to all four stats | Your strike resolves on all 4 cardinals of the opponent's dial, each at 50% output | The Guard blocks at most one cardinal; aim so it blocks the best one |
-| Straight flush | Straight + flush passives | The Charge plus Suit Ascendant, including the suit reveal | Trade race on Seat only |
+| Straight flush | Straight + flush passives | The Charge plus Suit Ascendant, including the suit reveal | Trade race on Posture only |
 | Royal flush | Same as straight flush | Same as straight flush, with its own presentation | Same |
 
 ### Flush by suit (what "Suit Ascendant" does per suit)
 
 | Suit | Name | Effect |
 | --- | --- | --- |
-| ♣ | Shattering Blow | Knockoff ×2 on vertical aim: big Seat damage |
+| ♣ | Shattering Blow | Knockoff ×2 on vertical aim: big Posture damage |
 | ♠ | Needle | Pierce ×2 on horizontal aim: big Score |
 | ♥ | Unbroken | Sturdiness ×2; your Guard widens to 3 notches on vertical aim, and clean blocks restore 10 |
 | ♦ | Gilded Ward | Armor ×2; your Guard widens to 3 notches on horizontal aim, and blocks reflect 50% of the blocked output back as Score for you |
@@ -359,7 +449,7 @@ Frequency: a player finishes with a straight or better in about 10.5% of 7-card 
 
 | Board makes | Arena effect |
 | --- | --- |
-| Straight | Open Lists: all Seat damage ×1.5. If the top card is 10 or higher, Score ×1.5 too. |
+| Straight | Open Lists: all Posture damage ×1.5. If the top card is 10 or higher, Score ×1.5 too. |
 | Flush | That suit's stat +8 for both riders, tilting the hand toward its axis |
 | Full house | Siege: all output ×0.5; the hand leans on Score and kickers |
 | Quads | Score ties use hole cards only |
@@ -392,15 +482,15 @@ Design rule: each tell must have at least two plausible causes.
 
 | Cue | Public source | What it suggests | Why it's ambiguous |
 | --- | --- | --- | --- |
-| Stance (aim axis) | Aim notch | Which axis the rider's cards load | Could be a bluff stance or a pure sector read |
+| Stance (aim axis) | Aim position | Which offense stat the rider's cards load | Could be a bluff stance or a pure sector read |
 | Hold meter | Hold fraction | Confidence in the current aim | Late switches cost power but are legal |
 | Lance/shield color | Hole card colors | Offense vs defense lean | Axis hidden; jack randomizes |
-| Refusing to fall | Seat at 1 | Holding a trick | Could be queen heals or strong ♥ loading |
-| Clean blocks | Block outcome | Hard Guard on that axis | Could be hold, not cards |
+| Refusing to fall | Posture at 1 | Holding a trick | Could be queen heals or strong ♥ loading |
+| Clean blocks | Block outcome | Thick Guard armor (♦) | Could be hold, not cards |
 | First exit from Neutral | Timing | Eagerness or confidence | Could be habit |
 
 **Core read loop.** Aim is public, so everyone sees the stance. The secret is whether the
-stance is loaded. If you think the opponent's Guard is soft, strike into it for leak damage. If
+stance is loaded. If you think the opponent's Guard is soft, strike into it and get through the armor. If
 you think it's real, go for their exposure instead. This replaces the hidden Shield from
 Turbo Jousting.
 
@@ -457,12 +547,12 @@ we take mechanics and code that fit the poker spirit.
 
 | Take | Source | Use here |
 | --- | --- | --- |
-| 8-notch dial with Neutral and hard snapping | GAME_SPEC §3, ADR 0006 | The standard dial |
+| 8-notch dial with Neutral and hard snapping | GAME_SPEC §3, ADR 0006 | The standard dial, at half-step resolution |
 | Polarization: exposure at the strike, Guard opposite | GAME_SPEC §3 | Sectors |
-| Chiral 3-notch exposure | ADR 0006 | Standard dial sweeps clockwise |
+| Chiral 3-notch exposure | ADR 0006 | Chirality: the standard dial sweeps in label order; its layout is §3's own |
 | Held-aim proration with a public meter | ADR 0001, 0008 | The windup, as a price not a lock |
 | Aim lock before the tick | GAME_SPEC §3 | 0.3 s lock |
-| Magnet wheel feel (drag, flick, detents) | `ring-spin-ui-feel` branch, `WheelPhysics.luau` | Dial input |
+| Magnet wheel feel (drag, flick, detents) | `claude/ring-spin-ui-feel-xpatk4` branch, `src/shared/WheelPhysics.luau` and `Constants.WHEEL` | Dial input |
 | Simultaneous one-tick resolution | CLAUDE.md invariant 3 | Contact resolution |
 | Post-pass reveal | GAME_SPEC §8 | After each contact |
 | Ghosts as habit tables, never recordings | ADR 0013, `diegetic-lobby-design` branch | Add betting, yield and unleash habits conditioned on the ghost's own hand-strength band |
@@ -474,8 +564,8 @@ we take mechanics and code that fit the poker spirit.
 | Drop or change | Why |
 | --- | --- |
 | Hidden Shield | Replaced by hole cards; the secret is now whether your stance is loaded |
-| Supershield | Its job (hard Guard) is now suit loading and hold |
-| Balance teeter roll | Replaced by deterministic Seat. Could return as an option (see Open questions) |
+| Supershield | Its job (hard Guard) is now ♦ Armor and hold |
+| Balance teeter roll | Replaced by deterministic Posture. Could return as an option (see Open questions) |
 | Breaking and the mortal ladder | Deferred; not needed for v1 |
 | Spur and momentum | Deferred; hold is the only run-up currency in v1 |
 | One duel to unhorse | A hand is 4 passes; Score decides if no one falls |
@@ -516,7 +606,7 @@ matchup charts and a readable meta. Hidden information stays in the cards.
 | 6–9 | Brawlers | Balanced, varied hold rates |
 | 10 | The Standard | The v1 dial |
 | J | Trickster | Public hold meter displays slightly off from the true hold |
-| Q | Warden | Clean blocks restore more Seat |
+| Q | Warden | Clean blocks restore more Posture |
 | K | Commander | Opponent's aim locks earlier |
 | A | Champion | Narrow Guard, long exposure, big crits |
 
@@ -536,10 +626,12 @@ whether tricks win often but not always.
 
 - Does a hand-to-hand trick win rate land in a healthy band (target: unleashed tricks win
   about 75 to 90% of the time vs numeric hands)?
-- Is the held-trick Seat floor too safe for slow-playing?
-- Should the unhorse be a visible-odds roll at low Seat (the Turbo Jousting teeter)
+- Is the held-trick Posture floor too safe for slow-playing?
+- Should the unhorse be a visible-odds roll at low Posture (the Turbo Jousting teeter)
   instead of a hard 0?
-- Is the 0.4 hold floor collapsing half-holds toward last-instant flicks?
+- Is the 0.4 hold floor collapsing half-holds toward last-instant flicks? A switch onto a
+  held aim wins when the floor is above what the holder deals back divided by what the
+  switch deals: Normal/Crit = 1/3 on a CN row, lower on a CB row (§3).
 - Is an 8 s pass long enough to read the reveal, decide, and react to a hold?
 - Prefold cost: what does prefolding in the yard cost (units, time, or both)?
 - Preflop redraw for a price: a second hand-selection tool alongside the prefold. What can be
@@ -549,19 +641,27 @@ whether tricks win often but not always.
   never purchasable currency, until checked.
 - Ghost betting: which public and private inputs a ghost's betting habits condition on.
 - Should spur and momentum return as a second run-up currency?
+- Shed Score for an implicit score, where a knockdown at showdown is necessary or forced,
+  based on hand strength?
+- ♠ Pierce: how crits scale with ♠, how it pierces armor, and how its pay-later buff works.
+  Trey's proposal: non-crit hits build a buff that later crits spend.
+- How slow-motion time counts toward the hold fraction (§3, §8).
+- Which offense stat Neutral's Weak strike uses (§3).
+- How the half steps between directions use the two offense stats (§4).
+- A hit's size is public: can one hit identify a hand's rank at display precision?
 
 ### Tuning parameters (sim config)
 
 | Parameter | v1 value |
 | --- | --- |
-| Seat start | 100 |
+| Posture start | 100 |
 | Base: Weak / Normal / Crit | 4 / 10 / 30 |
 | Stat base (cardless floor) | 20 |
 | Absent-suit share floor | 15% |
 | Hold multiplier | 0.4 + 0.6 × h |
 | Street multipliers (Passes 1–4) | 0.5 / 0.75 / 1.0 / 1.25 |
 | Block leak factor | 0.5 |
-| Clean block restore | 3 Seat |
+| Clean block restore | 3 Posture |
 | Aim lock before contact | 0.3 s |
 | Pass length | 8 s |
 | Exposure / Guard / ordinary | 3 / 1 / 4 notches |
@@ -579,9 +679,9 @@ whether tricks win often but not always.
 ### Sim plan
 
 1. Deal random heads-up hands and evaluate each street.
-2. Scripted riders with parameters: read accuracy (chance to pick the best notch vs the
+2. Scripted riders with parameters: read accuracy (chance to pick the best aim position vs the
    opponent's sectors), hold discipline, stance honesty (aim on your loaded axis),
    aggression (raise and unleash timing).
 3. Metrics: win rate by hand-category gap; knockout rate by pass; how often skill flips a
-   numeric matchup; unleashed-trick win rate by trick; Score vs Seat finish ratio.
+   numeric matchup; unleashed-trick win rate by trick; Score vs Posture finish ratio.
 4. v2 of the sim: a reading model, so jack, color and held-trick tells get a value.
