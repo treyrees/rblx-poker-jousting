@@ -1,15 +1,13 @@
 # WORKFLOW — how a change moves through the repo
 
-[GAME_SPEC.md](GAME_SPEC.md) is the central design point. Every change either implements it,
-corrects its transcription, or goes to Trey. The rules for agents are in
-[AGENTS.md](../../AGENTS.md); this doc is the process.
+[GAME_SPEC.md](GAME_SPEC.md) is the central design point. Every change either implements it or
+goes to Trey. The rules for agents are in [AGENTS.md](../../AGENTS.md); this doc is the process.
 
 ## Kinds of change
 
 | The change | Who decides | What the PR does |
 |---|---|---|
 | Implements something GAME_SPEC specifies | Normal review | Names the GAME_SPEC sections it implements |
-| Fixes a transcription error (GAME_SPEC doesn't match the design PDF) | Normal review | Fixes it and quotes the PDF |
 | GAME_SPEC is silent, ambiguous or contradicts itself on something the work needs | Trey | Nothing yet: ask first, with the options and what each costs |
 | Changes the design: a rule, effect, pillar, Status row or open question | Trey | Only after Trey decides: updates GAME_SPEC and records the decision |
 | Changes a tuning value (§11 parameter table) | Trey | Updates the value, citing the sim run behind it once the sim exists |

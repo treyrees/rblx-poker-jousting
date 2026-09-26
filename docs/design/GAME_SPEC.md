@@ -2,10 +2,11 @@
 
 Sep 22, 2026 · @Trey Rees
 
-> Transcribed from the design PDF of the same name. This is the central
-> design point for the repo. The only edits from the PDF are formatting: tables rebuilt, formulas
-> written as plain text, and top-level sections numbered so they can be cited ("GAME_SPEC §3").
-> The design changes only when Trey changes it (see [WORKFLOW.md](WORKFLOW.md)).
+> The canonical design for Poker Jousting. It began as a transcription of the design PDF of the
+> same name; since Sep 26, 2026 this doc is the source and the PDF is history. Top-level sections
+> are numbered so they can be cited ("GAME_SPEC §3"). The design changes only when Trey changes
+> it, and each change is recorded in [decisions/](decisions/README.md) (see
+> [WORKFLOW.md](WORKFLOW.md)).
 
 ## 1. Overview
 
@@ -20,37 +21,61 @@ commitment to ride into the next card.
   tiebreak.
 - **Play every hand.** Numeric hands (high card through trips) are modest stat edges. Skill
   on the dial decides most numeric matchups, so a bad hand is a handicap, not a fold.
-- **Tricks are trump cards, not auto-wins.** Straight and above change the dial's rules for
-  one pass. Each trick trades power for predictability, so reads can still beat it. Trick vs
-  read is an intended arms race.
+- **Tricks are trump cards.** Straight and above are tricks, ranked on a trick ladder. As the
+  ladder climbs, tricks bring unique mechanics and/or explosively scaled numbers. A rider above
+  the opponent on the ladder who unleashes their trick, rather than holding it, has a virtually
+  guaranteed win condition.
 - **Ambiguous tells.** The dial and the rider leak partial information about hole cards.
   Nothing leaks the exact hand.
-- **Suits are stats and directions.** Each suit is a stat, and each stat lives on an axis of the
+- **Suits are stats and axes.** Each suit is a stat, and each stat lives on an axis of the
   dial. Aim is public; whether your stance is actually loaded is the secret.
+
+Also important: **learnability** (for example, betting is beginner-ignorable, §2) and
+**spectacle** (for example, the setup/counter animation system, §8).
 
 ### Status
 
-| Area | State |
-| --- | --- |
-| Hand and betting structure | Settled |
-| Standard dial | Settled for v1, numbers tunable |
-| Suit to stat to axis mapping | Settled |
-| Numeric Power curve | Proposed, needs sim |
-| Broadway effects | Proposed, needs sim |
-| Trick wheel effects | Settled in shape, numbers need sim |
-| Classes and alternate dials | Deferred to v2 |
-| Economy, wager limits, monetization | Open |
+| Area | Section | State |
+| --- | --- | --- |
+| Hand structure: deck, deal, streets, win conditions | §2 | Settled |
+| The yard: deal, prefold, matchmaking | §2 | Settled in shape |
+| Preflop redraw for a price | §11 | Open |
+| Betting | §2 | Settled |
+| Standard dial: notches, sectors, Neutral, held aim, aim lock | §3 | Settled for v1, numbers tunable |
+| Suits as stats on the dial's axes | §4 | Settled |
+| The four stats: what they are and what they do | §4 | Open |
+| Numeric Power curve and suit split | §4 | Proposed, needs sim |
+| Contact resolution, Seat and Score | §4 | Proposed, needs sim |
+| Broadway effects | §5 | Proposed, needs sim |
+| Tricks: ladder, ownership, held and unleash rules, effects | §6 | Open |
+| Board-made tricks | §6 | Proposed, needs sim |
+| Information design | §7 | Settled |
+| Pass timeline | §8 | Proposed, needs sim |
+| Presentation: arena reveals, setup/counter animation | §8 | Settled in shape |
+| What we take from rblx-joust-tourney | §9 | Settled |
+| Classes and alternate dials | §10 | Deferred to v2 |
+| Economy: currency, wager limits, monetization | §11 | Open |
+| Tuning parameters | §11 | Proposed, needs sim |
 
 ## 2. Hand structure and betting
 
-One hand is one match: four bets and four passes. Cards reveal mid-charge, so each bet is
+One hand is one match: four bets and four passes. A match's result is the units won or lost. Cards reveal mid-charge, so each bet is
 made before the card it rides into, as in hold'em where you call and then see the card.
+
+### The yard
+
+Riders wait in the yard, circling. Each rider is dealt hole cards in the yard, before being
+matched.
+
+- A rider who doesn't want their hand prefolds it, for a cost, and is dealt a new one.
+- A rider who keeps their hand steps forward and meets their match. Matchmaking happens behind
+  the scenes, among riders who kept their hands. Then the Ante and Bet 1.
+- Prefolding is the preflop fold. Hand selection happens in the yard, so a match stays one hand.
 
 ### Deck and deal
 
 - One standard 52-card deck per hand, no jokers.
-- Each rider gets 2 private hole cards. The hole cards replace the Turbo Jousting Shield
-  entirely.
+- Each rider gets 2 private hole cards.
 - 5 community cards: flop (3), turn (1), river (1).
 - Hand strength is always the best 5 of the rider's 7 available cards (standard hold'em
   evaluation).
@@ -69,6 +94,10 @@ made before the card it rides into, as in hold'em where you call and then see th
 | Bet 4 | Stay / Raise / Yield | n/a |
 | Pass 4 (showdown) | Charge with full information; unused tricks auto-fire | All 7 cards |
 
+Street multipliers apply to all Seat damage and Score gained in that pass: Pass 1 = 0.5,
+Pass 2 = 0.75, Pass 3 = 1.0, Pass 4 = 1.25. Early passes rarely unhorse; the hand builds
+toward the river.
+
 ### Win conditions
 
 1. A rider whose Seat reaches 0 is unhorsed. The other rider wins the pot immediately.
@@ -81,15 +110,14 @@ made before the card it rides into, as in hold'em where you call and then see th
 ### Betting rules (v1)
 
 - Fixed limit. Raise size is 1 unit before Passes 1 and 2, 2 units before Passes 3 and 4.
-- Decisions are simultaneous with a short timer (5 to 8 s). If exactly one rider raises, the
-  other gets a call-or-yield prompt (5 s).
+- Betting alternates, as in hold'em, until a bet is agreed. Then the pass begins and the
+  joust is simultaneous.
+- The rider on the button acts first in every betting round. The button passes each hand.
+- Actions: Stay (check when there is no raise to face, call when there is), Raise, Yield.
 - One re-raise cap per betting round.
-- Timeout defaults to Stay (call). This keeps the game beginner-ignorable: a player who
-  never touches betting still plays every hand.
-- Players can only fold between passes. Every revealed card is ridden into.
-- Street multipliers apply to all Seat damage and Score gained in that pass: Pass 1 = 0.5,
-  Pass 2 = 0.75, Pass 3 = 1.0, Pass 4 = 1.25. Early passes rarely unhorse; the hand builds
-  toward the river.
+- Each action has a 5 s timer. Timeout defaults to Stay. This keeps the game
+  beginner-ignorable: a player who never touches betting still plays every hand.
+- Players can only Yield between passes. Every revealed card is ridden into.
 
 ## 3. The standard dial (v1)
 
@@ -513,6 +541,9 @@ whether tricks win often but not always.
   instead of a hard 0?
 - Is the 0.4 hold floor collapsing half-holds toward last-instant flicks?
 - Is an 8 s pass long enough to read the reveal, decide, and react to a hold?
+- Prefold cost: what does prefolding in the yard cost (units, time, or both)?
+- Preflop redraw for a price: a second hand-selection tool alongside the prefold. What can be
+  redrawn, and what does it cost?
 - Wager limits: cap the pot (for example 3× ante) so a loss stays cheap?
 - Roblox policy on simulated gambling and maturity labels. Stake only earned currency,
   never purchasable currency, until checked.
@@ -543,6 +574,7 @@ whether tricks win often but not always.
 | Quads: per-cardinal output | 50% |
 | Held passive sizes | +3 to +4 |
 | Raise size (Passes 1–2 / 3–4) | 1 / 2 units |
+| Betting action timer | 5 s |
 
 ### Sim plan
 
