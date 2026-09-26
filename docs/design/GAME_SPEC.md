@@ -63,8 +63,7 @@ made before the card it rides into, as in hold'em where you call and then see th
 ### Deck and deal
 
 - One standard 52-card deck per hand, no jokers.
-- Each rider gets 2 private hole cards. The hole cards replace the Turbo Jousting Shield
-  entirely.
+- Each rider gets 2 private hole cards.
 - 5 community cards: flop (3), turn (1), river (1).
 - Hand strength is always the best 5 of the rider's 7 available cards (standard hold'em
   evaluation).
@@ -83,6 +82,10 @@ made before the card it rides into, as in hold'em where you call and then see th
 | Bet 4 | Stay / Raise / Yield | n/a |
 | Pass 4 (showdown) | Charge with full information; unused tricks auto-fire | All 7 cards |
 
+Street multipliers apply to all Seat damage and Score gained in that pass: Pass 1 = 0.5,
+Pass 2 = 0.75, Pass 3 = 1.0, Pass 4 = 1.25. Early passes rarely unhorse; the hand builds
+toward the river.
+
 ### Win conditions
 
 1. A rider whose Seat reaches 0 is unhorsed. The other rider wins the pot immediately.
@@ -95,15 +98,14 @@ made before the card it rides into, as in hold'em where you call and then see th
 ### Betting rules (v1)
 
 - Fixed limit. Raise size is 1 unit before Passes 1 and 2, 2 units before Passes 3 and 4.
-- Decisions are simultaneous with a short timer (5 to 8 s). If exactly one rider raises, the
-  other gets a call-or-yield prompt (5 s).
+- Betting alternates, as in hold'em, until a bet is agreed. Then the pass begins and the
+  joust is simultaneous.
+- The rider on the button acts first in every betting round. The button passes each hand.
+- Actions: Stay (check when there is no raise to face, call when there is), Raise, Yield.
 - One re-raise cap per betting round.
-- Timeout defaults to Stay (call). This keeps the game beginner-ignorable: a player who
-  never touches betting still plays every hand.
-- Players can only fold between passes. Every revealed card is ridden into.
-- Street multipliers apply to all Seat damage and Score gained in that pass: Pass 1 = 0.5,
-  Pass 2 = 0.75, Pass 3 = 1.0, Pass 4 = 1.25. Early passes rarely unhorse; the hand builds
-  toward the river.
+- Each action has a 5 s timer. Timeout defaults to Stay. This keeps the game
+  beginner-ignorable: a player who never touches betting still plays every hand.
+- Players can only Yield between passes. Every revealed card is ridden into.
 
 ## 3. The standard dial (v1)
 
@@ -527,6 +529,9 @@ whether tricks win often but not always.
   instead of a hard 0?
 - Is the 0.4 hold floor collapsing half-holds toward last-instant flicks?
 - Is an 8 s pass long enough to read the reveal, decide, and react to a hold?
+- Preflop folding: in hold'em some hands get folded preflop, but with one hand per match a
+  preflop Yield ends the match before any joust. How does hand selection work without
+  extending a match to several hands against one opponent?
 - Wager limits: cap the pot (for example 3× ante) so a loss stays cheap?
 - Roblox policy on simulated gambling and maturity labels. Stake only earned currency,
   never purchasable currency, until checked.
@@ -557,6 +562,7 @@ whether tricks win often but not always.
 | Quads: per-cardinal output | 50% |
 | Held passive sizes | +3 to +4 |
 | Raise size (Passes 1–2 / 3–4) | 1 / 2 units |
+| Betting action timer | 5 s |
 
 ### Sim plan
 
