@@ -2,10 +2,11 @@
 
 Sep 22, 2026 · @Trey Rees
 
-> Transcribed from the design PDF of the same name. This is the central
-> design point for the repo. The only edits from the PDF are formatting: tables rebuilt, formulas
-> written as plain text, and top-level sections numbered so they can be cited ("GAME_SPEC §3").
-> The design changes only when Trey changes it (see [WORKFLOW.md](WORKFLOW.md)).
+> The canonical design for Poker Jousting. It began as a transcription of the design PDF of the
+> same name; since Sep 26, 2026 this doc is the source and the PDF is history. Top-level sections
+> are numbered so they can be cited ("GAME_SPEC §3"). The design changes only when Trey changes
+> it, and each change is recorded in [decisions/](decisions/README.md) (see
+> [WORKFLOW.md](WORKFLOW.md)).
 
 ## 1. Overview
 
@@ -20,26 +21,39 @@ commitment to ride into the next card.
   tiebreak.
 - **Play every hand.** Numeric hands (high card through trips) are modest stat edges. Skill
   on the dial decides most numeric matchups, so a bad hand is a handicap, not a fold.
-- **Tricks are trump cards, not auto-wins.** Straight and above change the dial's rules for
-  one pass. Each trick trades power for predictability, so reads can still beat it. Trick vs
-  read is an intended arms race.
+- **Tricks are trump cards.** Straight and above are tricks, ranked on a trick ladder. As the
+  ladder climbs, tricks bring unique mechanics and/or explosively scaled numbers. A rider above
+  the opponent on the ladder who unleashes their trick, rather than holding it, has a virtually
+  guaranteed win condition.
 - **Ambiguous tells.** The dial and the rider leak partial information about hole cards.
   Nothing leaks the exact hand.
-- **Suits are stats and directions.** Each suit is a stat, and each stat lives on an axis of the
+- **Suits are stats and axes.** Each suit is a stat, and each stat lives on an axis of the
   dial. Aim is public; whether your stance is actually loaded is the secret.
+
+Also important: **learnability** (for example, betting is beginner-ignorable, §2) and
+**spectacle** (for example, the setup/counter animation system, §8).
 
 ### Status
 
-| Area | State |
-| --- | --- |
-| Hand and betting structure | Settled |
-| Standard dial | Settled for v1, numbers tunable |
-| Suit to stat to axis mapping | Settled |
-| Numeric Power curve | Proposed, needs sim |
-| Broadway effects | Proposed, needs sim |
-| Trick wheel effects | Settled in shape, numbers need sim |
-| Classes and alternate dials | Deferred to v2 |
-| Economy, wager limits, monetization | Open |
+| Area | Section | State |
+| --- | --- | --- |
+| Hand structure: deck, deal, streets, win conditions | §2 | Settled |
+| Betting | §2 | Settled |
+| Standard dial: notches, sectors, Neutral, held aim, aim lock | §3 | Settled for v1, numbers tunable |
+| Suits as stats on the dial's axes | §4 | Settled |
+| The four stats: what they are and what they do | §4 | Open |
+| Numeric Power curve and suit split | §4 | Proposed, needs sim |
+| Contact resolution, Seat and Score | §4 | Proposed, needs sim |
+| Broadway effects | §5 | Proposed, needs sim |
+| Tricks: ladder, ownership, held and unleash rules, effects | §6 | Open |
+| Board-made tricks | §6 | Proposed, needs sim |
+| Information design | §7 | Settled |
+| Pass timeline | §8 | Proposed, needs sim |
+| Presentation: arena reveals, setup/counter animation | §8 | Settled in shape |
+| What we take from rblx-joust-tourney | §9 | Settled |
+| Classes and alternate dials | §10 | Deferred to v2 |
+| Economy, wager limits, monetization | §11 | Open |
+| Tuning parameters | §11 | Proposed, needs sim |
 
 ## 2. Hand structure and betting
 

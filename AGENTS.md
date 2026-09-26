@@ -15,13 +15,17 @@ Verbatim from GAME_SPEC §1. These are Trey's words: apply them, don't reword, e
   Outcomes come from the joust, not a card comparison, except as a final tiebreak.
 - **Play every hand.** Numeric hands (high card through trips) are modest stat edges. Skill on the
   dial decides most numeric matchups, so a bad hand is a handicap, not a fold.
-- **Tricks are trump cards, not auto-wins.** Straight and above change the dial's rules for one
-  pass. Each trick trades power for predictability, so reads can still beat it. Trick vs read is an
-  intended arms race.
+- **Tricks are trump cards.** Straight and above are tricks, ranked on a trick ladder. As the
+  ladder climbs, tricks bring unique mechanics and/or explosively scaled numbers. A rider above the
+  opponent on the ladder who unleashes their trick, rather than holding it, has a virtually
+  guaranteed win condition.
 - **Ambiguous tells.** The dial and the rider leak partial information about hole cards. Nothing
   leaks the exact hand.
-- **Suits are stats and directions.** Each suit is a stat, and each stat lives on an axis of the
-  dial. Aim is public; whether your stance is actually loaded is the secret.
+- **Suits are stats and axes.** Each suit is a stat, and each stat lives on an axis of the dial.
+  Aim is public; whether your stance is actually loaded is the secret.
+
+Also important: **learnability** (for example, betting is beginner-ignorable, §2) and
+**spectacle** (for example, the setup/counter animation system, §8).
 
 ## Invariants
 

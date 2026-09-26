@@ -24,5 +24,9 @@ Add a row below in the same commit. Check the latest `main` for the next free id
 
 | id | title | date |
 |----|-------|------|
+| [0001](0001-game-spec-is-canonical.md) | GAME_SPEC is the canonical design; the PDF is history | 2026-09-26 |
+| [0002](0002-tricks-climb-a-ladder.md) | Tricks are trump cards on a ladder, not "not auto-wins" | 2026-09-26 |
+| [0003](0003-suits-are-stats-and-axes.md) | Suits are stats and axes; the four stats themselves are open | 2026-09-26 |
+| [0004](0004-learnability-and-spectacle.md) | Learnability and spectacle are named as important | 2026-09-26 |
 
-Next free id: **0001**.
+Next free id: **0005**.
