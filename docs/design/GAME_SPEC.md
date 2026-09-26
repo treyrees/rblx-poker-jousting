@@ -17,8 +17,9 @@ commitment to ride into the next card.
 ### Design pillars
 
 - **Poker structure, physical resolution.** Hole cards, board, streets and betting are
-  hold'em. Outcomes come from the joust, not a card comparison, except as a final
-  tiebreak.
+  hold'em. Outcomes come from the joust. Hand strength acts through the riders' stats and, at
+  showdown, forces the knockdown alongside Posture. A bare card comparison only breaks exact
+  ties.
 - **Play every hand.** Numeric hands (high card through trips) are modest stat edges. Skill
   on the dial decides most numeric matchups, so a bad hand is a handicap, not a fold.
 - **Tricks are trump cards.** Straight and above are tricks, ranked on a trick ladder. As the
@@ -43,7 +44,7 @@ Also important: **learnability** (for example, betting is beginner-ignorable, §
 | Betting | §2 | Settled |
 | Standard dial: layout, outcome table, sectors, Neutral, held aim, aim lock | §3 | Settled for v1, numbers tunable |
 | Suits as stats; all four act, aim leans into the stats it points at | §4 | Settled |
-| Aim lean: which directions lean into which stats, and how much | §4 | Open |
+| Aim lean: the stat compass | §4 | Settled for v1, numbers tunable |
 | The four stats: what they are and what they do | §4 | Settled in shape |
 | Numeric Power curve and suit split | §4 | Proposed, needs sim |
 | Contact resolution, Posture and the showdown knockdown | §4 | Proposed, needs sim |
@@ -209,7 +210,7 @@ is the perfect read.
 - Neutral has no Guard. Every incoming hit on a neutral rider resolves as Normal.
 - Neutral is where the run-up starts, so the first frame leaks nothing. When a rider first
   leaves Neutral is itself a tell.
-- Neutral points at no stat. What that means for the aim lean is open (§11).
+- Neutral leans into no stat.
 
 ### Held aim (the windup)
 
@@ -275,8 +276,25 @@ and the other is circumstantial.
 All four stats act all the time. Aim leans into the stats it points at: the stats your aim
 points toward have more impact on the exchange. So an exchange depends on two things: the
 distance between the two aims, which picks the row (§3), and each aim's absolute position,
-which picks the stats it leans into. Which directions lean into which stats, and by how much,
-is open (§11).
+which picks the stats it leans into.
+
+**The stat compass.** Each stat has a home direction. The black suits sit next to each other
+and so do the red suits, so a diagonal can lean all offense or all defense.
+
+| Aim | Leans into | Reads as |
+| --- | --- | --- |
+| Up | ♣ Knockoff | Raw hit |
+| Out | ♠ Pierce | Crit hunter |
+| Down | ♥ Sturdiness | Posture |
+| In | ♦ Armor | Armor |
+| Up-Out | ♣ ♠ | All offense |
+| Down-In | ♥ ♦ | All defense |
+| Up-In | ♣ ♦ | Raw hit, armored |
+| Out-Down | ♠ ♥ | Crit hunter who can take hits |
+
+A cardinal leans into one stat and a diagonal into two. A half step leans mostly toward the
+nearer cardinal. Neutral leans into no stat. How much a lean buffs, and how a diagonal and a
+half step split it, are sim values (§11).
 
 Color pairing: black suits (♣ ♠) are offense, red suits (♥ ♦) are defense.
 
@@ -645,8 +663,6 @@ whether tricks win often but not always.
 - Ghost betting: which public and private inputs a ghost's betting habits condition on.
 - Should spur and momentum return as a second run-up currency?
 - Showdown knockdown: how hand strength converts, and how much it weighs against Posture.
-- Aim lean: which directions lean into which stats (including the half steps and Neutral),
-  and how much a lean buffs.
 - How slow-motion time counts toward the hold fraction (§3, §8).
 - A hit's size is public: can one hit identify a hand's rank at display precision?
 
@@ -666,7 +682,7 @@ whether tricks win often but not always.
 | Standard dial layout (half steps from aim) | Exposure 0–4, ordinary 5–7, Guard 8, ordinary 9, Guard 10–12, ordinary 13–15 |
 | ♦ armor: Guard / ordinary / exposure | Thick / thin / none; values set by the sim |
 | ♠ charge per non-crit hit, and piercing | Set by the sim |
-| Aim lean buff | Set by the sim |
+| Aim lean: buff size, and the split on diagonals and half steps | Set by the sim |
 | Showdown: hand strength weight against Posture | Set by the sim |
 | Queen restore (hole / board) | 6 / 3 per pass |
 | King lock penalty (hole / board) | 0.15 / 0.08 s |

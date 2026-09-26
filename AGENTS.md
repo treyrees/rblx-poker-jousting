@@ -12,7 +12,8 @@ change moves through the repo is in [docs/design/WORKFLOW.md](docs/design/WORKFL
 Verbatim from GAME_SPEC §1. These are Trey's words: apply them, don't reword, extend or add to them.
 
 - **Poker structure, physical resolution.** Hole cards, board, streets and betting are hold'em.
-  Outcomes come from the joust, not a card comparison, except as a final tiebreak.
+  Outcomes come from the joust. Hand strength acts through the riders' stats and, at showdown,
+  forces the knockdown alongside Posture. A bare card comparison only breaks exact ties.
 - **Play every hand.** Numeric hands (high card through trips) are modest stat edges. Skill on the
   dial decides most numeric matchups, so a bad hand is a handicap, not a fold.
 - **Tricks are trump cards.** Straight and above are tricks, ranked on a trick ladder. As the
