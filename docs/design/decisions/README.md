@@ -29,5 +29,6 @@ Add a row below in the same commit. Check the latest `main` for the next free id
 | [0003](0003-suits-are-stats-and-axes.md) | Suits are stats and axes; the four stats themselves are open | 2026-09-26 |
 | [0004](0004-learnability-and-spectacle.md) | Learnability and spectacle are named as important | 2026-09-26 |
 | [0005](0005-betting-alternates-one-hand-matches.md) | Betting alternates from the button; a match stays one hand | 2026-09-26 |
+| [0006](0006-the-yard-and-prefolding.md) | Hand selection happens in the yard; results are graded in units | 2026-09-26 |
 
-Next free id: **0006**.
+Next free id: **0007**.

@@ -38,6 +38,8 @@ Also important: **learnability** (for example, betting is beginner-ignorable, §
 | Area | Section | State |
 | --- | --- | --- |
 | Hand structure: deck, deal, streets, win conditions | §2 | Settled |
+| The yard: deal, prefold, matchmaking | §2 | Settled in shape |
+| Preflop redraw for a price | §11 | Open |
 | Betting | §2 | Settled |
 | Standard dial: notches, sectors, Neutral, held aim, aim lock | §3 | Settled for v1, numbers tunable |
 | Suits as stats on the dial's axes | §4 | Settled |
@@ -52,13 +54,23 @@ Also important: **learnability** (for example, betting is beginner-ignorable, §
 | Presentation: arena reveals, setup/counter animation | §8 | Settled in shape |
 | What we take from rblx-joust-tourney | §9 | Settled |
 | Classes and alternate dials | §10 | Deferred to v2 |
-| Economy, wager limits, monetization | §11 | Open |
+| Economy: currency, wager limits, monetization | §11 | Open |
 | Tuning parameters | §11 | Proposed, needs sim |
 
 ## 2. Hand structure and betting
 
-One hand is one match: four bets and four passes. Cards reveal mid-charge, so each bet is
+One hand is one match: four bets and four passes. A match's result is the units won or lost. Cards reveal mid-charge, so each bet is
 made before the card it rides into, as in hold'em where you call and then see the card.
+
+### The yard
+
+Riders wait in the yard, circling. Each rider is dealt hole cards in the yard, before being
+matched.
+
+- A rider who doesn't want their hand prefolds it, for a cost, and is dealt a new one.
+- A rider who keeps their hand steps forward and meets their match. Matchmaking happens behind
+  the scenes, among riders who kept their hands. Then the Ante and Bet 1.
+- Prefolding is the preflop fold. Hand selection happens in the yard, so a match stays one hand.
 
 ### Deck and deal
 
@@ -529,9 +541,9 @@ whether tricks win often but not always.
   instead of a hard 0?
 - Is the 0.4 hold floor collapsing half-holds toward last-instant flicks?
 - Is an 8 s pass long enough to read the reveal, decide, and react to a hold?
-- Preflop folding: in hold'em some hands get folded preflop, but with one hand per match a
-  preflop Yield ends the match before any joust. How does hand selection work without
-  extending a match to several hands against one opponent?
+- Prefold cost: what does prefolding in the yard cost (units, time, or both)?
+- Preflop redraw for a price: a second hand-selection tool alongside the prefold. What can be
+  redrawn, and what does it cost?
 - Wager limits: cap the pot (for example 3× ante) so a loss stays cheap?
 - Roblox policy on simulated gambling and maturity labels. Stake only earned currency,
   never purchasable currency, until checked.
