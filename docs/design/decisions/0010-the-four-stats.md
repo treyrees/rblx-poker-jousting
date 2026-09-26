@@ -4,7 +4,7 @@ title: The four stats are ♥ Posture, ♦ Armor, ♣ raw damage and ♠ crits
 date: 2026-09-26
 decided-by: trey (chat, §3 review session, 2026-09-26)
 supersedes: []
-superseded-by: null
+superseded-by: 0012 (the stance rule only)
 ---
 
 ## Context

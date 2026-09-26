@@ -21,8 +21,8 @@ Verbatim from GAME_SPEC §1. These are Trey's words: apply them, don't reword, e
   guaranteed win condition.
 - **Ambiguous tells.** The dial and the rider leak partial information about hole cards. Nothing
   leaks the exact hand.
-- **Suits are stats and axes.** Each suit is a stat, and each stat lives on an axis of the dial.
-  Aim is public; whether your stance is actually loaded is the secret.
+- **Suits are stats.** Each suit is a stat, and all four act all the time. Aim leans into the
+  stats it points at. Aim is public; whether your cards back the lean is the secret.
 
 Also important: **learnability** (for example, betting is beginner-ignorable, §2) and
 **spectacle** (for example, the setup/counter animation system, §8).

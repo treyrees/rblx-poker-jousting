@@ -35,5 +35,9 @@ Add a row below in the same commit. Check the latest `main` for the next free id
 | [0009](0009-seat-renamed-posture.md) | Seat is renamed Posture | 2026-09-26 |
 | [0010](0010-the-four-stats.md) | The four stats are ♥ Posture, ♦ Armor, ♣ raw damage and ♠ crits | 2026-09-26 |
 | [0011](0011-stats-reprice-tricks-rewrite.md) | Stats change what rows are worth; tricks change which rows exist | 2026-09-26 |
+| [0012](0012-all-stats-act-aim-leans.md) | All four stats act all the time; aim leans into the stats it points at | 2026-09-26 |
+| [0013](0013-pillar-5-reworded.md) | Pillar 5 reads "Suits are stats" | 2026-09-26 |
+| [0014](0014-showdown-knockdown.md) | Score is removed; hand strength forces a knockdown at showdown | 2026-09-26 |
+| [0015](0015-spade-charge.md) | ♠ non-crits build a hidden charge that the next crit spends | 2026-09-26 |
 
-Next free id: **0012**.
+Next free id: **0016**.
