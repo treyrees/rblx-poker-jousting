@@ -2,10 +2,12 @@
 
 Sep 22, 2026 · @Trey Rees
 
-> Transcribed from the working design doc (PDF, 18 pages). This file is the
-> in-repo copy; keep it in sync when the working doc changes.
+> Transcribed from the design PDF of the same name. This is the central
+> design point for the repo. The only edits from the PDF are formatting: tables rebuilt, formulas
+> written as plain text, and top-level sections numbered so they can be cited ("GAME_SPEC §3").
+> The design changes only when Trey changes it (see [WORKFLOW.md](WORKFLOW.md)).
 
-## Overview
+## 1. Overview
 
 Poker Jousting is a Roblox 1v1 game where a Texas hold'em hand is played as four jousting
 passes. Cards buff the riders; a radial aim dial decides who lands the hit. Every bet is a
@@ -39,7 +41,7 @@ commitment to ride into the next card.
 | Classes and alternate dials | Deferred to v2 |
 | Economy, wager limits, monetization | Open |
 
-## Hand structure and betting
+## 2. Hand structure and betting
 
 One hand is one match: four bets and four passes. Cards reveal mid-charge, so each bet is
 made before the card it rides into, as in hold'em where you call and then see the card.
@@ -89,7 +91,7 @@ made before the card it rides into, as in hold'em where you call and then see th
   Pass 2 = 0.75, Pass 3 = 1.0, Pass 4 = 1.25. Early passes rarely unhorse; the hand builds
   toward the river.
 
-## The standard dial (v1)
+## 3. The standard dial (v1)
 
 Every rider uses the same dial in v1. One input, the aim, sets offense and defense
 together: you are exposed where you strike, and your Guard sits opposite.
@@ -147,7 +149,7 @@ ping wars.
 | Board cards and arena effects | Your hand's exact suit mix |
 | Lance and shield colors (see Information design) | True colors behind a jack |
 
-## Suits, stats and stances
+## 4. Suits, stats and stances
 
 Each suit is one stat, and each stat lives on one axis of the dial. Because the Guard sits
 opposite the aim, aiming on an axis activates that axis's offense stat on your strike and its
@@ -229,7 +231,7 @@ Base 20 is the "cardless jouster" floor. Board-only cards contribute to both rid
   reads unhorse.
 - Pass 4 crit with the same: about 54 Seat.
 
-## Broadway cards
+## 5. Broadway cards
 
 J, Q, K and A carry an effect just for being in your hand, on top of their rank and suit. Only
 hole cards grant the full effect. A face card on the board applies a half-strength version to
@@ -264,7 +266,7 @@ both riders and appears in the arena.
 Sim note: J effects are information effects. A sim with no reading model values them at
 zero. Expect jacks to look like dead cards until the sim has readers.
 
-## Tricks
+## 6. Tricks
 
 Straight and above are tricks. A trick changes the dial's rules for the one pass it is
 unleashed on. It does not win outright: every trick trades power for some predictability,
@@ -342,7 +344,7 @@ Frequency: a player finishes with a straight or better in about 10.5% of 7-card 
 - Unleash contact uses the setup/counter system (see Pass timeline and presentation).
 - An optional style input during the unleash (a timed flourish) affects only cosmetics.
 
-## Information design
+## 7. Information design
 
 Every visible cue should narrow the opponent's range without identifying the hand.
 Design rule: each tell must have at least two plausible causes.
@@ -381,7 +383,7 @@ yield where the winner chooses to show).
 **Spectators** see exactly what the opponent sees, never hole cards before reveal. This rules
 out a TV-poker hole-card cam, which would let a friend on the rail relay information.
 
-## Pass timeline and presentation
+## 8. Pass timeline and presentation
 
 A pass lasts about 8 s from the start of the charge to contact. The card reveal lands mid-
 charge with a brief slow-motion beat, then riders decide and commit before contact.
@@ -420,7 +422,7 @@ cards get their own arena state for the rest of the hand.
 - Clash beat for identical tricks: both lances shatter.
 - Trick resolutions run 3 to 5 s maximum. After first viewing, tap to speed up.
 
-## Reference: what we take from rblx-joust-tourney
+## 9. Reference: what we take from rblx-joust-tourney
 
 Turbo Jousting (repo) is a parts bin, not a rulebook. Its invariants do not bind this game;
 we take mechanics and code that fit the poker spirit.
@@ -452,7 +454,7 @@ we take mechanics and code that fit the poker spirit.
 | "Never a wager" (ADR 0015) | Betting is core here, within limits (see Open questions) |
 | Reads always beat rarity | Replaced by the trick vs read arms race |
 
-## v2: classes and dials
+## 10. v2: classes and dials
 
 Deferred. v1 ships the standard dial for everyone. In v2, a rider picks a favorite rank before
 play; that rank sets their class, which gives them one of 13 dials and a small buff whenever
@@ -496,7 +498,7 @@ five families plus mirroring: a tuning load the sim can cover.
 Open question for v2: 13 ranks give 13 classes; if ace-low (1) and ace-high (14) are meant as
 separate picks, that makes 14.
 
-## Open questions, tuning and next steps
+## 11. Open questions, tuning and next steps
 
 The next step is a headless sim of one hand, using the parameters below as config. It
 answers whether numeric hands order correctly, how often skill flips close matchups, and
