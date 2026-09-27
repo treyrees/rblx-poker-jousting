@@ -39,7 +39,7 @@ Add a row below in the same commit. Check the latest `main` for the next free id
 | [0013](0013-pillar-5-reworded.md) | Pillar 5 reads "Suits are stats" | 2026-09-26 |
 | [0014](0014-showdown-knockdown.md) | Score is removed; hand strength forces a knockdown at showdown | 2026-09-26 |
 | [0015](0015-spade-charge.md) | ♠ non-crits build a hidden charge that the next crit spends | 2026-09-26 |
-| [0016](0016-stat-compass.md) | The stat compass sets which directions lean into which stats | 2026-09-26 |
+| [0016](0016-stat-compass.md) | The stat compass puts the black suits side by side; the lean total is fixed | 2026-09-27 |
 | [0017](0017-pillar-1-reworded.md) | Pillar 1 lets hand strength force the showdown knockdown | 2026-09-26 |
 
 Next free id: **0018**.

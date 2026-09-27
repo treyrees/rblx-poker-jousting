@@ -292,9 +292,10 @@ and so do the red suits, so a diagonal can lean all offense or all defense.
 | Up-In | ♣ ♦ | Raw hit, armored |
 | Out-Down | ♠ ♥ | Crit hunter who can take hits |
 
-A cardinal leans into one stat and a diagonal into two. A half step leans mostly toward the
-nearer cardinal. Neutral leans into no stat. How much a lean buffs, and how a diagonal and a
-half step split it, are sim values (§11).
+A cardinal leans into one stat and a diagonal into two. The total lean is the same at every
+aim, so a diagonal shares it evenly between its two stats: being on a diagonal is never worth
+more in itself. A half step shares it too, mostly toward the nearer cardinal. Neutral leans
+into no stat. How much a lean buffs, and the half-step share, are sim values (§11).
 
 Color pairing: black suits (♣ ♠) are offense, red suits (♥ ♦) are defense.
 
@@ -682,7 +683,7 @@ whether tricks win often but not always.
 | Standard dial layout (half steps from aim) | Exposure 0–4, ordinary 5–7, Guard 8, ordinary 9, Guard 10–12, ordinary 13–15 |
 | ♦ armor: Guard / ordinary / exposure | Thick / thin / none; values set by the sim |
 | ♠ charge per non-crit hit, and piercing | Set by the sim |
-| Aim lean: buff size, and the split on diagonals and half steps | Set by the sim |
+| Aim lean: buff size, and the half-step share | Set by the sim |
 | Showdown: hand strength weight against Posture | Set by the sim |
 | Queen restore (hole / board) | 6 / 3 per pass |
 | King lock penalty (hole / board) | 0.15 / 0.08 s |
