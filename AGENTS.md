@@ -12,7 +12,8 @@ change moves through the repo is in [docs/design/WORKFLOW.md](docs/design/WORKFL
 Verbatim from GAME_SPEC §1. These are Trey's words: apply them, don't reword, extend or add to them.
 
 - **Poker structure, physical resolution.** Hole cards, board, streets and betting are hold'em.
-  Outcomes come from the joust, not a card comparison, except as a final tiebreak.
+  Outcomes come from the joust. Hand strength acts through the riders' stats and, at showdown,
+  forces the knockdown alongside Posture. A bare card comparison only breaks exact ties.
 - **Play every hand.** Numeric hands (high card through trips) are modest stat edges. Skill on the
   dial decides most numeric matchups, so a bad hand is a handicap, not a fold.
 - **Tricks are trump cards.** Straight and above are tricks, ranked on a trick ladder. As the
@@ -21,8 +22,8 @@ Verbatim from GAME_SPEC §1. These are Trey's words: apply them, don't reword, e
   guaranteed win condition.
 - **Ambiguous tells.** The dial and the rider leak partial information about hole cards. Nothing
   leaks the exact hand.
-- **Suits are stats and axes.** Each suit is a stat, and each stat lives on an axis of the dial.
-  Aim is public; whether your stance is actually loaded is the secret.
+- **Suits are stats.** Each suit is a stat, and all four act all the time. Aim leans into the
+  stats it points at. Aim is public; whether your cards back the lean is the secret.
 
 Also important: **learnability** (for example, betting is beginner-ignorable, §2) and
 **spectacle** (for example, the setup/counter animation system, §8).
@@ -48,8 +49,8 @@ else. If you think one is missing, say so in chat or the PR and leave this secti
 ## Borrowing from rblx-joust-tourney
 
 GAME_SPEC §9: Turbo Jousting is "a parts bin, not a rulebook." Take practical pieces only: the ones
-the §9 *Take* table lists (for example the Magnet wheel physics from the `ring-spin-ui-feel` branch,
-and the headless Lune sim and test harness), or ones Trey names. Take the code or mechanism, not
+the §9 *Take* table lists (for example the Magnet wheel physics from the
+`claude/ring-spin-ui-feel-xpatk4` branch, and the headless Lune sim and test harness), or ones Trey names. Take the code or mechanism, not
 Turbo Jousting's invariants, ADRs, vocabulary, conventions or design reasoning. Every PR that
 borrows names the source repo, branch and file.
 

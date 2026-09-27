@@ -4,7 +4,7 @@ title: Suits are stats and axes; the four stats themselves are open
 date: 2026-09-26
 decided-by: trey (chat, §1 review session, 2026-09-26)
 supersedes: []
-superseded-by: null
+superseded-by: 0013 (the pillar wording only)
 ---
 
 ## Context
