@@ -49,7 +49,8 @@ Also important: **learnability** (for example, betting is beginner-ignorable, §
 | Numeric Power curve and suit split | §4 | Proposed, needs sim |
 | Contact resolution, Posture and the showdown knockdown | §4 | Proposed, needs sim |
 | Broadway effects | §5 | Proposed, needs sim |
-| Tricks: ladder, ownership, held and unleash rules, effects | §6 | Open |
+| Tricks: ladder, ownership, held and unleash rules, trick vs trick | §6 | Settled in shape |
+| Trick effects on the unleash pass | §6 | Open |
 | Board-made tricks | §6 | Proposed, needs sim |
 | Information design | §7 | Settled |
 | Pass timeline | §8 | Proposed, needs sim |
@@ -406,16 +407,33 @@ zero. Expect jacks to look like dead cards until the sim has readers.
 
 ## 6. Tricks
 
-> Written before the §3 review. Its references to Score, axis stances and notch counts are
-> revisited in the §6 review (decisions 0012–0015).
+> The §6 review is in progress. The rules from the intro through *Trick vs trick* are
+> rewritten (decisions 0018–0024). *Trick effects on the unleash pass*, *Flush by suit* and
+> *Board-made tricks* predate the review: their Score, axis stances, notch counts and
+> counterplay are revisited in its later rounds.
 
 Straight and above are tricks. A trick changes the dial's rules for the one pass it is
-unleashed on. It does not win outright: every trick trades power for some predictability,
-and higher tricks give more power with less counterplay, never zero.
+unleashed on. Tricks are trump cards: an unleashed trick above the opponent on the trick
+ladder is built to unhorse them on that pass, so it wins the hand.
 
-Frequency: a player finishes with a straight or better in about 10.5% of 7-card hands
-(straight 4.6%, flush 3.0%, full house 2.6%, quads 0.17%, straight flush 0.03%). About 1 in
-5 hands that reach the river have a trick on at least one side.
+Frequency, from a deal sim: a rider owns a trick (see *Ownership*) by the river in about 10%
+of hands (straight 4.4%, flush 2.9%, full house 2.5%, quads 0.15%, straight flush 0.02%). Of
+those tricks, about 63% first appear on the river, 29% on the turn and 8% on the flop. About
+18% of hands have an owned trick on at least one side, and about 2% on both; three quarters
+of those are the same category. The board alone makes a trick in about 0.8% of hands. These
+are rates for random deals; prefolding in the yard shifts them.
+
+### The trick ladder
+
+- The rungs are the trick categories, low to high: straight, flush, full house, quads,
+  straight flush. The royal flush is the top straight flush, with its own presentation. Every
+  numeric hand is below the ladder.
+- Your rung is the category of the trick you own with the cards revealed so far, held or
+  unleashed. A rider on a higher rung is above the opponent. Riders on the same rung are
+  level, whatever their ranks within it.
+- Unleashing above the opponent ends the hand on that pass, before they can draw level or
+  above, for the pot bet so far. Holding builds the pot and hides the trick, at the risk of
+  the opponent drawing level or above, and of being worn down while riding as the sub-hand.
 
 ### Ownership
 
@@ -428,15 +446,16 @@ Frequency: a player finishes with a straight or better in about 10.5% of 7-card 
 - Rides as its best non-trick sub-hand for stats (a full house rides as trips, a straight with
   no pair rides as high card).
 - Adds a small held passive, sized to look like a good numeric hand.
-- Posture cannot drop below 1 while holding a trick. This makes slow-playing safe from being
-  unhorsed, at the cost of a tell: a weak-looking rider who won't fall. Tunable; remove if
-  slow-play is too safe.
+- No Posture floor: a rider holding a trick can be unhorsed like any other.
+- Answers an unleash from its own rung or below (see *Trick vs trick*).
 
 ### Unleash rules
 
 - Declared during the decision window after a card reveal (or any time in the Pass 4 run-
   up). Once per hand.
-- Hidden until contact, except the flush, which reveals its suit on declaration.
+- Declaring announces the trick's rung to both riders ("Straight unleashed"). A flush also
+  shows its suit. The trick's cards stay hidden until contact. A held trick that answers
+  is not announced; it shows at contact.
 - Any trick not unleashed by Pass 4 fires automatically on Pass 4.
 - Unleashing reveals the trick in the post-pass reveal.
 
@@ -462,10 +481,16 @@ Frequency: a player finishes with a straight or better in about 10.5% of 7-card 
 
 ### Trick vs trick
 
-- Both unleashed effects apply at once and the dial resolves them. No special rules.
-- Poker rank only breaks exact ties in the outcome (for example an exact tie at showdown).
-- Identical tricks from hole cards (both hold a 9 for the same straight) clash: both effects
-  cancel for that pass and it resolves as numeric.
+- A held trick answers an unleash from its own rung or below: it fires automatically on the
+  same pass, however late the unleash is declared. The answer is its unleash for the hand. A
+  held trick below the unleash doesn't answer; it rides as its sub-hand.
+- Level tricks clash. Two tricks on the same rung, both unleashed or one answering the other,
+  cancel for that pass, and it resolves as numeric. Both are spent. The edge between level
+  tricks comes from poker and play: who reached the rung first and unleashed while above,
+  the stronger hand at the showdown knockdown (§4), and the dial on the numeric passes.
+- Tricks on different rungs both apply, and the dial resolves them. Each trick is designed
+  to beat the tricks below it on the dial. Where two tricks' rules contradict outright, the
+  higher trick's rule wins that contradiction; everything else still applies.
 
 ### Board-made tricks (arena effects, both riders, all passes after the reveal)
 
@@ -507,7 +532,6 @@ Design rule: each tell must have at least two plausible causes.
 | Stance (aim lean) | Aim position | Which stats the rider's cards load | Could be a bluff stance or a pure sector read |
 | Hold meter | Hold fraction | Confidence in the current aim | Late switches cost power but are legal |
 | Lance/shield color | Hole card colors | Offense vs defense lean | Axis hidden; jack randomizes |
-| Refusing to fall | Posture at 1 | Holding a trick | Could be queen heals or strong ♥ loading |
 | Clean blocks | Block outcome | Thick Guard armor (♦) | Could be hold, not cards |
 | First exit from Neutral | Timing | Eagerness or confidence | Could be habit |
 
@@ -559,7 +583,7 @@ cards get their own arena state for the rest of the hand.
   horizontal-stance loser goes for the pierce.
 - A held trick countering an unleashed trick is the biggest moment in the game and gets
   the largest presentation budget.
-- Clash beat for identical tricks: both lances shatter.
+- Clash beat for level tricks: both lances shatter.
 - Trick resolutions run 3 to 5 s maximum. After first viewing, tap to speed up.
 
 ## 9. Reference: what we take from rblx-joust-tourney
@@ -648,7 +672,6 @@ whether tricks win often but not always.
 
 - Does a hand-to-hand trick win rate land in a healthy band (target: unleashed tricks win
   about 75 to 90% of the time vs numeric hands)?
-- Is the held-trick Posture floor too safe for slow-playing?
 - Should the unhorse be a visible-odds roll at low Posture (the Turbo Jousting teeter)
   instead of a hard 0?
 - Is the 0.4 hold floor collapsing half-holds toward last-instant flicks? A switch onto a
