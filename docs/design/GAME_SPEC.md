@@ -426,10 +426,8 @@ zero. Expect jacks to look like dead cards until the sim has readers.
 
 ## 6. Tricks
 
-> The §6 review is in progress. The intro through *Trick vs trick* is rewritten (decisions
-> 0018–0033). *Board-made tricks* predates the review: its Score and axis references are
-> revisited in its last round. The §11 trick rows (Straight, Flush, Full house, Quads) also
-> predate it and are left as they are until Trey updates them.
+> The §6 review is closing (decisions 0018–0033, 0040–0045). One item is open: the Charge's
+> "can't be Blocked" and widened exposure (0032).
 
 Straight and above are tricks. A trick changes the dial's rules for the one pass it is
 unleashed on. Tricks are trump cards: an unleashed trick above the opponent on the trick
@@ -449,8 +447,8 @@ are rates for random deals; prefolding in the yard shifts them.
   straight flush. The royal flush is the top straight flush, with its own presentation. Every
   numeric hand is below the ladder.
 - Your rung is the category of the trick you own with the cards revealed so far, held or
-  unleashed. A rider on a higher rung is above the opponent. Riders on the same rung are
-  level, whatever their ranks within it.
+  unleashed, or of the board's trick you play (*Ownership*). A rider on a higher rung is above
+  the opponent. Riders on the same rung are level, whatever their ranks within it.
 - Unleashing above the opponent ends the hand on that pass, before they can draw level or
   above, for the pot bet so far. Holding builds the pot and hides the trick, at the risk of
   the opponent drawing level or above, and of being worn down while riding as the sub-hand.
@@ -458,8 +456,16 @@ are rates for random deals; prefolding in the yard shifts them.
 ### Ownership
 
 - A trick is yours only if at least one of your hole cards is part of it.
-- If the board alone makes the trick and neither rider improves on it, it is board-made
-  (see below). Neither rider can unleash it.
+- Your hand is always your current best five cards. A held trick that a later board trick
+  plays over, so that none of your hole cards is in your best five, is no longer yours.
+- When the board alone makes a trick, both riders stand on its rung. A rider playing the
+  board's trick can't unleash it, and it doesn't fire on Pass 4. If the opponent unleashes a
+  trick on that rung, the board's trick answers and they clash (*Trick vs trick*).
+- Only hole cards that lift a rider to a higher rung put them above. An improvement within the
+  rung (a higher straight, a higher flush card, a better full house, a quads kicker) is level:
+  the stronger hand counts at the showdown knockdown (§4).
+- The board's arena effect (*Board-made tricks*) is on whenever the board alone makes a trick,
+  whether or not a rider improves on it.
 
 ### Held behavior (completed but not unleashed)
 
@@ -534,7 +540,7 @@ base stat; half steps share the tilt as on the compass. The suit is announced on
 | ♣ | Shattering Blow | Up | Your hit's raw damage lands in full, even into a Block |
 | ♠ | Needle | Out | Every hit you land is a Crit that pierces all armor, and it spends your charge |
 | ♥ | Unbroken | Down | You can't be unhorsed this pass |
-| ♦ | Gilded Ward | In | Your armor covers your whole dial, exposure included, and what it stops reflects back at the striker |
+| ♦ | Gilded Mirror | In | Your armor covers your whole dial, exposure included, and what it stops reflects back at the striker |
 
 ### Trick vs trick
 
@@ -553,11 +559,14 @@ base stat; half steps share the tilt as on the compass. The suit is announced on
 
 | Board makes | Arena effect |
 | --- | --- |
-| Straight | Open Lists: all Posture damage ×1.5. If the top card is 10 or higher, Score ×1.5 too. |
-| Flush | That suit's stat +8 for both riders, tilting the hand toward its axis |
-| Full house | Siege: all output ×0.5; the hand leans on Score and kickers |
-| Quads | Score ties use hole cards only |
+| Straight | Open Lists: numeric Posture damage ×1.5 |
+| Flush | An arena moment in the suit's colors, with no stat bonus: the board's cards already count for both riders (§4 *Card values*) |
+| Full house | Siege: numeric output ×0.5; the hand leans on the showdown knockdown |
+| Quads | An arena moment, with no rule of its own: kickers settle a showdown tie as usual (§2) |
 | Straight flush | Board flush + Open Lists |
+
+The arena multipliers scale numeric hits only; a trick's hit keeps its size. The ×1.5 and ×0.5
+are placeholders; their numbers come later.
 
 ### Presentation
 
@@ -635,7 +644,7 @@ cards get their own arena state for the rest of the hand.
 - Standardize the interrupt frame and rider positions so any setup can cut into any
   counter.
 - Offensive counters overtake the attack (the Charge, Shattering Blow, Needle).
-  Defensive counters absorb and retaliate (Fortress, Unbroken, Gilded Ward).
+  Defensive counters absorb and retaliate (Fortress, Unbroken, Gilded Mirror).
 - Numeric setups are data-driven: a vertical-stance loser swings for the unhorse, a
   horizontal-stance loser goes for the pierce.
 - A held trick countering an unleashed trick is the biggest moment in the game and gets
@@ -723,12 +732,14 @@ separate picks, that makes 14.
 
 The next step is a headless sim of one hand, using the parameters below as config. It
 answers whether numeric hands order correctly, how often skill flips close matchups, and
-whether tricks win often but not always.
+whether a trick above the opponent wins overwhelmingly.
 
 ### Open questions
 
-- Does a hand-to-hand trick win rate land in a healthy band (target: unleashed tricks win
-  about 75 to 90% of the time vs numeric hands)?
+- Do tricks meet their targets? A trick above the opponent, played to its design, wins
+  overwhelmingly (the number is Trey's, not yet set). A higher trick nearly always beats a
+  lower one across rungs. The sim reports how often a held trick is drawn out, and splits
+  trick win rates by whether the trick was played to its design.
 - Should the unhorse be a visible-odds roll at low Posture (the Turbo Jousting teeter)
   instead of a hard 0?
 - Is the 0.4 hold floor collapsing half-holds toward last-instant flicks? A switch onto a
@@ -771,11 +782,13 @@ whether tricks win often but not always.
 | Queen restore (hole / board) | 6 / 3 per pass |
 | King lock penalty (hole / board) | 0.15 / 0.08 s |
 | Ace crit base (hole / board bonus) | 35 / +2 |
-| Straight: output, exposure | ×1.5, 4 directions |
-| Flush: axis stat | ×2 |
+| Trick hit, per rung | Set by the sim: unhorses from full Posture when played to its design |
+| Trick ward, per rung | Set by the sim |
+| Straight meter: base x, and how y maps to hit size | Set by the sim |
+| Straight: exposure when unleashed | Positions 0–6 |
+| Flush: suit stat explosion (full at home, half on the diagonals beside it) | Set by the sim |
 | Full house: Guard coverage | 7 of 8 directions |
-| Quads: per-cardinal output | 50% |
-| Held passive sizes | +3 to +4 |
+| Held passive sizes | +3 to +4 card points (§4); the sim checks them |
 | Raise size (Passes 1–2 / 3–4) | 1 / 2 units |
 | Betting action timer | 5 s |
 
