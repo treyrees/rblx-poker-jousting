@@ -302,7 +302,9 @@ into no stat.
 
 A lean multiplies the card points (*Card values*) of the stats it points at. It amplifies what
 your cards give: a lean into a stat with no points adds nothing, and high cards of a suit reward
-aiming at its home. How much a lean multiplies, and the half-step share, are sim values (§11).
+aiming at its home. ♥ takes its lean at contact: max Posture uses your ♥ points without the
+lean, and a lean into ♥ cuts the Posture damage you take on that hit. How much a lean
+multiplies, how much a leaned ♥ point cuts, and the half-step share are sim values (§11).
 
 **The stat meter.** The rider sees a meter of their four stats with the current lean applied,
 live as they rotate, so they can see which aims their cards back. The meter is the rider's own:
@@ -315,8 +317,8 @@ Color pairing: black suits (♣ ♠) are offense, red suits (♥ ♦) are defens
 
 Every revealed card adds points to its suit's stat. r = rank, 2 = 2 up to A = 14.
 
-- **Rank value:** `1 + (r − 2) / 6` points. 2 = 1, 8 = 2, J = 2.5, A = 3. J, Q, K and A carry
-  it on top of their §5 effect.
+- **Rank value:** `1 + (r − 2) / 6` points. 2 = 1, 8 = 2, J = 2.5, A = 3. J, Q, K and A stay
+  on this curve and carry it on top of their §5 effect.
 - **Hole or board:** your hole cards count in full. Board cards count at the board weight (half
   to start), for both riders.
 - Every revealed card counts, kickers included. Kickers also break exact ties at showdown (§2).
@@ -341,7 +343,8 @@ trips vs high card.
 S_suit = 20 + points_suit
 ```
 
-`points_suit` is the sum of that suit's card points, with the aim lean applied (*Stances*). Base
+`points_suit` is the sum of that suit's card points, with the aim lean applied (*Stances*; ♥
+takes its lean at contact instead). Base
 20 is the "cardless jouster" floor. Each stat turns its value into its effect at its own rate:
 ♣ scales your hits by `S_♣ / 20` (contact resolution, step 3), so each ♣ point is +5% on a hit.
 The ♥ rate (Posture per point), ♦ rate (armor per point) and ♠ rates (piercing and charge) are
@@ -356,7 +359,7 @@ sim values (§11).
    ```
    Out = Base · (S_♣,A / 20) · (0.4 + 0.6·h_A) · Street · Mods
    ```
-   S_♣,A includes A's aim lean (*Stat value*), as does every stat below.
+   S_♣,A includes A's aim lean (*Stat value*), as do ♠ and ♦ below.
 4. ♠ Pierce:
    - On every hit, A's ♠ pierces B's armor.
    - On a Normal or Block, the hit adds to A's charge.
@@ -367,7 +370,7 @@ sim values (§11).
 5. Armor: B's ♦ armor at the sector hit, less A's piercing, is subtracted from the output:
    thick on the Guard (scaled by B's hold multiplier), thin on ordinary positions, a sliver on
    the exposure. A Block that nothing gets through is a clean block: B restores 3 Posture.
-6. The output is Posture damage to B.
+6. B's ♥ lean cut (*Stances*) is subtracted, and the rest is Posture damage to B.
 
 ### Tracks and showdown
 
@@ -754,7 +757,7 @@ whether tricks win often but not always.
 | Card value by rank r | 1 + (r − 2) / 6 points: 2 = 1, 8 = 2, A = 3 |
 | Board card weight | ½ of a hole card; the sim tries lower |
 | Hand multipliers on made cards: pair / two pair / trips | ×2 / ×2 / ×3 |
-| Stat rates per point | ♣ +5% on a hit (S_♣ / 20); ♥ Posture, ♦ armor, ♠ piercing and charge set by the sim |
+| Stat rates per point | ♣ +5% on a hit (S_♣ / 20); ♥ Posture, ♥ lean damage cut, ♦ armor, ♠ piercing and charge set by the sim |
 | Hold multiplier | 0.4 + 0.6 × h |
 | Street multipliers (Passes 1–4) | 0.5 / 0.75 / 1.0 / 1.25 |
 | Clean block restore | 3 Posture |
