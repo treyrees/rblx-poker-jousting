@@ -4,7 +4,7 @@ title: A trick's hit is sized to unhorse from full Posture on any pass
 date: 2026-09-29
 decided-by: trey (chat, §6 review session, 2026-09-29)
 supersedes: []
-superseded-by: null
+superseded-by: 0031
 ---
 
 ## Context

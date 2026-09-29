@@ -54,5 +54,8 @@ Add a row below in the same commit. Check the latest `main` for the next free id
 | [0028](0028-trick-effects-draft.md) | Trick effects are rebuilt on the new dial as a starting draft | 2026-09-29 |
 | [0029](0029-defensive-flushes-close-the-out.md) | The defensive flushes close the out | 2026-09-27 |
 | [0030](0030-armor-sliver-on-exposure.md) | The exposure carries a sliver of armor, so ♠ piercing always has value | 2026-09-29 |
+| [0031](0031-tricks-played-to-design.md) | A trick's hit unhorses when the trick is played to its design | 2026-09-29 |
+| [0032](0032-straight-meter.md) | A straight's hit grows with a meter through its five cards | 2026-09-29 |
+| [0033](0033-straight-flush-inherits-conditions.md) | The straight flush inherits both conditions, sized as strong as it needs | 2026-09-29 |
 
-Next free id: **0031**.
+Next free id: **0034**.
