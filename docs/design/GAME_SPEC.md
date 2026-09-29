@@ -410,7 +410,7 @@ zero. Expect jacks to look like dead cards until the sim has readers.
 ## 6. Tricks
 
 > The §6 review is in progress. The intro through *Trick vs trick* is rewritten (decisions
-> 0018–0030). *Board-made tricks* predates the review: its Score and axis references are
+> 0018–0033). *Board-made tricks* predates the review: its Score and axis references are
 > revisited in its last round. The §11 trick rows (Straight, Flush, Full house, Quads) also
 > predate it and are left as they are until Trey updates them.
 
@@ -467,7 +467,9 @@ are rates for random deals; prefolding in the yard shifts them.
 A starting draft, to be tuned in the sim.
 
 - **The hit.** An unleashed trick's hit is sized to unhorse the opponent from full Posture on
-  any pass, Pass 1 included. Its size is a sim value. Armor is a flat reduction per hit (§4),
+  any pass, Pass 1 included, when the trick is played to its design: a straight held (*The
+  straight's meter*), a flush aimed at its suit's home (*Flush by suit*). Full house and quads
+  are unconditional. Hit sizes are sim values. Armor is a flat reduction per hit (§4),
   so a hit that size gets through any sector, a Block included.
 - **The out.** What a trick changes on the dial sets its out: the narrow way a numeric rider
   can still survive, by unhorsing the trick rider on the same contact while ahead on Posture
@@ -482,17 +484,33 @@ A starting draft, to be tuned in the sim.
 
 | Trick | Held passive | On the dial when unleashed | Out left to a numeric rider |
 | --- | --- | --- | --- |
-| Straight: The Charge | +3 to the top card's suit stat | Your strike can't be Blocked. Your exposure widens by one direction (positions 0–6). | Widest: exposure on 7 of 16 positions |
+| Straight: The Charge | +3 to the top card's suit stat | Your hit grows with the straight's meter (below). Your strike can't be Blocked. Your exposure widens by one direction (positions 0–6). | Widest: exposure on 7 of 16 positions |
 | Flush: Suit Ascendant | +4 to the flush suit's stat | The flush suit's stat explodes (see *Flush by suit*) | ♣ and ♠: normal exposure. ♥ and ♦: none |
 | Full house: Fortress | +4 ♥ and +4 ♦ | Your Guard covers every position but one gap direction, picked secretly at declaration. A hit on the gap is a Crit. | Only a crit through the gap: 1 in 8 at random |
 | Quads: Four Lances | +4 to all four stats | Your strike lands on all four cardinals of their dial. Any five positions of exposure hold a cardinal, so one lance always crits. The lances parry their strike: it deals nothing. | None |
-| Straight flush | Straight + flush passives | The Charge and Suit Ascendant, with no exposure this pass | None |
+| Straight flush | Straight + flush passives | The Charge and Suit Ascendant, with no exposure this pass. It inherits both conditions: its hit grows with the meter and with the lean toward its suit's home, and fully played it is the strongest hit on the ladder. | None |
 | Royal flush | Same as straight flush | Same as straight flush, with its own presentation | None |
+
+### The straight's meter
+
+A straight makes its money by holding still. On the unleash pass, a meter steps through the
+straight's five cards, low to high, as the rider holds one aim: one card per fifth of the
+run-up (hold fraction h ≥ 1/5, 2/5, … 5/5, §3). Changing aim resets it with h.
+
+- The hit grows as x^y, where x is a fixed base and y is the value of the highest card
+  unlocked. Held on a linear timer, each card is worth more than the last, and most of the
+  power arrives toward the end of the hold.
+- A higher straight's cards are higher, so it builds bigger and reaches an unhorsing hit
+  sooner.
+- The meter replaces the hold multiplier (0.4 + 0.6 × h) for the trick's hit. The base x, and
+  how y maps to hit size, are sim values.
 
 ### Flush by suit (what "Suit Ascendant" does per suit)
 
 The suit's stat explodes at full strength when aimed at its compass home (§4 *Stances*) and at
-half on the two diagonals beside it. The suit is announced on declaration (*Unleash rules*).
+half on the two diagonals beside it. Aimed anywhere else, the flush adds nothing beyond its
+base stat; half steps share the tilt as on the compass. The suit is announced on declaration
+(*Unleash rules*).
 
 | Suit | Name | Home | Effect |
 | --- | --- | --- | --- |
