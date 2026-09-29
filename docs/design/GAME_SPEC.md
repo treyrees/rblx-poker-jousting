@@ -49,7 +49,8 @@ Also important: **learnability** (for example, betting is beginner-ignorable, §
 | Numeric Power curve and suit split | §4 | Proposed, needs sim |
 | Contact resolution, Posture and the showdown knockdown | §4 | Proposed, needs sim |
 | Broadway effects | §5 | Proposed, needs sim |
-| Tricks: ladder, ownership, held and unleash rules, effects | §6 | Open |
+| Tricks: ladder, ownership, held and unleash rules, trick vs trick | §6 | Settled in shape |
+| Trick effects on the unleash pass | §6 | Proposed, needs sim |
 | Board-made tricks | §6 | Proposed, needs sim |
 | Information design | §7 | Settled |
 | Pass timeline | §8 | Proposed, needs sim |
@@ -264,12 +265,13 @@ and the other is circumstantial.
   you gain the difference. When a reveal lowers it, your max drops but your current Posture
   isn't taken away.
 - **♦ Armor** is a flat reduction per hit, mapped onto your dial: thick on your Guard, thin on
-  your ordinary positions, none on your exposure. A Block is a hit into thick armor. Guard
-  armor scales with hold. Its value depends on how damage arrives: it erases a grind of
-  small hits and does nothing against the crit that finds your exposure.
+  your ordinary positions, a sliver on your exposure. A Block is a hit into thick armor.
+  Guard armor scales with hold. Its value depends on how damage arrives: it erases a grind
+  of small hits and barely dents the crit that finds your exposure.
 - **♣ Knockoff** is raw damage: it scales your hits linearly.
-- **♠ Pierce** is the crit stat. It pierces armor and pays later, through crits: your
-  non-crit hits build a hidden charge that your next crit spends (contact resolution, step 4).
+- **♠ Pierce** is the crit stat. It pierces armor on every hit and pays later, through
+  crits: your non-crit hits build a hidden charge that your next crit spends (contact
+  resolution, step 4).
 
 ### Stances
 
@@ -342,14 +344,15 @@ Base 20 is the "cardless jouster" floor. Board-only cards contribute to both rid
    ```
    Mods include the aim leans on the stats involved (*Stances*).
 4. ♠ Pierce:
-   - On a Normal or Block, A's ♠ pierces B's armor, and the hit adds to A's charge.
+   - On every hit, A's ♠ pierces B's armor.
+   - On a Normal or Block, the hit adds to A's charge.
    - On a Crit, A's ♠ scales the crit, and the crit spends all of A's charge as a bonus. A
      crossed-lances crit (CC) spends it too.
    - Charge lasts the whole hand, so charge built on cheap early passes pays at later street
      multipliers. The outcomes that build it are public; the amount is hidden.
 5. Armor: B's ♦ armor at the sector hit, less A's piercing, is subtracted from the output:
-   thick on the Guard (scaled by B's hold multiplier), thin on ordinary positions, none on the
-   exposure. A Block that nothing gets through is a clean block: B restores 3 Posture.
+   thick on the Guard (scaled by B's hold multiplier), thin on ordinary positions, a sliver on
+   the exposure. A Block that nothing gets through is a clean block: B restores 3 Posture.
 6. The output is Posture damage to B.
 
 ### Tracks and showdown
@@ -406,16 +409,34 @@ zero. Expect jacks to look like dead cards until the sim has readers.
 
 ## 6. Tricks
 
-> Written before the §3 review. Its references to Score, axis stances and notch counts are
-> revisited in the §6 review (decisions 0012–0015).
+> The §6 review is in progress. The intro through *Trick vs trick* is rewritten (decisions
+> 0018–0030). *Board-made tricks* predates the review: its Score and axis references are
+> revisited in its last round. The §11 trick rows (Straight, Flush, Full house, Quads) also
+> predate it and are left as they are until Trey updates them.
 
 Straight and above are tricks. A trick changes the dial's rules for the one pass it is
-unleashed on. It does not win outright: every trick trades power for some predictability,
-and higher tricks give more power with less counterplay, never zero.
+unleashed on. Tricks are trump cards: an unleashed trick above the opponent on the trick
+ladder is built to unhorse them on that pass, so it wins the hand. The win always comes
+through the joust; no rule declares it.
 
-Frequency: a player finishes with a straight or better in about 10.5% of 7-card hands
-(straight 4.6%, flush 3.0%, full house 2.6%, quads 0.17%, straight flush 0.03%). About 1 in
-5 hands that reach the river have a trick on at least one side.
+Frequency, from a deal sim: a rider owns a trick (see *Ownership*) by the river in about 10%
+of hands (straight 4.4%, flush 2.9%, full house 2.5%, quads 0.15%, straight flush 0.02%). Of
+those tricks, about 63% first appear on the river, 29% on the turn and 8% on the flop. About
+18% of hands have an owned trick on at least one side, and about 2% on both; three quarters
+of those are the same category. The board alone makes a trick in about 0.8% of hands. These
+are rates for random deals; prefolding in the yard shifts them.
+
+### The trick ladder
+
+- The rungs are the trick categories, low to high: straight, flush, full house, quads,
+  straight flush. The royal flush is the top straight flush, with its own presentation. Every
+  numeric hand is below the ladder.
+- Your rung is the category of the trick you own with the cards revealed so far, held or
+  unleashed. A rider on a higher rung is above the opponent. Riders on the same rung are
+  level, whatever their ranks within it.
+- Unleashing above the opponent ends the hand on that pass, before they can draw level or
+  above, for the pot bet so far. Holding builds the pot and hides the trick, at the risk of
+  the opponent drawing level or above, and of being worn down while riding as the sub-hand.
 
 ### Ownership
 
@@ -428,44 +449,70 @@ Frequency: a player finishes with a straight or better in about 10.5% of 7-card 
 - Rides as its best non-trick sub-hand for stats (a full house rides as trips, a straight with
   no pair rides as high card).
 - Adds a small held passive, sized to look like a good numeric hand.
-- Posture cannot drop below 1 while holding a trick. This makes slow-playing safe from being
-  unhorsed, at the cost of a tell: a weak-looking rider who won't fall. Tunable; remove if
-  slow-play is too safe.
+- No Posture floor: a rider holding a trick can be unhorsed like any other.
+- Answers an unleash from its own rung or below (see *Trick vs trick*).
 
 ### Unleash rules
 
 - Declared during the decision window after a card reveal (or any time in the Pass 4 run-
   up). Once per hand.
-- Hidden until contact, except the flush, which reveals its suit on declaration.
+- Declaring announces the trick's rung to both riders ("Straight unleashed"). A flush also
+  shows its suit. The trick's cards stay hidden until contact. A held trick that answers
+  is not announced; it shows at contact.
 - Any trick not unleashed by Pass 4 fires automatically on Pass 4.
 - Unleashing reveals the trick in the post-pass reveal.
 
 ### Trick effects on the unleash pass
 
-| Trick | Held passive | Wheel effect when unleashed | Counterplay (the read) |
+A starting draft, to be tuned in the sim.
+
+- **The hit.** An unleashed trick's hit is sized to unhorse the opponent from full Posture on
+  any pass, Pass 1 included. Its size is a sim value. Armor is a flat reduction per hit (§4),
+  so a hit that size gets through any sector, a Block included.
+- **The out.** What a trick changes on the dial sets its out: the narrow way a numeric rider
+  can still survive, by unhorsing the trick rider on the same contact while ahead on Posture
+  before the pass (§2, win condition 2). The out narrows as the ladder climbs.
+- **The ward.** Unleashing or answering also wards the rider: armor that counts against trick
+  hits only, never numeric ones. Trick hits grow explosively up the ladder. Each rung's ward
+  stops the hits of every rung below it, but not its own rung's or higher. So across rungs a
+  higher trick's hit breaks the lower ward, and a lower trick's hit can't get through the
+  higher one. The straight, the bottom rung, needs none. Ward sizes are sim values.
+- **The joust decides.** No rule declares a winner. A trick above the opponent wins
+  overwhelmingly because the numbers make it so.
+
+| Trick | Held passive | On the dial when unleashed | Out left to a numeric rider |
 | --- | --- | --- | --- |
-| Straight: The Charge | +3 to the top card's suit stat | Your strike ignores Guard (a Guard hit resolves as Normal) and output ×1.5. Your exposure widens to 4 notches this pass. | Punish the wider exposure and win the damage trade |
-| Flush: Suit Ascendant | +4 to the flush suit's stat | The flush suit's stat ×2 on its axis. Suit is revealed on declaration. Diagonals get half the bonus. | Opponent knows which axis you want and can Guard it. Holder can hedge on a diagonal at partial power. |
-| Full house: Fortress | +4 Sturdiness and +4 Armor | Your Guard covers 7 of 8 notches. You secretly pick the one gap at declaration. A hit on the gap is a Crit. | Find the gap: 1 in 8, narrowed by tells and aim |
-| Quads: Four Lances | +4 to all four stats | Your strike resolves on all 4 cardinals of the opponent's dial, each at 50% output | The Guard blocks at most one cardinal; aim so it blocks the best one |
-| Straight flush | Straight + flush passives | The Charge plus Suit Ascendant, including the suit reveal | Trade race on Posture only |
-| Royal flush | Same as straight flush | Same as straight flush, with its own presentation | Same |
+| Straight: The Charge | +3 to the top card's suit stat | Your strike can't be Blocked. Your exposure widens by one direction (positions 0–6). | Widest: exposure on 7 of 16 positions |
+| Flush: Suit Ascendant | +4 to the flush suit's stat | The flush suit's stat explodes (see *Flush by suit*) | ♣ and ♠: normal exposure. ♥ and ♦: none |
+| Full house: Fortress | +4 ♥ and +4 ♦ | Your Guard covers every position but one gap direction, picked secretly at declaration. A hit on the gap is a Crit. | Only a crit through the gap: 1 in 8 at random |
+| Quads: Four Lances | +4 to all four stats | Your strike lands on all four cardinals of their dial. Any five positions of exposure hold a cardinal, so one lance always crits. The lances parry their strike: it deals nothing. | None |
+| Straight flush | Straight + flush passives | The Charge and Suit Ascendant, with no exposure this pass | None |
+| Royal flush | Same as straight flush | Same as straight flush, with its own presentation | None |
 
 ### Flush by suit (what "Suit Ascendant" does per suit)
 
-| Suit | Name | Effect |
-| --- | --- | --- |
-| ♣ | Shattering Blow | Knockoff ×2 on vertical aim: big Posture damage |
-| ♠ | Needle | Pierce ×2 on horizontal aim: big Score |
-| ♥ | Unbroken | Sturdiness ×2; your Guard widens to 3 notches on vertical aim, and clean blocks restore 10 |
-| ♦ | Gilded Ward | Armor ×2; your Guard widens to 3 notches on horizontal aim, and blocks reflect 50% of the blocked output back as Score for you |
+The suit's stat explodes at full strength when aimed at its compass home (§4 *Stances*) and at
+half on the two diagonals beside it. The suit is announced on declaration (*Unleash rules*).
+
+| Suit | Name | Home | Effect |
+| --- | --- | --- | --- |
+| ♣ | Shattering Blow | Up | Your hit's raw damage lands in full, even into a Block |
+| ♠ | Needle | Out | Every hit you land is a Crit that pierces all armor, and it spends your charge |
+| ♥ | Unbroken | Down | You can't be unhorsed this pass |
+| ♦ | Gilded Ward | In | Your armor covers your whole dial, exposure included, and what it stops reflects back at the striker |
 
 ### Trick vs trick
 
-- Both unleashed effects apply at once and the dial resolves them. No special rules.
-- Poker rank only breaks exact ties in the outcome (for example an exact tie at showdown).
-- Identical tricks from hole cards (both hold a 9 for the same straight) clash: both effects
-  cancel for that pass and it resolves as numeric.
+- A held trick answers an unleash from its own rung or below: it fires automatically on the
+  same pass, however late the unleash is declared. The answer is its unleash for the hand. A
+  held trick below the unleash doesn't answer; it rides as its sub-hand.
+- Level tricks clash. Two tricks on the same rung, both unleashed or one answering the other,
+  cancel for that pass, and it resolves as numeric. Both are spent. The edge between level
+  tricks comes from poker and play: who reached the rung first and unleashed while above,
+  the stronger hand at the showdown knockdown (§4), and the dial on the numeric passes.
+- Tricks on different rungs both apply, and the dial resolves them. Each trick is designed
+  to beat the tricks below it on the dial. Where two tricks' rules contradict outright, the
+  higher trick's rule wins that contradiction; everything else still applies.
 
 ### Board-made tricks (arena effects, both riders, all passes after the reveal)
 
@@ -507,7 +554,6 @@ Design rule: each tell must have at least two plausible causes.
 | Stance (aim lean) | Aim position | Which stats the rider's cards load | Could be a bluff stance or a pure sector read |
 | Hold meter | Hold fraction | Confidence in the current aim | Late switches cost power but are legal |
 | Lance/shield color | Hole card colors | Offense vs defense lean | Axis hidden; jack randomizes |
-| Refusing to fall | Posture at 1 | Holding a trick | Could be queen heals or strong ♥ loading |
 | Clean blocks | Block outcome | Thick Guard armor (♦) | Could be hold, not cards |
 | First exit from Neutral | Timing | Eagerness or confidence | Could be habit |
 
@@ -559,7 +605,7 @@ cards get their own arena state for the rest of the hand.
   horizontal-stance loser goes for the pierce.
 - A held trick countering an unleashed trick is the biggest moment in the game and gets
   the largest presentation budget.
-- Clash beat for identical tricks: both lances shatter.
+- Clash beat for level tricks: both lances shatter.
 - Trick resolutions run 3 to 5 s maximum. After first viewing, tap to speed up.
 
 ## 9. Reference: what we take from rblx-joust-tourney
@@ -648,7 +694,6 @@ whether tricks win often but not always.
 
 - Does a hand-to-hand trick win rate land in a healthy band (target: unleashed tricks win
   about 75 to 90% of the time vs numeric hands)?
-- Is the held-trick Posture floor too safe for slow-playing?
 - Should the unhorse be a visible-odds roll at low Posture (the Turbo Jousting teeter)
   instead of a hard 0?
 - Is the 0.4 hold floor collapsing half-holds toward last-instant flicks? A switch onto a
@@ -681,7 +726,7 @@ whether tricks win often but not always.
 | Aim lock before contact | 0.3 s |
 | Pass length | 8 s |
 | Standard dial layout (half steps from aim) | Exposure 0–4, ordinary 5–7, Guard 8, ordinary 9, Guard 10–12, ordinary 13–15 |
-| ♦ armor: Guard / ordinary / exposure | Thick / thin / none; values set by the sim |
+| ♦ armor: Guard / ordinary / exposure | Thick / thin / sliver; values set by the sim |
 | ♠ charge per non-crit hit, and piercing | Set by the sim |
 | Aim lean: buff size, and the half-step share | Set by the sim |
 | Showdown: hand strength weight against Posture | Set by the sim |
