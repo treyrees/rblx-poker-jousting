@@ -48,5 +48,11 @@ Add a row below in the same commit. Check the latest `main` for the next free id
 | [0022](0022-held-posture-floor-removed.md) | The held-trick Posture floor is removed | 2026-09-27 |
 | [0023](0023-unleash-announced.md) | Declaring an unleash announces its rung | 2026-09-27 |
 | [0024](0024-held-and-unleash-rules-kept.md) | Ownership, riding as the sub-hand, passives, once per hand and auto-fire are kept | 2026-09-27 |
+| [0025](0025-victory-through-the-joust.md) | Victory always comes through the joust; no rule declares it | 2026-09-27 |
+| [0026](0026-trick-hit-sized-to-unhorse.md) | A trick's hit is sized to unhorse from full Posture on any pass | 2026-09-29 |
+| [0027](0027-trick-ward.md) | A ward lets a higher trick beat a lower one through the numbers | 2026-09-29 |
+| [0028](0028-trick-effects-draft.md) | Trick effects are rebuilt on the new dial as a starting draft | 2026-09-29 |
+| [0029](0029-defensive-flushes-close-the-out.md) | The defensive flushes close the out | 2026-09-27 |
+| [0030](0030-armor-sliver-on-exposure.md) | The exposure carries a sliver of armor, so ♠ piercing always has value | 2026-09-29 |
 
-Next free id: **0025**.
+Next free id: **0031**.
