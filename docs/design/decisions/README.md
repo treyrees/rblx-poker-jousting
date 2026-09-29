@@ -57,5 +57,9 @@ Add a row below in the same commit. Check the latest `main` for the next free id
 | [0031](0031-tricks-played-to-design.md) | A trick's hit unhorses when the trick is played to its design | 2026-09-29 |
 | [0032](0032-straight-meter.md) | A straight's hit grows with a meter through its five cards | 2026-09-29 |
 | [0033](0033-straight-flush-inherits-conditions.md) | The straight flush inherits both conditions, sized as strong as it needs | 2026-09-29 |
+| [0034](0034-card-values.md) | Every revealed card adds its rank value to its suit's stat; board cards count for less | 2026-09-29 |
+| [0035](0035-hands-multiply-card-values.md) | Poker hands multiply the points of the cards that make them | 2026-09-29 |
+| [0036](0036-broadway-rank-value-on-top.md) | Broadway cards carry their rank value on top of their effects | 2026-09-29 |
+| [0037](0037-lean-multiplies-card-points.md) | Aim lean multiplies what your cards give a stat; a stat meter shows it as you rotate | 2026-09-29 |
 
-Next free id: **0034**.
+Next free id: **0038**.

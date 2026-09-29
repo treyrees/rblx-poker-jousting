@@ -44,9 +44,10 @@ Also important: **learnability** (for example, betting is beginner-ignorable, §
 | Betting | §2 | Settled |
 | Standard dial: layout, outcome table, sectors, Neutral, held aim, aim lock | §3 | Settled for v1, numbers tunable |
 | Suits as stats; all four act, aim leans into the stats it points at | §4 | Settled |
-| Aim lean: the stat compass | §4 | Settled for v1, numbers tunable |
+| Aim lean: the stat compass; a lean multiplies card points | §4 | Settled for v1, numbers tunable |
+| Stat meter: your own stats, live as you rotate | §4 | Settled in shape |
 | The four stats: what they are and what they do | §4 | Settled in shape |
-| Numeric Power curve and suit split | §4 | Proposed, needs sim |
+| Card values, board weight and hand multipliers | §4 | Proposed, needs sim |
 | Contact resolution, Posture and the showdown knockdown | §4 | Proposed, needs sim |
 | Broadway effects | §5 | Proposed, needs sim |
 | Tricks: ladder, ownership, held and unleash rules, trick vs trick | §6 | Settled in shape |
@@ -297,41 +298,54 @@ and so do the red suits, so a diagonal can lean all offense or all defense.
 A cardinal leans into one stat and a diagonal into two. The total lean is the same at every
 aim, so a diagonal shares it evenly between its two stats: being on a diagonal is never worth
 more in itself. A half step shares it too, mostly toward the nearer cardinal. Neutral leans
-into no stat. How much a lean buffs, and the half-step share, are sim values (§11).
+into no stat.
+
+A lean multiplies the card points (*Card values*) of the stats it points at. It amplifies what
+your cards give: a lean into a stat with no points adds nothing, and high cards of a suit reward
+aiming at its home. How much a lean multiplies, and the half-step share, are sim values (§11).
+
+**The stat meter.** The rider sees a meter of their four stats with the current lean applied,
+live as they rotate, so they can see which aims their cards back. The meter is the rider's own:
+whether your cards back your aim's lean is hidden (§3), so the opponent and spectators never
+see it (§7).
 
 Color pairing: black suits (♣ ♠) are offense, red suits (♥ ♦) are defense.
 
-### Power by hand category (numeric hands)
+### Card values
 
-Only the cards that make the hand contribute ("made cards"). Kickers only break showdown
-ties. r = rank, 2 = 2 up to A = 14.
+Every revealed card adds points to its suit's stat. r = rank, 2 = 2 up to A = 14.
 
-| Category | Power P | Range | Made cards |
-| --- | --- | --- | --- |
-| High card | 4 × (r_top − 7) / 7 | 0 to 4 | Top card |
-| Pair | 8 + 0.5 × (r − 2) | 8 to 14 | 2 |
-| Two pair | 16 + 0.5 × (r_high − 3) + 0.05 × r_low | 16 to 22 | 4 |
-| Trips | 24 + 0.67 × (r − 2) | 24 to 32 | 3 |
+- **Rank value:** `1 + (r − 2) / 6` points. 2 = 1, 8 = 2, J = 2.5, A = 3. J, Q, K and A carry
+  it on top of their §5 effect.
+- **Hole or board:** your hole cards count in full. Board cards count at the board weight (half
+  to start), for both riders.
+- Every revealed card counts, kickers included. Kickers also break exact ties at showdown (§2).
 
-The curve is compressed on purpose: category gaps guarantee ordering, but the whole
-numeric range is worth about ×1.0 to ×1.45 on a hit. A clean read (normal vs crit, or block vs
-hit) swings more than trips vs high card.
+In your hole cards, 8♣ is 2 points of ♣ (+10% on your hits) and J♦ is 2.5 points of ♦ armor.
+On the board, each is worth half that to both riders.
 
-### Suit split
+### Poker hands multiply
 
-- Each suit absent from the made cards gets 15% of P.
-- The remainder, 1 − 0.15 × (number of absent suits), is divided among present suits by
-  card count.
-- Examples: a pair (2 suits) splits 35 / 35 / 15 / 15. Two pair across 4 suits splits 25 each.
-  Trips (3 suits) is about 28.3 each plus 15 for the missing suit.
+The cards that make a pair, two pair or trips multiply their points: pair ×2, two pair ×2,
+trips ×3. Each card keeps its own hole or board weight, so a board pair is multiplied for both
+riders at board weight. A held trick rides as its sub-hand (§6).
+
+The curve is compressed on purpose: the gap between the two riders' numeric hands is worth
+about ×1.0 to ×1.45 on a hit. The board raises both riders alike, so the gap comes from hole
+cards and hand multipliers. A clean read (normal vs crit, or block vs hit) swings more than
+trips vs high card.
 
 ### Stat value
 
 ```
-S_suit = 20 + P · share_suit
+S_suit = 20 + points_suit
 ```
 
-Base 20 is the "cardless jouster" floor. Board-only cards contribute to both riders equally.
+`points_suit` is the sum of that suit's card points, with the aim lean applied (*Stances*). Base
+20 is the "cardless jouster" floor. Each stat turns its value into its effect at its own rate:
+♣ scales your hits by `S_♣ / 20` (contact resolution, step 3), so each ♣ point is +5% on a hit.
+The ♥ rate (Posture per point), ♦ rate (armor per point) and ♠ rates (piercing and charge) are
+sim values (§11).
 
 ### Contact resolution (A strikes B; both directions resolve simultaneously)
 
@@ -342,7 +356,7 @@ Base 20 is the "cardless jouster" floor. Board-only cards contribute to both rid
    ```
    Out = Base · (S_♣,A / 20) · (0.4 + 0.6·h_A) · Street · Mods
    ```
-   Mods include the aim leans on the stats involved (*Stances*).
+   S_♣,A includes A's aim lean (*Stat value*), as does every stat below.
 4. ♠ Pierce:
    - On every hit, A's ♠ pierces B's armor.
    - On a Normal or Block, the hit adds to A's charge.
@@ -737,7 +751,10 @@ whether tricks win often but not always.
 | Posture start | 100 |
 | Base: Weak / Normal / Crit | 4 / 10 / 30 |
 | Stat base (cardless floor) | 20 |
-| Absent-suit share floor | 15% |
+| Card value by rank r | 1 + (r − 2) / 6 points: 2 = 1, 8 = 2, A = 3 |
+| Board card weight | ½ of a hole card; the sim tries lower |
+| Hand multipliers on made cards: pair / two pair / trips | ×2 / ×2 / ×3 |
+| Stat rates per point | ♣ +5% on a hit (S_♣ / 20); ♥ Posture, ♦ armor, ♠ piercing and charge set by the sim |
 | Hold multiplier | 0.4 + 0.6 × h |
 | Street multipliers (Passes 1–4) | 0.5 / 0.75 / 1.0 / 1.25 |
 | Clean block restore | 3 Posture |
@@ -746,7 +763,7 @@ whether tricks win often but not always.
 | Standard dial layout (half steps from aim) | Exposure 0–4, ordinary 5–7, Guard 8, ordinary 9, Guard 10–12, ordinary 13–15 |
 | ♦ armor: Guard / ordinary / exposure | Thick / thin / sliver; values set by the sim |
 | ♠ charge per non-crit hit, and piercing | Set by the sim |
-| Aim lean: buff size, and the half-step share | Set by the sim |
+| Aim lean: multiplier on card points, and the half-step share | Set by the sim |
 | Showdown: hand strength weight against Posture | Set by the sim |
 | Queen restore (hole / board) | 6 / 3 per pass |
 | King lock penalty (hole / board) | 0.15 / 0.08 s |
