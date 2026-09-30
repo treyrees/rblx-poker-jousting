@@ -426,9 +426,6 @@ zero. Expect jacks to look like dead cards until the sim has readers.
 
 ## 6. Tricks
 
-> The §6 review is closing (decisions 0018–0033, 0040–0047). One item is open: whether a held
-> straight's passive grows with hold.
-
 Straight and above are tricks. A trick changes the dial's rules for the one pass it is
 unleashed on. Tricks are trump cards: an unleashed trick above the opponent on the trick
 ladder is built to unhorse them on that pass, so it wins the hand. The win always comes
@@ -507,7 +504,7 @@ A starting draft, to be tuned in the sim.
 
 | Trick | Held passive | On the dial when unleashed | Out left to a numeric rider |
 | --- | --- | --- | --- |
-| Straight: The Charge | +3 to the top card's suit stat | Your hit grows with the straight's meter (below). | Widest: normal exposure, and the rider can't move without resetting the meter |
+| Straight: The Charge | +3 to the top card's suit stat, growing with hold: 0 at the start of each pass, the full +3 at full hold | Your hit grows with the straight's meter (below). | Widest: normal exposure, and the rider can't move without resetting the meter |
 | Flush: Suit Ascendant | +4 to the flush suit's stat | The flush suit's stat explodes (see *Flush by suit*) | ♣ and ♠: normal exposure. ♥ and ♦: none |
 | Full house: Fortress | +4 ♥ and +4 ♦ | Your Guard covers every position but one gap direction, picked secretly at declaration. A hit on the gap is a Crit. | Only a crit through the gap: 1 in 8 at random |
 | Quads: Four Lances | +4 to all four stats | Your strike lands on all four cardinals of their dial. Any five positions of exposure hold a cardinal, so one lance always crits. The lances parry their strike: it deals nothing. | None |
@@ -789,7 +786,7 @@ whether a trick above the opponent wins overwhelmingly.
 | Straight meter: base x, and how y maps to hit size | Set by the sim |
 | Flush: suit stat explosion (full at home, half on the diagonals beside it) | Set by the sim |
 | Full house: Guard coverage | 7 of 8 directions |
-| Held passive sizes | +3 to +4 card points (§4); the sim checks them |
+| Held passive sizes | +3 to +4 card points (§4); the sim checks them. The straight's grows with hold; its curve is set by the sim |
 | Raise size (Passes 1–2 / 3–4) | 1 / 2 units |
 | Betting action timer | 5 s |
 

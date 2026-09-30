@@ -71,5 +71,6 @@ Add a row below in the same commit. Check the latest `main` for the next free id
 | [0045](0045-gilded-mirror.md) | The ♦ flush is renamed Gilded Mirror | 2026-09-29 |
 | [0046](0046-charge-clauses-dropped.md) | The Charge drops "can't be Blocked" and its widened exposure; the meter is its cost | 2026-09-30 |
 | [0047](0047-straight-draws-hold.md) | The spec says outright that a straight draw pays for holding from the start of the charge | 2026-09-30 |
+| [0048](0048-held-straight-passive-grows-with-hold.md) | A held straight's passive grows with hold on each pass | 2026-09-30 |
 
-Next free id: **0048**.
+Next free id: **0049**.
