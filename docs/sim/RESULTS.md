@@ -207,7 +207,8 @@ Nothing here is applied. Decisions 1 (the showdown, the pass order and the last-
 
 1. **The skill flip after 0052.** A skilled rider now beats a novice 57% of the time while holding
    the worse category (67% before). That still meets pillar 2, with less margin. The showdown bonus
-   now moves it further: 70% at 10 per step, 45% at 30.
+   now moves it further: 70% at 10 per step, 45% at 30. The whole showdown problem, and the
+   options beyond the bonus's size, are in [SHOWDOWN.md](SHOWDOWN.md).
 2. **The straight's meter: decide how much holding should matter.**
    - At x = 1.3, an unheld straight wins about as often as a held one (93.2% vs 92.2%).
    - With the river on the final pass, straights that complete there rarely reach a full meter,

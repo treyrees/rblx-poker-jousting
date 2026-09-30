@@ -5,6 +5,7 @@
 --   lune run tools/sim.luau --report sweeps          -- one row per sweep point (docs/sim/RESULTS.md)
 --   lune run tools/sim.luau --report gap             -- numeric hit gap by category (§4)
 --   lune run tools/sim.luau --report final           -- last-pass bonus sweep (0051)
+--   lune run tools/sim.luau --report showdown        -- how the forced knockdown is decided (0050)
 --   lune run tools/sim.luau --set sim.lean=2 --set spec.showdownBonus=10
 --   lune run tools/sim.luau --smoke                  -- 5k hands: checks it runs; rates not citable
 --
@@ -127,6 +128,21 @@ local function run(cfg: any, prof1: any, prof2: any, n: number, s: number): Tall
 		-- Showdown: how often the knockdown goes to the rider ahead on Posture, and to the better hand.
 		if r.finish == "showdown" then
 			local p1, p2 = r.posture[1], r.posture[2]
+			-- How close the riders are when the knockdown is forced (--report showdown).
+			inc(t, "sd.postureSum", p1 + p2)
+			inc(t, "sd.lowerPosture", math.min(p1, p2))
+			local pg = math.abs(p1 - p2)
+			inc(t, "sd.pgap." .. (if pg < 10 then "0" elseif pg < 20 then "10" elseif pg < 40 then "20" else "40"))
+			inc(t, "sd.cgap." .. math.min(3, math.abs(r.category[1] - r.category[2])))
+			if p1 ~= p2 and r.category[1] ~= r.category[2] then
+				local leader = if p1 > p2 then 1 else 2
+				if (r.category[1] > r.category[2]) ~= (leader == 1) then
+					inc(t, "sd.leaderWorse")
+					if r.winner ~= leader then
+						inc(t, "sd.leaderWorse.cardsWin")
+					end
+				end
+			end
 			if p1 ~= p2 then
 				inc(t, "sd.postureDiff")
 				if r.winner == (if p1 > p2 then 1 else 2) then
@@ -397,6 +413,25 @@ elseif report == "final" then
 			pct(t["ko.pass4"], t.hands), pct(t["finish.showdown"], t.hands),
 			pct(t["final.close.held"], t["final.close"]), pct(t["final.clear.held"], t["final.clear"]),
 			pct(t["gap1.better"], t.gap1), pct(m["p1worse.win"], m.p1worse)))
+	end
+elseif report == "showdown" then
+	-- §4 *Tracks and showdown* (0050): how close the riders are when the knockdown is forced, and
+	-- how much of the result the hand bonus decides. Bonus 0 is a reference point, not a proposal.
+	print("mirror = average vs average; flip = skilled wins a numeric hand with the worse category vs novice")
+	for _, b in { "0", "10", "20", "30" } do
+		local cfg = baseConfig()
+		Config.set(cfg, "spec.showdownBonus", b)
+		local t = run(cfg, cfg.riders.average, cfg.riders.average, hands, seed)
+		local m = run(cfg, cfg.riders.skilled, cfg.riders.novice, hands, seed + 1)
+		local sd = t["finish.showdown"] or 0
+		print(string.format("bonus %s: showdown %s of hands | Posture there: mean %.0f, lower rider %.0f", b,
+			pct(sd, t.hands), (t["sd.postureSum"] or 0) / math.max(1, sd) / 2, (t["sd.lowerPosture"] or 0) / math.max(1, sd)))
+		print(string.format("  Posture gap <10 %s  10-20 %s  20-40 %s  40+ %s | category gap 0 %s  1 %s  2 %s  3+ %s",
+			pct(t["sd.pgap.0"], sd), pct(t["sd.pgap.10"], sd), pct(t["sd.pgap.20"], sd), pct(t["sd.pgap.40"], sd),
+			pct(t["sd.cgap.0"], sd), pct(t["sd.cgap.1"], sd), pct(t["sd.cgap.2"], sd), pct(t["sd.cgap.3"], sd)))
+		print(string.format("  Posture leader wins %s | leader holds the worse hand in %s of showdowns; cards win %s of those | gap1 better wins %s | flip %s",
+			pct(t["sd.postureLeaderWins"], t["sd.postureDiff"]), pct(t["sd.leaderWorse"], sd),
+			pct(t["sd.leaderWorse.cardsWin"], t["sd.leaderWorse"]), pct(t["gap1.better"], t.gap1), pct(m["p1worse.win"], m.p1worse)))
 	end
 elseif report == "gap" then
 	-- §4: the gap between two riders' numeric hands on a hit, from random river deals.
