@@ -23,9 +23,16 @@ local function play(cfg: any, seed: number, n: number): { Hand.Record }
 	return out
 end
 
+-- The prototypes were built against the river rule before 0053: a rider at 0 falls on Pass 4's contact.
+local function protoDefaults(): any
+	local cfg = Config.defaults()
+	Config.set(cfg, "switches.riverRule", "unhorse")
+	return cfg
+end
+
 kit.describe("Showdown prototypes (switches.showdown)", function()
-	kit.it("the default reading is 0050: Posture + 20 per step decides, kickers break an exact tie", function()
-		local cfg = Config.defaults()
+	kit.it("bonus is 0050: Posture + 20 per step decides, kickers break an exact tie", function()
+		local cfg = protoDefaults()
 		kit.expectEqual(cfg.switches.showdown, "bonus")
 		for _, r in play(cfg, 11, 400) do
 			if r.finish == "showdown" then
@@ -39,14 +46,17 @@ kit.describe("Showdown prototypes (switches.showdown)", function()
 				else
 					kit.expectEqual(r.winner, 0)
 				end
-				-- afterFinal is the Posture the rule saw.
-				kit.expectDeepEqual(r.afterFinal, r.posture)
+				-- afterFinal is the Posture the rule saw, unless Twin Favor or Unbroken lifted a rider
+				-- off 0 after the exchange (then it isn't recorded).
+				if r.afterFinal then
+					kit.expectDeepEqual(r.afterFinal, r.posture)
+				end
 			end
 		end
 	end)
 	kit.it("every reading runs, and only the charge rides a fifth pass", function()
 		for _, mode in { "bonus", "mult", "riverHit", "charge" } do
-			local cfg = Config.defaults()
+			local cfg = protoDefaults()
 			Config.set(cfg, "switches.showdown", mode)
 			local five = 0
 			for _, r in play(cfg, 3, 300) do
@@ -63,7 +73,7 @@ kit.describe("Showdown prototypes (switches.showdown)", function()
 		end
 	end)
 	kit.it("mult: Posture × (1 + mult × steps) decides", function()
-		local cfg = Config.defaults()
+		local cfg = protoDefaults()
 		Config.set(cfg, "switches.showdown", "mult")
 		for _, r in play(cfg, 5, 400) do
 			if r.finish == "showdown" then
@@ -76,7 +86,7 @@ kit.describe("Showdown prototypes (switches.showdown)", function()
 		end
 	end)
 	kit.it("riverHit: the hand's blows land on Pass 4, then Posture alone decides", function()
-		local cfg = Config.defaults()
+		local cfg = protoDefaults()
 		Config.set(cfg, "switches.showdown", "riverHit")
 		local blown = 0
 		for _, r in play(cfg, 8, 600) do
@@ -97,7 +107,7 @@ kit.describe("Showdown prototypes (switches.showdown)", function()
 		kit.expectTrue(blown > 0, "no hand blow ever landed")
 	end)
 	kit.it("riverHit: with no blow per step it is Posture alone, so the Posture leader always wins", function()
-		local cfg = Config.defaults()
+		local cfg = protoDefaults()
 		Config.set(cfg, "switches.showdown", "riverHit")
 		Config.set(cfg, "proto.riverPerStep", "0")
 		for _, r in play(cfg, 8, 300) do
@@ -107,7 +117,7 @@ kit.describe("Showdown prototypes (switches.showdown)", function()
 		end
 	end)
 	kit.it("charge: the bonus lands before the charge, a fifth contact is ridden, and the lower rider falls", function()
-		local cfg = Config.defaults()
+		local cfg = protoDefaults()
 		Config.set(cfg, "switches.showdown", "charge")
 		local charged, koInCharge = 0, 0
 		for _, r in play(cfg, 9, 600) do
@@ -126,7 +136,7 @@ kit.describe("Showdown prototypes (switches.showdown)", function()
 		kit.expectTrue(charged > 0 and koInCharge > 0)
 	end)
 	kit.it("charge with no bonus: nothing is added before the charge", function()
-		local cfg = Config.defaults()
+		local cfg = protoDefaults()
 		Config.set(cfg, "switches.showdown", "charge")
 		Config.set(cfg, "proto.chargeBonus", "none")
 		for _, r in play(cfg, 9, 300) do
@@ -140,47 +150,39 @@ kit.describe("Showdown prototypes (switches.showdown)", function()
 	end)
 end)
 
-kit.describe("Pass 4 always goes to the knockdown (switches.riverRule = knockdown)", function()
-	kit.it("is off by default until GAME_SPEC says it", function()
+kit.describe("Pass 4 always goes to the knockdown (0053)", function()
+	kit.it("is the default", function()
 		local cfg = Config.defaults()
-		kit.expectEqual(cfg.switches.riverRule, "unhorse")
+		kit.expectEqual(cfg.switches.riverRule, "knockdown")
 		kit.expectEqual(cfg.proto.turnCushion, 0)
 	end)
 	kit.it("unhorses no one on Pass 4; Posture, even below 0, plus the bonus decides", function()
-		for _, floor in { "below", "zero" } do
-			local cfg = Config.defaults()
-			Config.set(cfg, "switches.riverRule", "knockdown")
-			Config.set(cfg, "switches.riverFloor", floor)
-			local lanced, saved = 0, 0
-			for _, r in play(cfg, 5, 600) do
-				kit.expectTrue(not (r.finish == "unhorse" and r.pass == 4), "an unhorse on Pass 4")
-				if r.finish == "showdown" then
-					local s = {}
-					for i = 1, 2 do
-						local p = if floor == "zero" then math.max(0, r.posture[i]) else r.posture[i]
-						s[i] = p + cfg.spec.showdownBonus * r.category[i]
-					end
-					if s[1] ~= s[2] then
-						kit.expectEqual(r.winner, if s[1] > s[2] then 1 else 2)
-					end
-					for i = 1, 2 do
-						if r.lanced[i] then
-							lanced += 1
-							if r.winner == i then
-								saved += 1
-							end
+		local cfg = Config.defaults()
+		local lanced, saved = 0, 0
+		for _, r in play(cfg, 5, 600) do
+			kit.expectTrue(not (r.finish == "unhorse" and r.pass == 4), "an unhorse on Pass 4")
+			if r.finish == "showdown" then
+				local s1 = r.posture[1] + cfg.spec.showdownBonus * r.category[1]
+				local s2 = r.posture[2] + cfg.spec.showdownBonus * r.category[2]
+				if s1 ~= s2 then
+					kit.expectEqual(r.winner, if s1 > s2 then 1 else 2)
+				end
+				for i = 1, 2 do
+					if r.lanced[i] then
+						lanced += 1
+						if r.winner == i then
+							saved += 1
 						end
 					end
 				end
 			end
-			kit.expectTrue(lanced > 0, "no rider was lanced to 0 on Pass 4")
-			kit.expectTrue(saved > 0, "the bonus never saved a lanced rider")
 		end
+		kit.expectTrue(lanced > 0, "no rider was lanced to 0 on Pass 4")
+		kit.expectTrue(saved > 0, "the bonus never saved a lanced rider")
 	end)
 	kit.it("the turn cushion keeps riders in on Pass 3", function()
 		local function turnKOs(cushion: string): number
 			local cfg = Config.defaults()
-			Config.set(cfg, "spec.postureStart", "70")
 			Config.set(cfg, "proto.turnCushion", cushion)
 			local n = 0
 			for _, r in play(cfg, 9, 600) do

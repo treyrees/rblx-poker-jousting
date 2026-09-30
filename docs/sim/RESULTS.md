@@ -7,6 +7,10 @@ Sep 30, 2026. GAME_SPEC through decision 0052:
 - Pass 4 carries a ×1.3 last-pass bonus;
 - the hold multiplier is 0.25 + 0.75 × h (0052; it was 0.4 + 0.6 × h).
 
+**Stale since 0053–0054** (the river always goes to the knockdown; Posture 80; street
+multipliers 1.0 / 1.0 / 1.0 / 1.25; no last-pass bonus). The numbers below are from before them
+and need a rerun. The headline numbers at the new defaults are in 0054.
+
 Runs use seed 20260930 and 100k hands per run; a sweep row is 200k hands (a mirror run plus a
 skilled-vs-novice run). The sim is `tools/sim.luau` over `sim/`, and every value it uses is in
 `sim/Config.luau`. [SANITY_CHECK.md](SANITY_CHECK.md) says which values are §11's, which the sim

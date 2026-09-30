@@ -71,8 +71,8 @@ export type Record = {
 	afterFinal: { number }?, -- Posture after Pass 4's dial exchange, before the hand's showdown effect
 	-- (bonus, mult, the hand's blows, the charge), when neither rider fell to the exchange itself
 	chargeStanding: number?, -- switches.showdown = charge: the rider ahead before the charge (0: level)
-	posture: { number }, -- Posture after the last contact (under riverRule = knockdown, may be 0 or below)
-	lanced: { boolean }, -- riverRule = knockdown: taken to 0 or below on Pass 4's contact
+	posture: { number }, -- Posture after the last contact (at the showdown, may be 0 or below: 0053)
+	lanced: { boolean }, -- taken to 0 or below on Pass 4's contact (0053)
 	reads: number, -- reads taken
 	switches: number, -- reads that moved the aim (a late switch rather than staying on a held aim)
 }
@@ -330,7 +330,7 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 		end
 		local newBoard = revealed(pass)
 		local hasReveal = SHOWN[pass] > SHOWN[pass - 1]
-		local street = if charge then proto.chargeStreet else spec.street[pass] * (if pass == 4 then spec.finalPassBonus else 1)
+		local street = if charge then proto.chargeStreet else spec.street[pass]
 
 		-- Start of pass: queen restores (Passes 2–4; §5), capped at max Posture.
 		if pass >= 2 and not charge then
@@ -660,7 +660,7 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 			return -proto.turnCushion * spec.showdownBonus * r.status.eval.category
 		end
 		local down1, down2 = riders[1].posture <= floorOf(riders[1]), riders[2].posture <= floorOf(riders[2])
-		-- riverRule = knockdown: Pass 4's contact unhorses no one; the knockdown after it decides.
+		-- Pass 4's contact unhorses no one; the knockdown after it decides (0053).
 		if pass == 4 and cfg.switches.riverRule == "knockdown" then
 			rec.lanced = { down1, down2 }
 			break
@@ -688,9 +688,9 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 		rec.drawnOut[i] = r.drawnOut
 		rec.heldAbove[i] = r.heldAbove
 	end
-	-- Showdown knockdown (§2 win condition 3, §4 *Tracks*, 0050): each rider's hand bonus is added
-	-- to their Posture and the lower rider falls; an exact tie goes to the poker hands (§2 win
-	-- condition 4), then a split.
+	-- Showdown knockdown (§2 win condition 3, §4 *Tracks*, 0050, 0053): after Pass 4's contact each
+	-- rider's hand bonus is added to their Posture, even Posture the lance took below 0, and the
+	-- lower rider falls; an exact tie goes to the poker hands (§2 win condition 4), then a split.
 	-- The prototypes (switches.showdown, SHOWDOWN.md) change what is compared: mult multiplies
 	-- Posture by the steps; riverHit and charge have already dealt the hand's blows (or the bonus)
 	-- and compare Posture alone, unless riverKnockdown = bonus.
@@ -698,15 +698,7 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 		local s = {}
 		for i, r in riders do
 			local c = e[i].category
-			local p = r.posture
-			local floor = cfg.switches.riverFloor
-			if floor == "zero" or (floor == "before" and p < 0) then
-				p = math.max(0, p)
-			end
-			-- before: both lanced on Pass 4, so Posture before the pass stands in (win condition 2's reading).
-			if floor == "before" and rec.lanced[1] and rec.lanced[2] and rec.beforeFinal then
-				p = rec.beforeFinal[i]
-			end
+			local p = r.posture -- below 0 counts (0053)
 			if mode == "bonus" or (mode == "riverHit" and proto.riverKnockdown == "bonus") then
 				s[i] = p + handBonus(c)
 			elseif mode == "mult" then

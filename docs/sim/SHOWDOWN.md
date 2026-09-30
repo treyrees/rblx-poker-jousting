@@ -5,6 +5,13 @@ solution families, prototypes the strongest ones in the sim and recommends one. 
 applied**, and none of it changes GAME_SPEC. The prototypes live behind `switches.showdown` in
 `sim/Config.luau`, off by default; the current rules stay the default.
 
+**Update, later the same day: Trey decided.** [0053](../design/decisions/0053-the-river-always-goes-to-the-knockdown.md)
+(the river always goes to the knockdown; Posture below 0 counts) and
+[0054](../design/decisions/0054-hand-shape-and-damage-retune.md) (Posture 80, street multipliers
+1.0 / 1.0 / 1.0 / 1.25, no last-pass bonus) are now GAME_SPEC and the sim's defaults. The tables in
+this brief were run before them, and `--report proto` now pins the pre-0053 river rule for its
+rows. How Trey got there is in *Trey's answers in a second chat*.
+
 Numbers come from `tools/sim.luau`, 100k hands per run, seed 20260930: `--report showdown` for the
 current rule and `--report proto` for the prototypes. "Flip" is how often a skilled rider beats a
 novice in a numeric hand while holding the worse category (pillar 2). "Gap 1" is how often the

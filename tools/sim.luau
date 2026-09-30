@@ -4,7 +4,6 @@
 --   lune run tools/sim.luau                          -- baseline report, 100k hands per run
 --   lune run tools/sim.luau --report sweeps          -- one row per sweep point (docs/sim/RESULTS.md)
 --   lune run tools/sim.luau --report gap             -- numeric hit gap by category (§4)
---   lune run tools/sim.luau --report final           -- last-pass bonus sweep (0051)
 --   lune run tools/sim.luau --report showdown        -- how the forced knockdown is decided (0050)
 --   lune run tools/sim.luau --report proto           -- the showdown prototypes (docs/sim/SHOWDOWN.md)
 --   lune run tools/sim.luau --set sim.lean=2 --set spec.showdownBonus=10
@@ -402,7 +401,6 @@ local SWEEPS: { { any } } = {
 	{ "trick hits and wards ×0.5", { { "sim.straightK", "50" }, { "sim.hit.flush", "300" }, { "sim.hit.fullHouse", "6500" }, { "sim.hit.quads", "10000" }, { "sim.hit.straightFlush", "30000" }, { "sim.ward.flush", "3250" }, { "sim.ward.fullHouse", "4500" }, { "sim.ward.quads", "11000" }, { "sim.ward.straightFlush", "16500" } } },
 	{ "spec.showdownBonus=10 (0050: 20)", { { "spec.showdownBonus", "10" } } },
 	{ "spec.showdownBonus=30", { { "spec.showdownBonus", "30" } } },
-	{ "spec.finalPassBonus=1.0 (0051: 1.3)", { { "spec.finalPassBonus", "1.0" } } },
 	{ "switches.slowmo=game", { { "switches.slowmo", "game" } } },
 	{ "switches.slowmo=excluded", { { "switches.slowmo", "excluded" } } },
 	{ "switches.statBasis=points", { { "switches.statBasis", "points" } } },
@@ -475,20 +473,6 @@ elseif report == "floor" then
 		print(string.format("holdFloor %s: holder wins %s vs flicker | steady wins %s vs fidget | mirror reads that switch %s",
 			f, pct(t["win.1"], t.hands), pct(u["win.1"], u.hands), pct(m.switches, m.reads)))
 	end
-elseif report == "final" then
-	-- The last-pass bonus (0051, spec.finalPassBonus): real knockoffs vs comebacks.
-	print("last-pass bonus × Pass 4 damage | mirror = average vs average; flip = skilled wins with the worse category vs novice")
-	print("bonus | KO on P4 | forced fall | leader into P4 holds on: lead <20 / lead 20+ | gap1 better wins | flip")
-	for _, b in { "1.0", "1.1", "1.2", "1.3", "1.5", "2.0" } do
-		local cfg = baseConfig()
-		Config.set(cfg, "spec.finalPassBonus", b)
-		local t = run(cfg, cfg.riders.average, cfg.riders.average, hands, seed)
-		local m = run(cfg, cfg.riders.skilled, cfg.riders.novice, hands, seed + 1)
-		print(string.format("%s   | %s   | %s      | %s / %s                     | %s          | %s", b,
-			pct(t["ko.pass4"], t.hands), pct(t["finish.showdown"], t.hands),
-			pct(t["final.close.held"], t["final.close"]), pct(t["final.clear.held"], t["final.clear"]),
-			pct(t["gap1.better"], t.gap1), pct(m["p1worse.win"], m.p1worse)))
-	end
 elseif report == "showdown" then
 	-- §4 *Tracks and showdown* (0050): how close the riders are when the knockdown is forced, and
 	-- how much of the result the hand bonus decides. Bonus 0 is a reference point, not a proposal.
@@ -518,8 +502,8 @@ elseif report == "proto" then
 	local PROTO: { { any } } = {
 		{ "bonus 20 (0050)", {} },
 		{ "bonus 20, Posture start 70", { { "spec.postureStart", "70" } } },
-		{ "bonus 20, last-pass bonus 2.0", { { "spec.finalPassBonus", "2.0" } } },
-		{ "bonus 10, last-pass bonus 2.0", { { "spec.showdownBonus", "10" }, { "spec.finalPassBonus", "2.0" } } },
+		{ "bonus 20, Pass 4 ×2.5", { { "spec.street.4", "2.5" } } },
+		{ "bonus 10, Pass 4 ×2.5", { { "spec.showdownBonus", "10" }, { "spec.street.4", "2.5" } } },
 		{ "mult 0.2", { { "switches.showdown", "mult" } } },
 		{ "mult 0.35", { { "switches.showdown", "mult" }, { "proto.mult", "0.35" } } },
 		{ "mult 0.5", { { "switches.showdown", "mult" }, { "proto.mult", "0.5" } } },
@@ -552,7 +536,9 @@ elseif report == "proto" then
 	print(string.format("%d hands per run; mirror = average vs average; flip = skilled (seat 1) wins with the worse category vs novice", hands))
 	print("config                                   | sd %  | KO P2  P3   P4   P5  | gap1  gap2  gap3 | flip  | above/design above/off | over  | proj close clear | charge KO flip | passes")
 	for _, sw in selectRows(PROTO) do
-		local cfg = sweepConfig(sw[2])
+		-- The prototypes were built against the river rule before 0053 (a rider at 0 falls on
+		-- Pass 4's contact), so every row pins it. Everything else is the current defaults.
+		local cfg = sweepConfig({ { "switches.riverRule", "unhorse" }, table.unpack(sw[2]) })
 		local t = run(cfg, cfg.riders.average, cfg.riders.average, hands, seed)
 		local m = run(cfg, cfg.riders.skilled, cfg.riders.novice, hands, seed + 1)
 		local n = t.hands

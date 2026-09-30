@@ -3,6 +3,10 @@
 Sep 30, 2026. Checked against `main` at 08e3ff3 (GAME_SPEC through decision 0048), then brought
 up to date with Trey's calls 0049–0052: the river flips on the final pass, the showdown adds a
 hand bonus to Posture, Pass 4 carries a ×1.3 last-pass bonus (PR #10), and the hold floor is 0.25.
+Then 0053–0054: Pass 4 always goes to the knockdown, Posture starts at 80, the street multipliers
+are 1.0 / 1.0 / 1.0 / 1.25, and the last-pass bonus is gone. The trick-sizing derivation below
+still uses the old multipliers (Pass 2 ×0.75, Pass 4 ×1.625); the new ones loosen both binding
+cases, and `tests/Tricks.spec.luau` checks the targets at the current values.
 
 This report proposes; it decides nothing. Every value below marked **sim config** lives in the
 sim's config file and nowhere else. It is never written into GAME_SPEC. Every open question stays
@@ -202,9 +206,9 @@ cardless rider's piercing (1).
 
 | Check | Spec | With armor and piercing |
 | --- | --- | --- |
-| Pass 1 Normal, high card, half hold | 3.1 | 3.1 |
+| Pass 1 Normal, high card, half hold | 6.3 | 6.3 |
 | Pass 3 Crit, trips-loaded ♣, full hold | 43 | 43.5 |
-| Pass 4 Crit, the same, with the last-pass bonus | 71 | 70.7 |
+| Pass 4 Crit, the same | 54 | 54.4 |
 
 At the starting rates, a cardless rider's piercing cancels the thin and sliver armor. They hold, but
 only with the lean off; see (c6). The sim's tests pin them at λ = 0.

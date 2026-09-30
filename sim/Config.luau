@@ -17,7 +17,7 @@ function Config.defaults()
 	return {
 		-- ── SPEC: GAME_SPEC §11 tuning parameters (v1 values) ─────────────────────────────────
 		spec = {
-			postureStart = 100,
+			postureStart = 80, -- 0054
 			base = { weak = 4, normal = 10, crit = 30 },
 			statBase = 20, -- cardless floor, S_suit = 20 + points
 			rankBase = 1, -- card value 1 + (r − 2) / 6
@@ -26,8 +26,7 @@ function Config.defaults()
 			handMult = { pair = 2, twoPair = 2, trips = 3 },
 			clubRate = 1 / 20, -- ♣ scales hits by S♣ / 20
 			holdFloor = 0.25, -- hold multiplier 0.25 + 0.75·h (0052; the slope is 1 − floor)
-			street = { 0.5, 0.75, 1.0, 1.25 },
-			finalPassBonus = 1.3, -- last-pass bonus on Pass 4, on top of its street multiplier (0051)
+			street = { 1.0, 1.0, 1.0, 1.25 }, -- 0054; 0051's last-pass bonus is removed
 			showdownBonus = 20, -- showdown: Posture per step of hand category (0050)
 			cleanBlockRestore = 3,
 			aimLock = 0.3,
@@ -111,11 +110,10 @@ function Config.defaults()
 			--             lower rider on Posture alone falls
 			--   charge    cards up and one more contact (the final charge); proto.charge* set it
 			showdown = "bonus", -- bonus | mult | riverHit | charge
-			-- Pass 4's contact (Trey, chat, 2026-09-30; GAME_SPEC not yet updated). "unhorse" is GAME_SPEC:
-			-- a rider at 0 falls on contact and the bonus never lands. "knockdown": no one is unhorsed on
-			-- Pass 4's contact; the hand's showdown effect always lands, then the lower rider falls.
-			riverRule = "unhorse", -- unhorse | knockdown
-			riverFloor = "below", -- knockdown: below | zero | before — under 0 counts, counts as 0, or (both lanced) Posture before Pass 4 (gap)
+			-- Pass 4's contact (0053): "knockdown" is GAME_SPEC. No one is unhorsed on Pass 4's contact; the
+			-- hand's showdown effect lands on Posture, even below 0, and the lower rider falls. "unhorse" is
+			-- the rule before 0053 (a rider at 0 falls on contact), kept for the SHOWDOWN.md prototypes.
+			riverRule = "knockdown", -- knockdown | unhorse
 		},
 
 		-- ── PROTO: values the showdown prototypes use (SHOWDOWN.md). None is a §11 value. ─────
