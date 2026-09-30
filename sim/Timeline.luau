@@ -7,7 +7,7 @@
 --   wall      every wall-clock second counts the same (run-up 7.7 s)
 --   game      slow motion counts at its game speed, 0.4× (run-up 6.8 s)
 --   excluded  slow motion doesn't count (run-up 6.2 s)
--- Pass 4 has no reveal and so no slow motion (§8); every reading agrees there.
+-- Pass 1 has no reveal and so no slow motion (§8); every reading agrees there.
 
 local Timeline = {}
 

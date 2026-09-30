@@ -34,20 +34,8 @@ kit.describe("Hand", function()
 			kit.expectEqual(x.pass, y.pass)
 		end
 	end)
-	kit.it("both pass orders play whole hands (proposed.passOrder)", function()
-		for _, order in { "spec", "riverLast" } do
-			local c = Config.defaults()
-			Config.set(c, "proposed.passOrder", order)
-			local rng = rngFrom(11)
-			for i = 1, 300 do
-				local r = Hand.play(c, rng, c.riders.average, c.riders.average, (i % 2) + 1)
-				kit.expectTrue(r.winner == 0 or r.winner == 1 or r.winner == 2)
-			end
-		end
-	end)
-	kit.it("river last: no knockoff on Pass 1 can come from a trick (no community cards yet)", function()
+	kit.it("Pass 1 rides on hole cards: no trick can fire before the flop on Pass 2 (0049)", function()
 		local c = Config.defaults()
-		Config.set(c, "proposed.passOrder", "riverLast")
 		local rng = rngFrom(5)
 		for _ = 1, 2000 do
 			local r = Hand.play(c, rng, c.riders.average, c.riders.average, 1)
@@ -58,7 +46,6 @@ kit.describe("Hand", function()
 	end)
 	kit.it("every switch reading runs", function()
 		for key, values in {
-			showdown = { "category", "points", "lexicographic" },
 			slowmo = { "wall", "game", "excluded" },
 			statBasis = { "value", "points" },
 			flushHit = { "F1", "F2" },

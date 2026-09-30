@@ -4,8 +4,8 @@
 --   lune run tools/sim.luau                          -- baseline report, 100k hands per run
 --   lune run tools/sim.luau --report sweeps          -- one row per sweep point (docs/sim/RESULTS.md)
 --   lune run tools/sim.luau --report gap             -- numeric hit gap by category (§4)
---   lune run tools/sim.luau --report final           -- proposed last-pass damage bonus sweep
---   lune run tools/sim.luau --set sim.lean=2 --set switches.showdown=points
+--   lune run tools/sim.luau --report final           -- last-pass bonus sweep (0051)
+--   lune run tools/sim.luau --set sim.lean=2 --set spec.showdownBonus=10
 --   lune run tools/sim.luau --smoke                  -- 5k hands: checks it runs; rates not citable
 --
 -- Options: --hands N, --seed S, --shard i/n (sweeps: run every n-th row, for parallel runs), --set path=value (repeatable; paths as in sim/Config.luau),
@@ -321,11 +321,10 @@ local SWEEPS: { { any } } = {
 	{ "sim.chargeRate=6", { { "sim.chargeRate", "6" } } },
 	{ "sim.straightX=1.15", { { "sim.straightX", "1.15" }, { "sim.straightK", "180" } } },
 	{ "sim.straightX=2 (wards not rescaled)", { { "sim.straightX", "2" }, { "sim.straightK", "12" } } },
-	{ "trick hits and wards ×0.5", { { "sim.straightK", "50" }, { "sim.hit.flush", "300" }, { "sim.hit.fullHouse", "6500" }, { "sim.hit.quads", "10000" }, { "sim.hit.straightFlush", "30000" }, { "sim.ward.flush", "3000" }, { "sim.ward.fullHouse", "4500" }, { "sim.ward.quads", "10000" }, { "sim.ward.straightFlush", "15000" } } },
-	{ "switches.showdown=points", { { "switches.showdown", "points" } } },
-	{ "switches.showdown=lexicographic", { { "switches.showdown", "lexicographic" } } },
-	{ "sim.showdownCategoryWeight=5", { { "sim.showdownCategoryWeight", "5" } } },
-	{ "sim.showdownCategoryWeight=40", { { "sim.showdownCategoryWeight", "40" } } },
+	{ "trick hits and wards ×0.5", { { "sim.straightK", "50" }, { "sim.hit.flush", "300" }, { "sim.hit.fullHouse", "6500" }, { "sim.hit.quads", "10000" }, { "sim.hit.straightFlush", "30000" }, { "sim.ward.flush", "3250" }, { "sim.ward.fullHouse", "4500" }, { "sim.ward.quads", "11000" }, { "sim.ward.straightFlush", "16500" } } },
+	{ "spec.showdownBonus=10 (0050: 20)", { { "spec.showdownBonus", "10" } } },
+	{ "spec.showdownBonus=30", { { "spec.showdownBonus", "30" } } },
+	{ "spec.finalPassBonus=1.0 (0051: 1.3)", { { "spec.finalPassBonus", "1.0" } } },
 	{ "switches.slowmo=game", { { "switches.slowmo", "game" } } },
 	{ "switches.slowmo=excluded", { { "switches.slowmo", "excluded" } } },
 	{ "switches.statBasis=points", { { "switches.statBasis", "points" } } },
@@ -334,8 +333,6 @@ local SWEEPS: { { any } } = {
 	{ "switches.twinFavorVsTrick=trickOverrides", { { "switches.twinFavorVsTrick", "trickOverrides" } } },
 	{ "switches.aaEdge=both", { { "switches.aaEdge", "both" } } },
 	{ "switches.aaEdge=direction", { { "switches.aaEdge", "direction" } } },
-	{ "proposed.passOrder=riverLast", { { "proposed.passOrder", "riverLast" } } },
-	{ "riverLast + finalPassBonus=1.3", { { "proposed.passOrder", "riverLast" }, { "proposed.finalPassBonus", "1.3" } } },
 }
 
 local function sweepConfig(extra: { any }): any
@@ -387,12 +384,12 @@ elseif report == "floor" then
 			f, pct(t["win.1"], t.hands), pct(u["win.1"], u.hands), pct(m.switches, m.reads)))
 	end
 elseif report == "final" then
-	-- Proposed last-pass damage bonus (sim/Config.luau `proposed`): real knockoffs vs comebacks.
-	print("final pass bonus × Pass 4 damage | mirror = average vs average; flip = skilled wins with the worse category vs novice")
+	-- The last-pass bonus (0051, spec.finalPassBonus): real knockoffs vs comebacks.
+	print("last-pass bonus × Pass 4 damage | mirror = average vs average; flip = skilled wins with the worse category vs novice")
 	print("bonus | KO on P4 | forced fall | leader into P4 holds on: lead <20 / lead 20+ | gap1 better wins | flip")
 	for _, b in { "1.0", "1.1", "1.2", "1.3", "1.5", "2.0" } do
 		local cfg = baseConfig()
-		Config.set(cfg, "proposed.finalPassBonus", b)
+		Config.set(cfg, "spec.finalPassBonus", b)
 		local t = run(cfg, cfg.riders.average, cfg.riders.average, hands, seed)
 		local m = run(cfg, cfg.riders.skilled, cfg.riders.novice, hands, seed + 1)
 		print(string.format("%s   | %s   | %s      | %s / %s                     | %s          | %s", b,

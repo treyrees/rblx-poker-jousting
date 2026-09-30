@@ -38,9 +38,10 @@ kit.describe("Contact: §4 sanity checks (lean off, no armor, no piercing)", fun
 		kit.expectEqual(s.tier, "crit")
 		kit.expectNear(s.dmg, 43.5)
 	end)
-	kit.it("Pass 4 Crit with the same: about 54", function()
-		local s = Contact.strike(fighter({ aim = 1, S = { 29, 20, 20, 20 } }), fighter({ aim = 0 }), arena(1.25), cfg)
-		kit.expectNear(s.dmg, 54.375)
+	kit.it("Pass 4 Crit with the same, with the last-pass bonus: about 71", function()
+		local street = cfg.spec.street[4] * cfg.spec.finalPassBonus
+		local s = Contact.strike(fighter({ aim = 1, S = { 29, 20, 20, 20 } }), fighter({ aim = 0 }), arena(street), cfg)
+		kit.expectNear(s.dmg, 30 * 1.45 * 1.25 * 1.3)
 	end)
 end)
 

@@ -98,24 +98,28 @@ kit.describe("Tricks: the §6 targets hold at the starting values", function()
 	local maxHit = { Tricks.straightHit(14, 5, cfg), sim.hit.flush, sim.hit.fullHouse, sim.hit.quads, sim.hit.straightFlush }
 	local minHit = { Tricks.straightHit(5, 5, cfg), sim.hit.flush, sim.hit.fullHouse, sim.hit.quads, sim.hit.straightFlush }
 	local ward = { sim.ward.straight, sim.ward.flush, sim.ward.fullHouse, sim.ward.quads, sim.ward.straightFlush }
+	-- The earliest pass a trick can fire on is Pass 2, the flop (0049); the hardest is Pass 4 with
+	-- the last-pass bonus (0051).
+	local early = cfg.spec.street[2]
+	local late = cfg.spec.street[4] * cfg.spec.finalPassBonus
 
-	kit.it("every trick played to design unhorses a numeric rider from full Posture on Pass 1", function()
+	kit.it("every trick played to design unhorses a numeric rider from full Posture on Pass 2", function()
 		for r = 1, 5 do
-			kit.expectTrue(minHit[r] * 0.5 >= Pnum, Tricks.KEY[r])
+			kit.expectTrue(minHit[r] * early >= Pnum, Tricks.KEY[r])
 		end
 	end)
-	kit.it("each rung's ward stops every lower rung's hit, even at Pass 4", function()
+	kit.it("each rung's ward stops every lower rung's hit, even on Pass 4 with the last-pass bonus", function()
 		for r = 2, 5 do
 			for q = 1, r - 1 do
-				kit.expectTrue(ward[r] >= maxHit[q] * 1.25, Tricks.KEY[r] .. " ward vs " .. Tricks.KEY[q])
+				kit.expectTrue(ward[r] >= maxHit[q] * late, Tricks.KEY[r] .. " ward vs " .. Tricks.KEY[q])
 			end
 		end
 	end)
-	kit.it("each rung's hit breaks every lower ward and still unhorses, even on Pass 1", function()
+	kit.it("each rung's hit breaks every lower ward and still unhorses, even on Pass 2", function()
 		for r = 2, 5 do
 			for q = 1, r - 1 do
 				local P = if q == 2 then Pmirror else Pnum
-				kit.expectTrue(minHit[r] * 0.5 - ward[q] >= P, Tricks.KEY[r] .. " vs " .. Tricks.KEY[q])
+				kit.expectTrue(minHit[r] * early - ward[q] >= P, Tricks.KEY[r] .. " vs " .. Tricks.KEY[q])
 			end
 		end
 	end)

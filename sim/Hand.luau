@@ -230,12 +230,9 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 		switches = 0,
 	}
 
-	-- Community cards known once this pass's reveal has landed (proposed.passOrder).
-	local riverLast = cfg.proposed.passOrder == "riverLast"
-	if not riverLast and cfg.proposed.passOrder ~= "spec" then
-		error("unknown passOrder " .. tostring(cfg.proposed.passOrder))
-	end
-	local SHOWN = if riverLast then { [0] = 0, 0, 3, 4, 5 } else { [0] = 0, 3, 4, 5, 5 }
+	-- Community cards known once each pass's reveal has landed (§2 *Sequence*): Pass 1 rides on
+	-- hole cards, and the flop, turn and river flip mid-charge on Passes 2–4.
+	local SHOWN = { [0] = 0, 0, 3, 4, 5 }
 	local function revealed(pass: number): { number }
 		return table.move(board, 1, SHOWN[pass], 1, {})
 	end
@@ -291,7 +288,7 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 		end
 		local newBoard = revealed(pass)
 		local hasReveal = SHOWN[pass] > SHOWN[pass - 1]
-		local street = spec.street[pass] * (if pass == 4 then cfg.proposed.finalPassBonus else 1)
+		local street = spec.street[pass] * (if pass == 4 then spec.finalPassBonus else 1)
 
 		-- Start of pass: queen restores (Passes 2–4; §5), capped at max Posture.
 		if pass >= 2 then
@@ -612,7 +609,7 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 		end
 	end
 
-	-- Showdown knockdown (§2 win condition 3, §4 *Tracks*): an open question, three readings.
+	-- The river hands, for the record and the showdown.
 	local e = {}
 	for i, r in riders do
 		r.status = Tricks.status(r.hole, board)
@@ -624,29 +621,19 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 		rec.drawnOut[i] = r.drawnOut
 		rec.heldAbove[i] = r.heldAbove
 	end
+	-- Showdown knockdown (§2 win condition 3, §4 *Tracks*, 0050): each rider's hand bonus is added
+	-- to their Posture and the lower rider falls; an exact tie goes to the poker hands (§2 win
+	-- condition 4), then a split.
 	if rec.finish == "showdown" then
-		local mode = cfg.switches.showdown
 		local s = {}
 		for i, r in riders do
-			if mode == "category" then
-				s[i] = r.posture + sim.showdownCategoryWeight * e[i].category
-			elseif mode == "points" then
-				local pts = Cards.points(r.hole, board, spec)
-				s[i] = r.posture + sim.showdownPointsWeight * (pts[1] + pts[2] + pts[3] + pts[4])
-			elseif mode == "lexicographic" then
-				s[i] = r.posture
-			else
-				error("unknown showdown reading " .. mode)
-			end
+			s[i] = r.posture + spec.showdownBonus * e[i].category
 		end
 		local w = 0
-		if mode == "lexicographic" and e[1].value ~= e[2].value then
-			local better = if e[1].value > e[2].value then 1 else 2
-			w = if s[better] + sim.showdownLexMargin >= s[3 - better] then better else 3 - better
-		elseif s[1] ~= s[2] then
+		if s[1] ~= s[2] then
 			w = if s[1] > s[2] then 1 else 2
 		elseif e[1].value ~= e[2].value then
-			w = if e[1].value > e[2].value then 1 else 2 -- §2 win condition 4
+			w = if e[1].value > e[2].value then 1 else 2
 		end
 		finish(w, "showdown", 4)
 	end

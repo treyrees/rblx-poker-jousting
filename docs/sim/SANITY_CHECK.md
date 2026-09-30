@@ -1,17 +1,19 @@
 # Sanity check: is the GAME_SPEC draft simulatable?
 
-Sep 30, 2026. Checked against `main` at 08e3ff3 (GAME_SPEC through decision 0048).
+Sep 30, 2026. Checked against `main` at 08e3ff3 (GAME_SPEC through decision 0048), then brought
+up to date with Trey's calls 0049–0051 (PR #10): the river flips on the final pass, the showdown
+adds a hand bonus to Posture, and Pass 4 carries a ×1.3 last-pass bonus.
 
 This report proposes; it decides nothing. Every value below marked **sim config** lives in the
 sim's config file and nowhere else. It is never written into GAME_SPEC. Every open question stays
 open: the sim models each one as a switch over two or three readings and reports how much the
 answer moves the results.
 
-**Verdict: simulatable as config.** The core loop (numeric hands on the dial) needs only
-sim-set values, plus two §11 open questions modelled as switches (the showdown knockdown, and
-how slow motion counts toward hold). Three gaps in §6 need a switch too: the flush's hit, the
-top card of the straight's meter, and the Block base. None of them blocks the sim. Phase 2
-proceeds. The questions for Trey are at the end.
+**Verdict: simulatable as config.** The core loop (numeric hands on the dial) needs only sim-set
+values, plus one §11 open question modelled as a switch: how slow motion counts toward hold. The
+other one it met, the showdown knockdown, is now answered (0050). Three gaps in §6 need a switch
+too: the flush's hit, the top card of the straight's meter, and the Block base. None of them blocks
+the sim. Phase 2 proceeds. The questions for Trey are at the end.
 
 ## 1. Walking one hand
 
@@ -34,7 +36,7 @@ undefined is tagged:
 | ♠, armor, ♥ cut | §4 steps 4–6 | **(a)** Charge per non-crit hit; how ♠ scales a crit; piercing; the thick, thin and sliver armor values; the ♥ lean cut per point. |
 | Broadway | §5 | Fully specified except: **(a)** the timing of QQ's "restore 10 per pass", which the sim reads as the start of Passes 2–4, like Q. **C1** and **C2** are below. The K lock (0.15 s, 0.08 s and 0.3 s) has no timing model in an abstract sim. **(a)** It is read as "the K holder's opponent can't answer their last move", so the K holder wins a both-riders-read tie. |
 | Tricks | §6 | Ladder, ownership, unleash, answer, clash, cross-rung and board-made rules are all specified. **(a)** The trick hit and ward per rung, the straight meter's x and y mapping, and the flush explosion (§11 lists all of them as set by the sim). **(c3)** The flush's hit (below). **(c4)** The straight meter's fifth card (below). **(a)** The Fortress gap is one direction, which is 2 of 16 positions ("1 in 8 at random"). |
-| Showdown | §2 win condition 3, §4 *Tracks* | **(b)** How hand strength converts, and its weight against Posture. |
+| Showdown | §2 win condition 3, §4 *Tracks* | Answered by 0050: 20 Posture per hand-category step is added, and the lower rider falls. |
 
 ### (a) Set by the sim: starting values and sweeps
 
@@ -64,7 +66,6 @@ All of these are **sim config**, in `sim/Config.luau` under `SIM_SET`.
 
 | Question (§11) | Switch | Readings |
 | --- | --- | --- |
-| Showdown knockdown: how hand strength converts, and its weight against Posture | `showdown` | `category`: Posture + w × hand category index (0 to 8), w = 15. `points`: Posture + w × total unleaned card points, w = 3. `lexicographic`: the better poker hand wins unless it trails on Posture by more than T = 30. A tie on the chosen score goes to §2 win condition 4. |
 | How slow-motion time counts toward h | `slowmo` | `wall`: every wall-clock second counts; the run-up is 7.7 s. `game`: slow motion counts at 0.4×; the run-up is 6.8 s. `excluded`: 3.0–4.5 s doesn't count; the run-up is 6.2 s. |
 | Is the 0.4 hold floor collapsing half-holds? | `holdFloor` | 0.2, 0.4 (§11 value), 0.6. It is a sweep, not a switch: 0.4 is the §11 value, and the sweep is what §3 asks for. |
 
@@ -149,37 +150,38 @@ On a ♣-only stance (Up), the 90th-percentile gap across all deals is ×1.21 at
   of pair-vs-high-card deals (0035 already notes this).
 - A board weight of ¼ changes the medians by at most 0.06.
 
-### A trick's hit unhorses from full Posture on Pass 1 when played to design
+### A trick's hit unhorses from full Posture on the earliest pass when played to design
 
 - Let **P\*** be the most one hit must clear: max Posture, plus Guard armor at full hold, plus
   the ♥ cut.
 - At the starting values, P\* is about 170 (Posture 148, armor 13, cut 8). This takes a
   generous bound of 16 ♥ points, the full house passive included.
-- The hit is street-scaled, so a Pass 1 unhorse needs `0.5 × hit ≥ P*`: a hit of 340 or more.
-  This is feasible at any value; it's just a big number.
+- No trick exists before the flop, which lands on Pass 2 (0049). The hit is street-scaled, so a
+  Pass 2 unhorse needs `0.75 × hit ≥ P*`: a hit of about 225 or more. This is feasible at any
+  value; it's just a big number.
 
 ### Each rung's ward stops every lower rung's hit
 
 Wards are flat and hits are street-scaled. So the binding cases are:
 
-- a ward against the lower hit at Pass 4 (×1.25);
-- the higher hit against the lower ward at Pass 1 (×0.5).
+- a ward against the lower hit on Pass 4, at ×1.625 (street ×1.25 with the ×1.3 last-pass bonus);
+- the higher hit against the lower ward on Pass 2, at ×0.75.
 
 The minimal chain, with H for a rung's hit and W for its ward:
 
-- Straight: `k·x^5 × 0.5 ≥ P*` (the wheel, at full meter).
-- Flush: `W_F ≥ 1.25 · k·x^14` (it must stop the ace-high straight at full meter, per 0032), and
-  `H_F ≥ 2P*`.
-- Full house: `H_FH ≥ 2(P* + W_F)`, and `W_FH ≥ 1.25 · max(H_F, H_S)`.
-- Quads: `H_Q ≥ 2(P* + W_FH)`, and `W_Q ≥ 1.25 · H_FH`.
-- Straight flush: `H_SF ≥ 2(P* + W_Q)` (it beats the quads ward, per 0033).
+- Straight: `k·x^5 × 0.75 ≥ P*` (the wheel, at full meter).
+- Flush: `W_F ≥ 1.625 · k·x^14` (it must stop the ace-high straight at full meter, per 0032), and
+  `H_F ≥ P*/0.75`.
+- Full house: `H_FH ≥ (P* + W_F)/0.75`, and `W_FH ≥ 1.625 · max(H_F, H_S)`.
+- Quads: `H_Q ≥ (P* + W_FH)/0.75`, and `W_Q ≥ 1.625 · H_FH`.
+- Straight flush: `H_SF ≥ (P* + W_Q)/0.75` (it beats the quads ward, per 0033).
 
 | x | Wheel full | A-high full | x^4 (first card to fifth) | W_F | H_FH | H_Q | H_SF |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1.3 | 338 | 3.6k | ×2.9 | 4.5k | 9.3k | 9.3k | 24k |
-| 2.0 | 338 | 173k | ×16 | 216k | 433k | 433k | 1.1M |
+| 1.3 | 225 | 2.4k | ×2.9 | 3.9k | 5.4k | 5.4k | 12k |
+| 2.0 | 225 | 115k | ×16 | 187k | 250k | 250k | 542k |
 
-- **Every trick target can hold at once.** Each rung needs about ×2.5 over the one below; that
+- **Every trick target can hold at once.** Each rung needs about ×2.2 over the one below; that
   is the explosive growth §6 asks for.
 - **There is one tension, inside the straight.** 0032's "most of the power arrives toward the end
   of the hold" wants a large x: x^4 is the growth from the first card to the fifth. But y is the
@@ -189,21 +191,22 @@ The minimal chain, with H for a rung's hit and W for its ward:
   - With x = 2, the fifth is ×16, but the ace-high straight is ×512 the wheel.
   - The spec leaves "how y maps to hit size" to the sim, so this is tunable, not blocking.
   - The sim starts at x = 1.3 and sweeps 1.15 and 2.
-- **The straight flush beats the quads ward** as long as `H_SF ≥ 2(P* + W_Q)`. Its hit also needs
+- **The straight flush beats the quads ward** as long as `H_SF ≥ (P* + W_Q)/0.75`. Its hit also needs
   both conditions met (0033): the meter and the home lean, each played in full.
 
 ### The §4 damage checks
 
-These use armor from `S♦ = 20` at the starting rate, with the thin and sliver zones.
+These use armor from `S♦ = 20` at the starting rate, with the thin and sliver zones, less a
+cardless rider's piercing (1).
 
-| Check | Spec | With armor |
+| Check | Spec | With armor and piercing |
 | --- | --- | --- |
-| Pass 1 Normal, high card, half hold | 3.5 | 2.5 |
-| Pass 3 Crit, trips-loaded ♣, full hold | 43 | 43.2 |
-| Pass 4 Crit, the same | 54 | 54.1 |
+| Pass 1 Normal, high card, half hold | 3.5 | 3.5 |
+| Pass 3 Crit, trips-loaded ♣, full hold | 43 | 43.5 |
+| Pass 4 Crit, the same, with the last-pass bonus | 71 | 70.7 |
 
-They hold to within about a point, but only with the lean off; see (c6). The sim's tests pin
-them at λ = 0.
+At the starting rates, a cardless rider's piercing cancels the thin and sliver armor. They hold, but
+only with the lean off; see (c6). The sim's tests pin them at λ = 0.
 
 ## 3. Verdict
 

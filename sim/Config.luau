@@ -27,6 +27,8 @@ function Config.defaults()
 			clubRate = 1 / 20, -- ♣ scales hits by S♣ / 20
 			holdFloor = 0.4, -- hold multiplier 0.4 + 0.6·h (the slope is 1 − floor)
 			street = { 0.5, 0.75, 1.0, 1.25 },
+			finalPassBonus = 1.3, -- last-pass bonus on Pass 4, on top of its street multiplier (0051)
+			showdownBonus = 20, -- showdown: Posture per step of hand category (0050)
 			cleanBlockRestore = 3,
 			aimLock = 0.3,
 			passLength = 8.0,
@@ -65,18 +67,16 @@ function Config.defaults()
 			blockBase = 10, -- SANITY_CHECK (c2): a Block reads as a Normal into thick armor
 			earliestCommit = 0.3, -- the earliest a rider leaves Neutral (s)
 			readTime = 7.4, -- when a read's late switch lands (s)
-			-- Trick hits and wards per rung (SANITY_CHECK §2: the smallest chain that meets §6).
+			-- Trick hits and wards per rung (SANITY_CHECK §2: a chain that meets §6). A hit must
+			-- unhorse from the earliest pass a trick can fire on (Pass 2, ×0.75); a ward must stop
+			-- lower hits on Pass 4 (×1.25 × the last-pass bonus).
 			-- The straight's hit is the meter: straightK · straightX ^ y.
 			straightK = 100,
 			straightX = 1.3,
 			hit = { flush = 600, fullHouse = 13000, quads = 20000, straightFlush = 60000 },
-			ward = { straight = 0, flush = 6000, fullHouse = 9000, quads = 20000, straightFlush = 30000 },
+			ward = { straight = 0, flush = 6500, fullHouse = 9000, quads = 22000, straightFlush = 33000 },
 			flushExplode = 4, -- flush suit's S × this at home (× half on the diagonals beside it)
 			flushExplodeF2 = 60, -- the explosion when switches.flushHit = "F2"
-			-- Showdown (open question) weights, per reading
-			showdownCategoryWeight = 15, -- Posture per hand category step
-			showdownPointsWeight = 3, -- Posture per unleaned card point
-			showdownLexMargin = 30, -- lexicographic: Posture deficit the better hand survives
 		},
 
 		-- ── RIDERS: scripted rider parameters (§11 *Sim plan* step 2), set by the sim ──────────
@@ -94,22 +94,8 @@ function Config.defaults()
 			flicker = { read = 1.0, hold = 0.0, honesty = 0.5, aggression = 0.5, design = 0.5, yieldBelow = -1 },
 		},
 
-		-- ── PROPOSED: Trey's direction, not yet in GAME_SPEC ─────────────────────────────────
-		-- finalPassBonus: a modest extra multiplier on all Posture damage in Pass 4, on top of its
-		-- street multiplier (Trey, chat, 2026-09-30: "a modest last-round damage bonus"). 1.0 is
-		-- GAME_SPEC as written. The size is for Trey to pick from `--report final`.
-		-- passOrder: which pass has no card reveal (Trey, chat, 2026-09-30: "First pass (river on
-		-- final)"). "spec" is GAME_SPEC §2 as written: flop, turn, river on Passes 1–3 and a
-		-- full-information Pass 4. "riverLast": Pass 1 rides on hole cards only, and the flop, turn
-		-- and river flip mid-charge on Passes 2–4.
-		proposed = {
-			finalPassBonus = 1.0,
-			passOrder = "spec",
-		},
-
 		-- ── SWITCHES: open questions and gaps, each with 2–3 readings ─────────────────────────
 		switches = {
-			showdown = "category", -- category | points | lexicographic        (§11 open)
 			slowmo = "wall", -- wall | game | excluded                           (§11 open)
 			statBasis = "value", -- value | points: what ♦ and ♠ convert        (c1)
 			flushHit = "F1", -- F1 per-rung hit × home factor | F2 exploded stat (c3)
