@@ -28,20 +28,19 @@ kit.describe("Contact: §4 sanity checks (lean off, no armor, no piercing)", fun
 	local cfg = Config.defaults()
 	cfg.sim.armorRate = 0
 	cfg.sim.pierceRate = 0
-	kit.it("Pass 1 Normal, high card, half hold: 10 × 1.0 × 0.625 × 0.5 = 3.125", function()
-		local s = Contact.strike(fighter({ aim = 9, h = 0.5 }), fighter({ aim = 0 }), arena(0.5), cfg)
+	kit.it("Pass 1 Normal, high card, half hold: 10 × 1.0 × 0.625 × 1.0 = 6.25", function()
+		local s = Contact.strike(fighter({ aim = 9, h = 0.5 }), fighter({ aim = 0 }), arena(cfg.spec.street[1]), cfg)
 		kit.expectEqual(s.tier, "normal")
-		kit.expectNear(s.dmg, 3.125)
+		kit.expectNear(s.dmg, 6.25)
 	end)
 	kit.it("Pass 3 Crit, trips-loaded ♣ (×1.45), full hold: about 43", function()
 		local s = Contact.strike(fighter({ aim = 1, S = { 29, 20, 20, 20 } }), fighter({ aim = 0 }), arena(1.0), cfg)
 		kit.expectEqual(s.tier, "crit")
 		kit.expectNear(s.dmg, 43.5)
 	end)
-	kit.it("Pass 4 Crit with the same, with the last-pass bonus: about 71", function()
-		local street = cfg.spec.street[4] * cfg.spec.finalPassBonus
-		local s = Contact.strike(fighter({ aim = 1, S = { 29, 20, 20, 20 } }), fighter({ aim = 0 }), arena(street), cfg)
-		kit.expectNear(s.dmg, 30 * 1.45 * 1.25 * 1.3)
+	kit.it("Pass 4 Crit with the same: about 54", function()
+		local s = Contact.strike(fighter({ aim = 1, S = { 29, 20, 20, 20 } }), fighter({ aim = 0 }), arena(cfg.spec.street[4]), cfg)
+		kit.expectNear(s.dmg, 30 * 1.45 * 1.25)
 	end)
 end)
 

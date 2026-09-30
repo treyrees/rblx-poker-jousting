@@ -4,7 +4,7 @@ title: Pass 4 carries a ×1.3 last-pass damage bonus
 date: 2026-09-30
 decided-by: trey (chat, sim review session, 2026-09-30)
 supersedes: []
-superseded-by: null
+superseded-by: 0054
 ---
 
 ## Context

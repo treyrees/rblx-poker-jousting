@@ -76,5 +76,7 @@ Add a row below in the same commit. Check the latest `main` for the next free id
 | [0050](0050-showdown-hand-bonus.md) | The showdown adds a hand bonus to Posture, and the lower rider falls | 2026-09-30 |
 | [0051](0051-last-pass-bonus.md) | Pass 4 carries a ×1.3 last-pass damage bonus | 2026-09-30 |
 | [0052](0052-hold-floor-0-25.md) | The hold floor is 0.25, so holding can beat a last-instant switch | 2026-09-30 |
+| [0053](0053-the-river-always-goes-to-the-knockdown.md) | The river always goes to the knockdown, and Posture below 0 counts | 2026-09-30 |
+| [0054](0054-hand-shape-and-damage-retune.md) | Posture 80, flat early street multipliers, and no last-pass bonus | 2026-09-30 |
 
-Next free id: **0053**.
+Next free id: **0055**.

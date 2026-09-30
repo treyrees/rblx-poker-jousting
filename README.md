@@ -9,4 +9,5 @@ card.
 - **Workflow:** [docs/design/WORKFLOW.md](docs/design/WORKFLOW.md).
 - **Decisions:** [docs/design/decisions/](docs/design/decisions/README.md).
 
-No game code yet. Next step (GAME_SPEC §11): a headless sim of one hand.
+No game code yet. The headless sim of one hand (GAME_SPEC §11) is in `sim/` and `tools/sim.luau`,
+with its tests in `tests/`; what it found is in [docs/sim/RESULTS.md](docs/sim/RESULTS.md).

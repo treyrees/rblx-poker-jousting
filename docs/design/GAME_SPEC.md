@@ -100,18 +100,19 @@ matched.
 | Bet 4 | Stay / Raise / Yield on the turn | n/a |
 | Pass 4 (showdown) | Charge; river reveals mid-charge; unused tricks auto-fire; then the showdown | All 7 cards |
 
-Street multipliers apply to all Posture damage in that pass: Pass 1 = 0.5,
-Pass 2 = 0.75, Pass 3 = 1.0, Pass 4 = 1.25. Pass 4 also carries the last-pass bonus, ×1.3 on
-top of its street multiplier, so more hands end with a real unhorse on the river. Early passes
-rarely unhorse; the hand builds toward the river.
+Street multipliers apply to all Posture damage in that pass: Pass 1 = 1.0,
+Pass 2 = 1.0, Pass 3 = 1.0, Pass 4 = 1.25. Most hands see all five community cards and end on
+the river; some end on the turn, and fewer still on the flop.
 
 ### Win conditions
 
-1. A rider whose Posture reaches 0 is unhorsed. The other rider wins the pot immediately.
-2. If both riders are unhorsed on the same contact, the rider with more Posture before the
-   pass wins; if equal, split.
-3. If no one is unhorsed after Pass 4, a knockdown is forced at showdown: each rider's hand
-   bonus is added to their Posture, and the rider lower on Posture is knocked down (§4).
+1. On Passes 1–3, a rider whose Posture reaches 0 is unhorsed. The other rider wins the pot
+   immediately.
+2. If both riders are unhorsed on the same contact (Passes 1–3), the rider with more Posture
+   before the pass wins; if equal, split.
+3. Pass 4's contact unhorses no one. After it, a knockdown is forced at showdown: each rider's
+   hand bonus is added to their Posture, even Posture the river's lance took below 0, and the
+   rider lower on the total is knocked down (§4).
 4. Showdown tie (equal Posture after the hand bonus): compare poker hands with kickers. Still
    tied: split the pot.
 5. A rider who Yields forfeits the pot.
@@ -369,8 +370,8 @@ sim values (§11).
    - On a Normal or Block, the hit adds to A's charge.
    - On a Crit, A's ♠ scales the crit, and the crit spends all of A's charge as a bonus. A
      crossed-lances crit (CC) spends it too.
-   - Charge lasts the whole hand, so charge built on cheap early passes pays at later street
-     multipliers. The outcomes that build it are public; the amount is hidden.
+   - Charge lasts the whole hand, so charge built on early passes pays at Pass 4's higher
+     street multiplier. The outcomes that build it are public; the amount is hidden.
 5. Armor: B's ♦ armor at the sector hit, less A's piercing, is subtracted from the output:
    thick on the Guard (scaled by B's hold multiplier), thin on ordinary positions, a sliver on
    the exposure. A Block that nothing gets through is a clean block: B restores 3 Posture.
@@ -378,23 +379,24 @@ sim values (§11).
 
 ### Tracks and showdown
 
-- **Posture:** starts at 100 plus the ♥ bonus. Reaches 0 = unhorsed. Heals only from clean
-  blocks, queen effects and ♥ gains on a reveal, capped at max Posture.
-- **Showdown:** if no one is unhorsed after Pass 4, a knockdown is forced. Each rider's hand
-  bonus is added to their Posture: 20 Posture per step of hand category above high card (pair
-  +20, two pair +40, trips +60, and so on up the categories). Riders in the same category get
-  the same bonus, so Posture decides between them; kickers break only an exact tie (§2). The
-  rider lower on Posture after the bonus is knocked down, even above 0. The bonus is shown
+- **Posture:** starts at 80 plus the ♥ bonus. Reaches 0 on Passes 1–3 = unhorsed. On Pass 4 it
+  can fall below 0, and the showdown counts it. Heals only from clean blocks, queen effects and
+  ♥ gains on a reveal, capped at max Posture.
+- **Showdown:** after Pass 4's contact, a knockdown is always forced. Each rider's hand bonus is
+  added to their Posture, below 0 included: 20 Posture per step of hand category above high card
+  (pair +20, two pair +40, trips +60, and so on up the categories). Riders in the same category
+  get the same bonus, so Posture decides between them; kickers break only an exact tie (§2). The
+  rider lower on Posture after the bonus is knocked down, even above 0, and a rider the lance took
+  below 0 can still stay up if their bonus lifts them past the opponent. The bonus is shown
   landing on the Posture bar before the knockdown (§8).
 
 ### Sanity checks (to confirm in sim)
 
-- Pass 1 normal hit, high card, half hold: about 10 × 1.0 × 0.625 × 0.5 = 3.1 Posture. Early
+- Pass 1 normal hit, high card, half hold: about 10 × 1.0 × 0.625 × 1.0 = 6.3 Posture. Early
   knockouts are near impossible.
 - Pass 3 crit, trips-loaded ♣, full hold: about 30 × 1.45 × 1.0 × 1.0 = 43 Posture. Two such
   reads unhorse.
-- Pass 4 crit with the same, with the last-pass bonus: about 30 × 1.45 × 1.25 × 1.3 = 71
-  Posture.
+- Pass 4 crit with the same: about 30 × 1.45 × 1.25 = 54 Posture.
 
 ## 5. Broadway cards
 
@@ -416,7 +418,7 @@ both riders and appears in the arena.
 | Pair | Name | Effect |
 | --- | --- | --- |
 | JJ | Masquerade | Both colors randomized, and your public hold meter displays with a 0.5 s lag |
-| QQ | Twin Favor | Restore 10 per pass; the first unhorse this hand is negated and Posture is set to 20 |
+| QQ | Twin Favor | Restore 10 per pass; once per hand, the first time your Posture would fall to 0 or below, it is 20 instead |
 | KK | High Court | Opponent's aim locks 0.3 s earlier, and what gets through your Guard armor from them is halved |
 | AA | Champion | Crit base 40, and your Normal hits on the exposure's edge notch also count as Crit |
 
@@ -435,8 +437,9 @@ zero. Expect jacks to look like dead cards until the sim has readers.
 
 Straight and above are tricks. A trick changes the dial's rules for the one pass it is
 unleashed on. Tricks are trump cards: an unleashed trick above the opponent on the trick
-ladder is built to unhorse them on that pass, so it wins the hand. The win always comes
-through the joust; no rule declares it.
+ladder is built to unhorse them on that pass, so it wins the hand. On Pass 4, where no one is
+unhorsed on contact, the same hit takes them far below 0, and they fall at the knockdown. The
+win always comes through the joust; no rule declares it.
 
 Frequency, from a deal sim: a rider owns a trick (see *Ownership*) by the river in about 10%
 of hands (straight 4.4%, flush 2.9%, full house 2.5%, quads 0.15%, straight flush 0.02%). Of
@@ -493,7 +496,7 @@ are rates for random deals; prefolding in the yard shifts them.
 A starting draft, to be tuned in the sim.
 
 - **The hit.** An unleashed trick's hit is sized to unhorse the opponent from full Posture on
-  any pass, even the earliest a trick can fire on (Pass 2, the flop, at ×0.75), when the trick
+  any pass, even the earliest a trick can fire on (Pass 2, the flop, at ×1.0), when the trick
   is played to its design: a straight held (*The straight's meter*), a flush aimed at its
   suit's home (*Flush by suit*). Full house and quads
   are unconditional. Hit sizes are sim values. Armor is a flat reduction per hit (§4),
@@ -545,7 +548,7 @@ base stat; half steps share the tilt as on the compass. The suit is announced on
 | --- | --- | --- | --- |
 | ♣ | Shattering Blow | Up | Your hit's raw damage lands in full, even into a Block |
 | ♠ | Needle | Out | Every hit you land is a Crit that pierces all armor, and it spends your charge |
-| ♥ | Unbroken | Down | You can't be unhorsed this pass |
+| ♥ | Unbroken | Down | Your Posture can't fall below 1 this pass |
 | ♦ | Gilded Mirror | In | Your armor covers your whole dial, exposure included, and what it stops reflects back at the striker |
 
 ### Trick vs trick
@@ -638,10 +641,11 @@ Pass 1 has no card reveal: riders charge on hole cards alone, and its full 8 s i
 decision. On Pass 4 the river lands mid-charge, unused tricks auto-fire, and the showdown
 follows contact.
 
-**Showdown.** If no one falls on Pass 4's contact, each rider's hand bonus pours into their
-Posture bar ("PAIR +20"), and only then is the rider lower on Posture knocked down. The fall is
-sized to the gap: a clean unhorse for a wide gap, a stagger and fall for a middling one, a photo
-finish for a few points.
+**Showdown.** After Pass 4's contact, the hole cards flip and each rider's hand bonus pours into
+their Posture bar ("PAIR +20"), and only then is the rider lower on Posture knocked down. A bar
+the river's lance took past empty shows how far below 0 it went, and the bonus fills up from
+there. The fall is sized to the gap: a clean unhorse for a wide gap, a stagger and fall for a
+middling one, a photo finish for a few points.
 
 **Arena reveals.** Each revealed card changes the environment: suit sets the sky and
 lighting color (hearts and diamonds red-toned, clubs and spades dark-toned), face cards
@@ -693,7 +697,7 @@ we take mechanics and code that fit the poker spirit.
 | Balance teeter roll | Replaced by deterministic Posture. Could return as an option (see Open questions) |
 | Breaking and the mortal ladder | Deferred; not needed for v1 |
 | Spur and momentum | Deferred; hold is the only run-up currency in v1 |
-| One duel to unhorse | A hand is 4 passes; a forced knockdown at showdown decides if no one falls |
+| One duel to unhorse | A hand is 4 passes; an unhorse on Passes 1–3 ends it, and otherwise the forced knockdown after the river decides |
 | "Never a wager" (ADR 0015) | Betting is core here, within limits (see Open questions) |
 | Reads always beat rarity | Replaced by the trick vs read arms race |
 
@@ -771,7 +775,7 @@ whether a trick above the opponent wins overwhelmingly.
 
 | Parameter | v1 value |
 | --- | --- |
-| Posture start | 100 |
+| Posture start | 80 |
 | Base: Weak / Normal / Crit | 4 / 10 / 30 |
 | Stat base (cardless floor) | 20 |
 | Card value by rank r | 1 + (r − 2) / 6 points: 2 = 1, 8 = 2, A = 3 |
@@ -779,8 +783,7 @@ whether a trick above the opponent wins overwhelmingly.
 | Hand multipliers on made cards: pair / two pair / trips | ×2 / ×2 / ×3 |
 | Stat rates per point | ♣ +5% on a hit (S_♣ / 20); ♥ Posture, ♥ lean damage cut, ♦ armor, ♠ piercing and charge set by the sim |
 | Hold multiplier | 0.25 + 0.75 × h |
-| Street multipliers (Passes 1–4) | 0.5 / 0.75 / 1.0 / 1.25 |
-| Last-pass bonus (Pass 4, on top of its street multiplier) | ×1.3 |
+| Street multipliers (Passes 1–4) | 1.0 / 1.0 / 1.0 / 1.25 |
 | Clean block restore | 3 Posture |
 | Aim lock before contact | 0.3 s |
 | Pass length | 8 s |

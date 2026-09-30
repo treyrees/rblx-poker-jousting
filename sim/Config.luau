@@ -17,7 +17,7 @@ function Config.defaults()
 	return {
 		-- ── SPEC: GAME_SPEC §11 tuning parameters (v1 values) ─────────────────────────────────
 		spec = {
-			postureStart = 100,
+			postureStart = 80, -- 0054
 			base = { weak = 4, normal = 10, crit = 30 },
 			statBase = 20, -- cardless floor, S_suit = 20 + points
 			rankBase = 1, -- card value 1 + (r − 2) / 6
@@ -26,8 +26,7 @@ function Config.defaults()
 			handMult = { pair = 2, twoPair = 2, trips = 3 },
 			clubRate = 1 / 20, -- ♣ scales hits by S♣ / 20
 			holdFloor = 0.25, -- hold multiplier 0.25 + 0.75·h (0052; the slope is 1 − floor)
-			street = { 0.5, 0.75, 1.0, 1.25 },
-			finalPassBonus = 1.3, -- last-pass bonus on Pass 4, on top of its street multiplier (0051)
+			street = { 1.0, 1.0, 1.0, 1.25 }, -- 0054; 0051's last-pass bonus is removed
 			showdownBonus = 20, -- showdown: Posture per step of hand category (0050)
 			cleanBlockRestore = 3,
 			aimLock = 0.3,
@@ -68,8 +67,9 @@ function Config.defaults()
 			earliestCommit = 0.3, -- the earliest a rider leaves Neutral (s)
 			readTime = 7.4, -- when a read's late switch lands (s)
 			-- Trick hits and wards per rung (SANITY_CHECK §2: a chain that meets §6). A hit must
-			-- unhorse from the earliest pass a trick can fire on (Pass 2, ×0.75); a ward must stop
-			-- lower hits on Pass 4 (×1.25 × the last-pass bonus).
+			-- unhorse from the earliest pass a trick can fire on (Pass 2); a ward must stop lower hits
+			-- on Pass 4. Sized under the multipliers before 0054 (×0.75 and ×1.625), so they clear
+			-- today's (×1.0 and ×1.25) with room.
 			-- The straight's hit is the meter: straightK · straightX ^ y.
 			straightK = 100,
 			straightX = 1.3,
@@ -102,6 +102,35 @@ function Config.defaults()
 			meterThreshold = "reachable", -- reachable | strict                  (c4)
 			twinFavorVsTrick = "negates", -- negates | trickOverrides            (C1)
 			aaEdge = "one", -- one | both | direction                            (C2)
+			-- How the hand ends when no one is unhorsed after Pass 4 (docs/sim/SHOWDOWN.md prototypes).
+			-- "bonus" is GAME_SPEC (0050); the rest are proposals, off by default.
+			--   bonus     +showdownBonus Posture per category step, the lower rider falls
+			--   mult      Posture × (1 + proto.mult × steps), the lower rider falls
+			--   riverHit  the hand strikes on Pass 4: proto.riverPerStep per step lands on the opponent
+			--             at contact, scaled by the tier your own strike lands (proto.riverTier); then the
+			--             lower rider on Posture alone falls
+			--   charge    cards up and one more contact (the final charge); proto.charge* set it
+			showdown = "bonus", -- bonus | mult | riverHit | charge
+			-- Pass 4's contact (0053): "knockdown" is GAME_SPEC. No one is unhorsed on Pass 4's contact; the
+			-- hand's showdown effect lands on Posture, even below 0, and the lower rider falls. "unhorse" is
+			-- the rule before 0053 (a rider at 0 falls on contact), kept for the SHOWDOWN.md prototypes.
+			riverRule = "knockdown", -- knockdown | unhorse
+		},
+
+		-- ── PROTO: values the showdown prototypes use (SHOWDOWN.md). None is a §11 value. ─────
+		proto = {
+			mult = 0.2, -- mult: Posture × (1 + mult × steps)
+			riverPerStep = 20, -- riverHit: Posture per step, before the tier factor
+			riverTier = { crit = 1.5, normal = 1.0, block = 0.25, weak = 0.25 }, -- riverHit: by the tier you land
+			riverKnockdown = "posture", -- riverHit: posture | bonus — what decides if no one falls
+			riverVsTrick = "lands", -- riverHit: lands | warded — a rider firing a trick takes the blow, or not
+			chargeStreet = 1.625, -- charge: the fifth contact's multiplier (Pass 4's before 0054: 1.25 × 1.3)
+			chargeBonus = "posture", -- charge: posture (bonus lands before it) | none | hit (as riverHit, on the charge)
+			chargeCardsUp = "yes", -- charge: yes | no — readers see the opponent's exact stats
+			-- The turn cushion (Trey's ramp idea, chat 2026-09-30): on Pass 3 a rider is unhorsed only below
+			-- −(turnCushion × showdownBonus × turn category), so the cards start to count on the turn.
+			-- Hidden: the bar is unchanged. 0 is off.
+			turnCushion = 0,
 		},
 	}
 end
@@ -109,7 +138,11 @@ end
 -- Override one value by dotted path. Numbers parse as numbers, everything else stays a string.
 function Config.set(cfg: any, path: string, raw: string)
 	local node = cfg
-	local keys = string.split(path, ".")
+	-- A numeric key indexes a list: spec.street.3 is Pass 3's street multiplier.
+	local keys: { any } = string.split(path, ".")
+	for i, k in keys do
+		keys[i] = tonumber(k) or k
+	end
 	for i = 1, #keys - 1 do
 		node = node[keys[i]]
 		if type(node) ~= "table" then
