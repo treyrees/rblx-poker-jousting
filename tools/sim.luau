@@ -408,7 +408,7 @@ local SWEEPS: { { any } } = {
 	{ "proto.turnCushion=0.5 (not adopted)", { { "proto.turnCushion", "0.5" } } },
 	{ "before 0053-0054 (Posture 100, 0.5/0.75/1.0/1.25, ×1.3, unhorse on P4)", { { "switches.riverRule", "unhorse" }, { "spec.postureStart", "100" }, { "spec.street.1", "0.5" }, { "spec.street.2", "0.75" }, { "spec.street.4", "1.625" } } },
 	{ "switches.slowmo=game", { { "switches.slowmo", "game" } } },
-	{ "switches.slowmo=excluded", { { "switches.slowmo", "excluded" } } },
+	{ "switches.slowmo=wall (0061: excluded)", { { "switches.slowmo", "wall" } } },
 	{ "switches.statBasis=points", { { "switches.statBasis", "points" } } },
 	{ "switches.flushHit=F2", { { "switches.flushHit", "F2" } } },
 	{ "switches.meterThreshold=strict", { { "switches.meterThreshold", "strict" } } },

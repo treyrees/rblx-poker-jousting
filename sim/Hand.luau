@@ -629,13 +629,14 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 			if taken.cleanBlock then
 				p = math.min(r.maxPosture, p + spec.cleanBlockRestore)
 			end
-			-- ♥ Unbroken: can't be unhorsed this pass (a higher trick's rule wins).
+			-- ♥ Unbroken: Posture can't fall below 1 this pass (0053; a higher trick's rule wins).
 			local myTrick = F[r.id].trick
 			local oRung = if F[3 - r.id].trick then (F[3 - r.id].trick :: any).rung else 0
 			if myTrick and myTrick.key == "flush" and myTrick.suit == 3 and oRung < myTrick.rung then
 				p = math.max(p, 1)
 			end
-			-- QQ Twin Favor: the first unhorse this hand is negated, Posture set to 20 (C1).
+			-- QQ Twin Favor: the first time Posture would fall to 0 or below, it is 20 instead (0053), a
+			-- trick's hit included (0055).
 			if p <= 0 and holeFace(r, newBoard, 12) == 2 and not r.twinUsed then
 				local byTrick = taken.trickHit and taken.dmg > 0
 				if not (byTrick and cfg.switches.twinFavorVsTrick == "trickOverrides") then

@@ -78,5 +78,17 @@ Add a row below in the same commit. Check the latest `main` for the next free id
 | [0052](0052-hold-floor-0-25.md) | The hold floor is 0.25, so holding can beat a last-instant switch | 2026-09-30 |
 | [0053](0053-the-river-always-goes-to-the-knockdown.md) | The river always goes to the knockdown, and Posture below 0 counts | 2026-09-30 |
 | [0054](0054-hand-shape-and-damage-retune.md) | Posture 80, flat early street multipliers, and no last-pass bonus | 2026-09-30 |
+| [0055](0055-twin-favor-stops-a-trick-hit.md) | Twin Favor stops a trick's hit too | 2026-09-30 |
+| [0056](0056-aa-edge-is-half-step-5.md) | AA Champion's edge notch is the half step just past the exposure's far edge | 2026-09-30 |
+| [0057](0057-armor-and-pierce-convert-stat-value.md) | ♦ armor and ♠ piercing convert the stat value, 20 + points | 2026-09-30 |
+| [0058](0058-block-uses-the-normal-base.md) | A Block uses the Normal base | 2026-09-30 |
+| [0059](0059-flush-hit-scaled-by-home.md) | A flush has its own hit, full at home, half beside it, none elsewhere | 2026-09-30 |
+| [0060](0060-straight-meter-counts-from-first-commit.md) | The straight's meter fills against the earliest possible commit | 2026-09-30 |
+| [0061](0061-slow-motion-does-not-count-toward-hold.md) | Slow motion doesn't count toward the hold fraction | 2026-09-30 |
+| [0062](0062-numeric-gap-after-the-lean.md) | The numeric gap target is measured after the aim lean | 2026-09-30 |
+| [0063](0063-agents-md-points-to-the-pillars.md) | AGENTS.md points to GAME_SPEC §1 for the pillars instead of copying them | 2026-09-30 |
+| [0064](0064-trick-above-wins-95.md) | "Overwhelmingly" is 95% | 2026-09-30 |
+| [0065](0065-unhorse-is-a-hard-zero.md) | The unhorse stays a hard 0; no teeter roll | 2026-09-30 |
+| [0066](0066-pass-length-is-a-playtest-question.md) | The pass stays 8 s; a playtest decides whether it's long enough | 2026-09-30 |
 
-Next free id: **0055**.
+Next free id: **0067**.

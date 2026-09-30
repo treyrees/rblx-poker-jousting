@@ -63,7 +63,7 @@ function Config.defaults()
 			armorZone = { guard = 1.0, ordinary = 0.2, exposure = 0.05 },
 			pierceRate = 0.05, -- piercing per ♠ stat unit
 			chargeRate = 3, -- charge banked per non-crit hit, × S♠ / 20
-			blockBase = 10, -- SANITY_CHECK (c2): a Block reads as a Normal into thick armor
+			blockBase = 10, -- a Block is a Normal hit into thick armor (c2, 0058)
 			earliestCommit = 0.3, -- the earliest a rider leaves Neutral (s)
 			readTime = 7.4, -- when a read's late switch lands (s)
 			-- Trick hits and wards per rung (SANITY_CHECK §2: a chain that meets §6). A hit must
@@ -96,12 +96,13 @@ function Config.defaults()
 
 		-- ── SWITCHES: open questions and gaps, each with 2–3 readings ─────────────────────────
 		switches = {
-			slowmo = "wall", -- wall | game | excluded                           (§11 open)
-			statBasis = "value", -- value | points: what ♦ and ♠ convert        (c1)
-			flushHit = "F1", -- F1 per-rung hit × home factor | F2 exploded stat (c3)
-			meterThreshold = "reachable", -- reachable | strict                  (c4)
-			twinFavorVsTrick = "negates", -- negates | trickOverrides            (C1)
-			aaEdge = "one", -- one | both | direction                            (C2)
+			-- Answered by Trey (0055–0061): the default is GAME_SPEC; the other readings stay for comparison.
+			slowmo = "excluded", -- wall | game | excluded                       (0061)
+			statBasis = "value", -- value | points: what ♦ and ♠ convert        (c1, 0057)
+			flushHit = "F1", -- F1 per-rung hit × home factor | F2 exploded stat (c3, 0059)
+			meterThreshold = "reachable", -- reachable | strict                  (c4, 0060)
+			twinFavorVsTrick = "negates", -- negates | trickOverrides            (C1, 0055)
+			aaEdge = "one", -- one | both | direction                            (C2, 0056)
 			-- How the hand ends when no one is unhorsed after Pass 4 (docs/sim/SHOWDOWN.md prototypes).
 			-- "bonus" is GAME_SPEC (0050); the rest are proposals, off by default.
 			--   bonus     +showdownBonus Posture per category step, the lower rider falls

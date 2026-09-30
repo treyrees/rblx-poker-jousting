@@ -14,6 +14,13 @@ skilled-vs-novice run). The sim is `tools/sim.luau` over `sim/`, and every value
 `sim/Config.luau`. [SANITY_CHECK.md](SANITY_CHECK.md) says which values are §11's, which the sim
 set, and which open questions are modelled as switches.
 
+> **Update, 0055–0066.** Slow motion no longer counts toward hold (0061); it was the sweep row
+> "slowmo = excluded" below and is now the default. The tables below were run before it. The new
+> baseline (100k hands, seed 20260930): flop 1.4%, turn 9.9%, river 88.7%; better category wins
+> 75.0 / 87.7 / 95.8% at gaps 1 / 2 / 3; skill flip 63.1% (seed 20260931); tricks fired above win
+> 96.3% unleashed and 99.8% auto-fired; cross-rung 100% (n = 284); drawn out 7.9%. The other answers
+> (0055–0060, 0062) confirmed the sim's existing defaults. "Overwhelmingly" is now 95% (0064).
+
 **Everything here is a proposal.** The numbers come from a model of the aim war, not the game.
 Riders are scripted with the four §11 parameters:
 

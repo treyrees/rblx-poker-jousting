@@ -9,24 +9,8 @@ change moves through the repo is in [docs/design/WORKFLOW.md](docs/design/WORKFL
 
 ## Design pillars
 
-Verbatim from GAME_SPEC §1. These are Trey's words: apply them, don't reword, extend or add to them.
-
-- **Poker structure, physical resolution.** Hole cards, board, streets and betting are hold'em.
-  Outcomes come from the joust. Hand strength acts through the riders' stats and, at showdown,
-  forces the knockdown alongside Posture. A bare card comparison only breaks exact ties.
-- **Play every hand.** Numeric hands (high card through trips) are modest stat edges. Skill on the
-  dial decides most numeric matchups, so a bad hand is a handicap, not a fold.
-- **Tricks are trump cards.** Straight and above are tricks, ranked on a trick ladder. As the
-  ladder climbs, tricks bring unique mechanics and/or explosively scaled numbers. A rider above the
-  opponent on the ladder who unleashes their trick, rather than holding it, has a virtually
-  guaranteed win condition.
-- **Ambiguous tells.** The dial and the rider leak partial information about hole cards. Nothing
-  leaks the exact hand.
-- **Suits are stats.** Each suit is a stat, and all four act all the time. Aim leans into the
-  stats it points at. Aim is public; whether your cards back the lean is the secret.
-
-Also important: **learnability** (for example, betting is beginner-ignorable, §2) and
-**spectacle** (for example, the setup/counter animation system, §8).
+The pillars are in [GAME_SPEC §1](docs/design/GAME_SPEC.md#design-pillars). They are Trey's
+words: apply them, don't reword, extend or add to them. (0063)
 
 ## Invariants
 

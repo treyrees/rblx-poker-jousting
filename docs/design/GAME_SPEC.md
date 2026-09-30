@@ -223,7 +223,7 @@ is the perfect read.
 
 - Hold fraction h = the fraction of the run-up, from the start of the charge to aim lock,
   that the final aim position was held (0 to 1). Changing aim position resets h for the new
-  position. How slow-motion time counts is open (§11).
+  position. The slow-motion beat after a reveal (§8) doesn't count toward h.
 - Strike power and Guard armor both scale by the hold multiplier: `0.25 + 0.75 × h`.
 - The hold meter is public. Holding is the value bet; a late switch is the bluff, and it costs
   power. This is a price, not a lock: players commit by degrees, which keeps bluffing a dial
@@ -338,7 +338,7 @@ trips ×3. Each card keeps its own hole or board weight, so a board pair is mult
 riders at board weight. A held trick rides as its sub-hand (§6).
 
 The curve is compressed on purpose: the gap between the two riders' numeric hands is worth
-about ×1.0 to ×1.45 on a hit. The board raises both riders alike, so the gap comes from hole
+about ×1.0 to ×1.45 on a hit, with the aim lean applied. The board raises both riders alike, so the gap comes from hole
 cards and hand multipliers. A clean read (normal vs crit, or block vs hit) swings more than
 trips vs high card.
 
@@ -352,14 +352,15 @@ S_suit = 20 + points_suit
 takes its lean at contact instead). Base
 20 is the "cardless jouster" floor. Each stat turns its value into its effect at its own rate:
 ♣ scales your hits by `S_♣ / 20` (contact resolution, step 3), so each ♣ point is +5% on a hit.
-The ♥ rate (Posture per point), ♦ rate (armor per point) and ♠ rates (piercing and charge) are
-sim values (§11).
+♦ armor and ♠ piercing and charge also convert the stat value, so a cardless rider has a real
+Guard. The ♥ rate (Posture per point), ♦ rate (armor per unit of S♦) and ♠ rates (piercing and
+charge per unit of S♠) are sim values (§11).
 
 ### Contact resolution (A strikes B; both directions resolve simultaneously)
 
 1. Find the tier: look up A's aim position on B's sectors (§3). Guard = Block, exposure =
    Crit, ordinary = Normal. A in Neutral = Weak.
-2. Base values: Weak 4, Normal 10, Crit 30.
+2. Base values: Weak 4, Normal 10, Crit 30. A Block is a Normal hit into thick armor.
 3. Hit output, scaled by ♣:
    ```
    Out = Base · (S_♣,A / 20) · (0.25 + 0.75·h_A) · Street · Mods
@@ -392,6 +393,9 @@ sim values (§11).
 
 ### Sanity checks (to confirm in sim)
 
+These leave out the aim lean, armor and piercing.
+
+
 - Pass 1 normal hit, high card, half hold: about 10 × 1.0 × 0.625 × 1.0 = 6.3 Posture. Early
   knockouts are near impossible.
 - Pass 3 crit, trips-loaded ♣, full hold: about 30 × 1.45 × 1.0 × 1.0 = 43 Posture. Two such
@@ -418,9 +422,9 @@ both riders and appears in the arena.
 | Pair | Name | Effect |
 | --- | --- | --- |
 | JJ | Masquerade | Both colors randomized, and your public hold meter displays with a 0.5 s lag |
-| QQ | Twin Favor | Restore 10 per pass; once per hand, the first time your Posture would fall to 0 or below, it is 20 instead |
+| QQ | Twin Favor | Restore 10 per pass; once per hand, the first time your Posture would fall to 0 or below, it is 20 instead, a trick's hit included |
 | KK | High Court | Opponent's aim locks 0.3 s earlier, and what gets through your Guard armor from them is halved |
-| AA | Champion | Crit base 40, and your Normal hits on the exposure's edge notch also count as Crit |
+| AA | Champion | Crit base 40, and your Normal hits on the exposure's edge notch (the half step just past its far edge) also count as Crit |
 
 ### Rules
 
@@ -525,7 +529,9 @@ A starting draft, to be tuned in the sim.
 
 A straight makes its money by holding still. On the unleash pass, a meter steps through the
 straight's five cards, low to high, as the rider holds one aim: one card per fifth of the
-run-up (hold fraction h ≥ 1/5, 2/5, … 5/5, §3). Changing aim resets it with h.
+run-up (hold fraction h ≥ 1/5, 2/5, … 5/5, §3). The meter measures hold against the earliest
+possible commit out of Neutral, so a rider who commits at once and holds to aim lock unlocks all
+five. Changing aim resets it with h.
 
 - The hit grows as x^y, where x is a fixed base and y is the value of the highest card
   unlocked. Held on a linear timer, each card is worth more than the last, and most of the
@@ -541,7 +547,9 @@ run-up (hold fraction h ≥ 1/5, 2/5, … 5/5, §3). Changing aim resets it with
 
 The suit's stat explodes at full strength when aimed at its compass home (§4 *Stances*) and at
 half on the two diagonals beside it. Aimed anywhere else, the flush adds nothing beyond its
-base stat; half steps share the tilt as on the compass. The suit is announced on declaration
+base stat; half steps share the tilt as on the compass. The flush's hit follows the same tilt:
+full at home, half on the diagonals beside it, none elsewhere. The explosion powers the suit's
+rule below. The suit is announced on declaration
 (*Unleash rules*).
 
 | Suit | Name | Home | Effect |
@@ -694,7 +702,7 @@ we take mechanics and code that fit the poker spirit.
 | --- | --- |
 | Hidden Shield | Replaced by hole cards; the secret is now whether your stance is loaded |
 | Supershield | Its job (hard Guard) is now ♦ Armor and hold |
-| Balance teeter roll | Replaced by deterministic Posture. Could return as an option (see Open questions) |
+| Balance teeter roll | Replaced by deterministic Posture |
 | Breaking and the mortal ladder | Deferred; not needed for v1 |
 | Spur and momentum | Deferred; hold is the only run-up currency in v1 |
 | One duel to unhorse | A hand is 4 passes; an unhorse on Passes 1–3 ends it, and otherwise the forced knockdown after the river decides |
@@ -754,12 +762,11 @@ whether a trick above the opponent wins overwhelmingly.
 ### Open questions
 
 - Do tricks meet their targets? A trick above the opponent, played to its design, wins
-  overwhelmingly (the number is Trey's, not yet set). A higher trick nearly always beats a
+  overwhelmingly: at least 95%, whether unleashed, answering or auto-fired. A higher trick nearly always beats a
   lower one across rungs. The sim reports how often a held trick is drawn out, and splits
   trick win rates by whether the trick was played to its design.
-- Should the unhorse be a visible-odds roll at low Posture (the Turbo Jousting teeter)
-  instead of a hard 0?
-- Is an 8 s pass long enough to read the reveal, decide, and react to a hold?
+- Playtest: is an 8 s pass long enough to read the reveal, decide, and react to a hold? The sim
+  can't answer this; the first playable build does.
 - Prefold cost: what does prefolding in the yard cost (units, time, or both)?
 - Preflop redraw for a price: a second hand-selection tool alongside the prefold. What can be
   redrawn, and what does it cost?
@@ -768,7 +775,6 @@ whether a trick above the opponent wins overwhelmingly.
   never purchasable currency, until checked.
 - Ghost betting: which public and private inputs a ghost's betting habits condition on.
 - Should spur and momentum return as a second run-up currency?
-- How slow-motion time counts toward the hold fraction (§3, §8).
 - A hit's size is public: can one hit identify a hand's rank at display precision?
 
 ### Tuning parameters (sim config)
