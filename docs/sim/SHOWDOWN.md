@@ -420,6 +420,8 @@ charge). A costs nothing; 3 costs a pass.
 
 ## Recommendation
 
+*Superseded by 0053 and 0054 (see* Trey's answers in a second chat*); kept for the record.*
+
 **The hybrid C, warded, with candidate A as its presentation**: the hand strikes on the river with
 the lance, scaled by the tier landed; if nobody falls, a smaller bonus lands and the lower rider
 falls; and the standing is shown at the river reveal so the last five seconds are fought in the
@@ -492,11 +494,11 @@ above, Trey hasn't said yet which ones stand.
   one; after it each rider's hand bonus lands and the lower Posture falls. Today (§2 win condition
   3) a rider lanced to 0 on Pass 4 loses before the bonus counts.
 - **The flip target is 55–65%.** "55-65% is appropriate."
-- **Asked, not yet answered:** a ramp, the bonus "rolling up from baseline starting at the turn and
-  maximizing at the river", for less jank from round to round. See the numbers below.
+- **Asked about:** a ramp, the bonus "rolling up from baseline starting at the turn and
+  maximizing at the river", for less jank from round to round. See the numbers below. Not adopted.
 
-In the sim, the river rule is `switches.riverRule = knockdown`. It is off by default until GAME_SPEC
-says it. The ramp is `proto.turnCushion`: on Pass 3 a rider is unhorsed only below
+In the sim, the river rule is `switches.riverRule = knockdown`, the default since 0053. The ramp is
+`proto.turnCushion`, off: on Pass 3 a rider is unhorsed only below
 −(cushion × bonus × turn category), which is hidden (the bar doesn't change), so it leaks nothing
 until it saves someone.
 
@@ -514,9 +516,11 @@ throughout.
 | River rule, Posture 80, 1.0 / 1.0 / 1.25 / 1.25 | 1.5% | 16.4% | 82% | 70.9% | 63.5% | 93.0% | 99.7% |
 | **same, turn cushion ½** | **1.5%** | **12.3%** | **86%** | **71.8%** | **62.8%** | **98.9%** | **99.6%** |
 
-To reproduce a row: `lune run tools/sim.luau --set switches.riverRule=knockdown --set
-spec.postureStart=80 --set spec.street.1=1.0 --set spec.street.2=1.0 --set spec.street.3=1.25 --set
-proto.turnCushion=0.5`. `--set` now indexes lists.
+These rows include the last-pass bonus (×1.3 on Pass 4), which 0054 then removed. At 0054's
+values (no last-pass bonus) the third row reads gap 1 73.8%, flip 60.4%, unleash 95.8%. To
+reproduce a row today: `lune run tools/sim.luau --set spec.street.4=1.625 --set spec.street.3=1.25
+--set proto.turnCushion=0.5` (Posture 80, flat early streets and the river rule are the defaults).
+`--set` indexes lists.
 
 - **The river rule is good for tricks.** A held trick that auto-fires on Pass 4 can't be lanced
   down on the same contact any more: 93.7% → 99.7%.
@@ -526,20 +530,22 @@ proto.turnCushion=0.5`. `--set` now indexes lists.
 - **Every candidate lands inside 55–65%** with the bonus left at 20. Whether Posture below 0 counts
   is worth about 6 points of flip on its own.
 
-**Open under these answers** (the spec is silent):
+**How these were answered** (all 2026-09-30, recorded in 0053 and 0054):
 
-1. **The ramp:** none, or the hidden turn cushion at ½? A visible one (the bonus added to the bar
-   at the turn reveal) is the rejected D above: it leaks the category.
-2. **Below 0 at the knockdown:** does a rider lanced to −30 on Pass 4 count −30, or 0?
-3. **Twin Favor (QQ) and Unbroken (♥ flush) on Pass 4:** both act on "unhorsed", and under the
-   river rule no one is unhorsed on Pass 4's contact. The sim still applies them there.
-4. **The numbers** (§11): Posture start and street multipliers, from the rows above.
-5. **Win condition 2** (both unhorsed on one contact) no longer happens on Pass 4.
-6. **How this meets the recommendation above.** The hybrid's river blow can still ride with the
-   river rule, as damage into the knockdown rather than an unhorse. But the ending knob it was
-   built for (half the hands ending by the lance) is not the target Trey gave here.
+1. **The ramp:** not adopted. A visible ramp leaks the category on the turn; the hidden cushion
+   buys back unleashed-trick wins but adds a rule a beginner can't see.
+2. **Below 0 at the knockdown:** counts. Trey: "below 0, because it decides using the final pass".
+3. **Twin Favor and Unbroken:** reworded to act on every pass without "unhorse" (0053).
+4. **The numbers:** Posture 80, 1.0 / 1.0 / 1.0 / 1.25, the last-pass bonus removed, the bonus
+   kept at 20 (0054).
+5. **Win condition 2** now reads "Passes 1–3".
+6. **The recommendation above** (the hybrid, and the charge as runner-up) is superseded: the
+   charge is a pass after the river, which Trey ruled out, and the hybrid was built for half the
+   hands ending by the lance, which is not Trey's target.
 
 ### What Trey would decide
+
+*Superseded by 0053 and 0054; kept for the record.*
 
 1. **The target.** Is about half of hands ending at the knockdown right? The sim's riders never
    Yield, so the real share will be lower than any number here.

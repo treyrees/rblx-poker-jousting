@@ -32,9 +32,9 @@ doesn't rewrite it.
 
 ## Verifying
 
-No automated checks exist yet. GAME_SPEC §9 names the Turbo Jousting headless Lune sim and test
-harness as the starting point for this game's; the checks arrive with it. Until then, re-read your
-diff against GAME_SPEC and check every link you add.
+Run the sim's tests (`lune run tests/run.luau`; see *Commands* in AGENTS.md) on any change to
+`sim/`, `tools/` or `tests/`. There is no CI yet. Re-read your diff against GAME_SPEC and check
+every link you add.
 
 ## Session practice
 

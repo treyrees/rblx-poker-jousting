@@ -4,9 +4,8 @@ Sep 30, 2026. Checked against `main` at 08e3ff3 (GAME_SPEC through decision 0048
 up to date with Trey's calls 0049–0052: the river flips on the final pass, the showdown adds a
 hand bonus to Posture, Pass 4 carries a ×1.3 last-pass bonus (PR #10), and the hold floor is 0.25.
 Then 0053–0054: Pass 4 always goes to the knockdown, Posture starts at 80, the street multipliers
-are 1.0 / 1.0 / 1.0 / 1.25, and the last-pass bonus is gone. The trick-sizing derivation below
-still uses the old multipliers (Pass 2 ×0.75, Pass 4 ×1.625); the new ones loosen both binding
-cases, and `tests/Tricks.spec.luau` checks the targets at the current values.
+are 1.0 / 1.0 / 1.0 / 1.25, and the last-pass bonus is gone. §2's trick sizing and the §4
+damage checks below use the new values.
 
 This report proposes; it decides nothing. Every value below marked **sim config** lives in the
 sim's config file and nowhere else. It is never written into GAME_SPEC. Every open question stays
@@ -159,35 +158,36 @@ On a ♣-only stance (Up), the 90th-percentile gap across all deals is ×1.21 at
 
 - Let **P\*** be the most one hit must clear: max Posture, plus Guard armor at full hold, plus
   the ♥ cut.
-- At the starting values, P\* is about 170 (Posture 148, armor 13, cut 8). This takes a
+- At the starting values, P\* is about 149 (Posture 128, armor 13, cut 8). This takes a
   generous bound of 16 ♥ points, the full house passive included.
 - No trick exists before the flop, which lands on Pass 2 (0049). The hit is street-scaled, so a
-  Pass 2 unhorse needs `0.75 × hit ≥ P*`: a hit of about 225 or more. This is feasible at any
-  value; it's just a big number.
+  Pass 2 unhorse needs `1.0 × hit ≥ P*`: a hit of about 150 or more (0054).
 
 ### Each rung's ward stops every lower rung's hit
 
 Wards are flat and hits are street-scaled. So the binding cases are:
 
-- a ward against the lower hit on Pass 4, at ×1.625 (street ×1.25 with the ×1.3 last-pass bonus);
-- the higher hit against the lower ward on Pass 2, at ×0.75.
+- a ward against the lower hit on Pass 4, at ×1.25;
+- the higher hit against the lower ward on Pass 2, at ×1.0.
 
 The minimal chain, with H for a rung's hit and W for its ward:
 
-- Straight: `k·x^5 × 0.75 ≥ P*` (the wheel, at full meter).
-- Flush: `W_F ≥ 1.625 · k·x^14` (it must stop the ace-high straight at full meter, per 0032), and
-  `H_F ≥ P*/0.75`.
-- Full house: `H_FH ≥ (P* + W_F)/0.75`, and `W_FH ≥ 1.625 · max(H_F, H_S)`.
-- Quads: `H_Q ≥ (P* + W_FH)/0.75`, and `W_Q ≥ 1.625 · H_FH`.
-- Straight flush: `H_SF ≥ (P* + W_Q)/0.75` (it beats the quads ward, per 0033).
+- Straight: `k·x^5 ≥ P*` (the wheel, at full meter).
+- Flush: `W_F ≥ 1.25 · k·x^14` (it must stop the ace-high straight at full meter, per 0032), and
+  `H_F ≥ P*`.
+- Full house: `H_FH ≥ P* + W_F`, and `W_FH ≥ 1.25 · max(H_F, H_S)`.
+- Quads: `H_Q ≥ P* + W_FH`, and `W_Q ≥ 1.25 · H_FH`.
+- Straight flush: `H_SF ≥ P* + W_Q` (it beats the quads ward, per 0033).
 
 | x | Wheel full | A-high full | x^4 (first card to fifth) | W_F | H_FH | H_Q | H_SF |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1.3 | 225 | 2.4k | ×2.9 | 3.9k | 5.4k | 5.4k | 12k |
-| 2.0 | 225 | 115k | ×16 | 187k | 250k | 250k | 542k |
+| 1.3 | 150 | 1.6k | ×2.9 | 2.0k | 2.1k | 2.1k | 2.8k |
+| 2.0 | 150 | 76k | ×16 | 95k | 96k | 96k | 120k |
 
-- **Every trick target can hold at once.** Each rung needs about ×2.2 over the one below; that
-  is the explosive growth §6 asks for.
+- **Every trick target can hold at once.** These are minimums. With the flatter multipliers
+  (0054) each rung needs only about ×1.3 over the one below; the starting hits and wards
+  (`sim/Config.luau`, sized under the old ×0.75 and ×1.625) clear them with room, and the
+  explosive growth §6 asks for is a choice of size, not a requirement.
 - **There is one tension, inside the straight.** 0032's "most of the power arrives toward the end
   of the hold" wants a large x: x^4 is the growth from the first card to the fifth. But y is the
   card's rank, so the wheel-to-ace-high spread is x^9, and every ward above it inflates by the
@@ -196,7 +196,7 @@ The minimal chain, with H for a rung's hit and W for its ward:
   - With x = 2, the fifth is ×16, but the ace-high straight is ×512 the wheel.
   - The spec leaves "how y maps to hit size" to the sim, so this is tunable, not blocking.
   - The sim starts at x = 1.3 and sweeps 1.15 and 2.
-- **The straight flush beats the quads ward** as long as `H_SF ≥ (P* + W_Q)/0.75`. Its hit also needs
+- **The straight flush beats the quads ward** as long as `H_SF ≥ P* + W_Q`. Its hit also needs
   both conditions met (0033): the meter and the home lean, each played in full.
 
 ### The §4 damage checks

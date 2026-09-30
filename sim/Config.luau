@@ -67,8 +67,9 @@ function Config.defaults()
 			earliestCommit = 0.3, -- the earliest a rider leaves Neutral (s)
 			readTime = 7.4, -- when a read's late switch lands (s)
 			-- Trick hits and wards per rung (SANITY_CHECK §2: a chain that meets §6). A hit must
-			-- unhorse from the earliest pass a trick can fire on (Pass 2, ×0.75); a ward must stop
-			-- lower hits on Pass 4 (×1.25 × the last-pass bonus).
+			-- unhorse from the earliest pass a trick can fire on (Pass 2); a ward must stop lower hits
+			-- on Pass 4. Sized under the multipliers before 0054 (×0.75 and ×1.625), so they clear
+			-- today's (×1.0 and ×1.25) with room.
 			-- The straight's hit is the meter: straightK · straightX ^ y.
 			straightK = 100,
 			straightX = 1.3,
@@ -123,7 +124,7 @@ function Config.defaults()
 			riverTier = { crit = 1.5, normal = 1.0, block = 0.25, weak = 0.25 }, -- riverHit: by the tier you land
 			riverKnockdown = "posture", -- riverHit: posture | bonus — what decides if no one falls
 			riverVsTrick = "lands", -- riverHit: lands | warded — a rider firing a trick takes the blow, or not
-			chargeStreet = 1.625, -- charge: the fifth contact's multiplier (Pass 4's is 1.25 × 1.3)
+			chargeStreet = 1.625, -- charge: the fifth contact's multiplier (Pass 4's before 0054: 1.25 × 1.3)
 			chargeBonus = "posture", -- charge: posture (bonus lands before it) | none | hit (as riverHit, on the charge)
 			chargeCardsUp = "yes", -- charge: yes | no — readers see the opponent's exact stats
 			-- The turn cushion (Trey's ramp idea, chat 2026-09-30): on Pass 3 a rider is unhorsed only below
