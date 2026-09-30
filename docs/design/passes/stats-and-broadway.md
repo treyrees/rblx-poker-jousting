@@ -65,15 +65,25 @@ expressed in 4 wildly different ways - just an identity/common denominator."
 - **The Jack's signature is the Feint** (Trey chose it): leave your aim and return within a short
   window without losing hold.
 
-## 3. Single cards: first draft, proposed, not yet reviewed
+## 3. Broadway effects removed (Trey's call, Sep 30)
 
-One rule per rank; the suit picks the stat it acts through.
+Two drafts were rejected. The first was a 4×4 grid (one effect per rank per suit): "too many
+effects added". The second was suit-blind: one effect per rank sized by count, plus a pair unlock
+(the Feint, the Favor, the last word, crits ×1.5). Trey on the second: "im no longer confident
+these broadway card effects are justified in the grand scheme. too much going on to make them cool
+without them straight up revealing your cards".
 
-| Rank | Common rule | ♣ Strength | ♠ Accuracy | ♦ Armor | ♥ Posture |
-| --- | --- | --- | --- | --- | --- |
-| J, the Feint | Feint; the suit pays off when the opponent bites (moves during your feint) | They're Battered at this contact | Extra time past the lock | Guard at full armor whatever your hold | A buffer for this contact |
-| Q, the Favor | A gift at the start of Passes 2–4 | Your hits Batter this pass unaimed | Your crits need no hold this pass | Armor on your whole dial this pass | Restore Posture |
-| K, the Decree | Once per hand, announced, for one pass | Ban a direction the opponent can't aim at | The opponent locks earlier | Name a direction that is Guard for you | The opponent can't heal; you can't fall below 1 |
-| A, the Perfect Moment | The suit's best moment doubles | A hit at full hold deals double | A crit on the CB row deals double | A clean block deals back double what it stopped | Once per hand, heal back all a contact took |
+The reason: any visible face effect is a tell with one cause (a heal at the start of a pass means
+a Queen), so it can't meet §7's rule that every tell has at least two plausible causes.
 
-Next: Trey's review of the grid, then pairs and trips, then the tricks.
+Trey chose: **no broadway effects.** J, Q, K and A are the top of the rank curve and add their
+rank points to their suit's stat like any card (0036, 0039).
+
+- §5's single, pocket-pair and board effects all go: J colors, Q restore, K lock, A crit base, JJ
+  Masquerade, QQ Twin Favor, KK High Court, AA Champion. That supersedes 0055 and 0056.
+- Board faces keep their arena emblems (§8) as presentation only.
+- Pairs and trips need no design of their own: they are the numeric multipliers (§4).
+- Faces could return in v2 as the favorite-rank class buffs (§10); that is not decided here.
+- Trey's earlier choice of the Feint as the Jack's signature lapses with the effects.
+
+## 4. Tricks built on the stats: next
