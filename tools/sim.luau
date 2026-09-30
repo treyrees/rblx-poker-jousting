@@ -334,6 +334,8 @@ local SWEEPS: { { any } } = {
 	{ "switches.twinFavorVsTrick=trickOverrides", { { "switches.twinFavorVsTrick", "trickOverrides" } } },
 	{ "switches.aaEdge=both", { { "switches.aaEdge", "both" } } },
 	{ "switches.aaEdge=direction", { { "switches.aaEdge", "direction" } } },
+	{ "proposed.passOrder=riverLast", { { "proposed.passOrder", "riverLast" } } },
+	{ "riverLast + finalPassBonus=1.3", { { "proposed.passOrder", "riverLast" }, { "proposed.finalPassBonus", "1.3" } } },
 }
 
 local function sweepConfig(extra: { any }): any

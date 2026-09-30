@@ -230,9 +230,14 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 		switches = 0,
 	}
 
+	-- Community cards known once this pass's reveal has landed (proposed.passOrder).
+	local riverLast = cfg.proposed.passOrder == "riverLast"
+	if not riverLast and cfg.proposed.passOrder ~= "spec" then
+		error("unknown passOrder " .. tostring(cfg.proposed.passOrder))
+	end
+	local SHOWN = if riverLast then { [0] = 0, 0, 3, 4, 5 } else { [0] = 0, 3, 4, 5, 5 }
 	local function revealed(pass: number): { number }
-		local n = if pass == 1 then 3 elseif pass == 2 then 4 else 5
-		return table.move(board, 1, n, 1, {})
+		return table.move(board, 1, SHOWN[pass], 1, {})
 	end
 
 	local function finish(winner: number, how: string, pass: number)
@@ -285,7 +290,7 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 			break
 		end
 		local newBoard = revealed(pass)
-		local hasReveal = pass <= 3
+		local hasReveal = SHOWN[pass] > SHOWN[pass - 1]
 		local street = spec.street[pass] * (if pass == 4 then cfg.proposed.finalPassBonus else 1)
 
 		-- Start of pass: queen restores (Passes 2–4; §5), capped at max Posture.
@@ -335,7 +340,7 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 				r.maxPosture = newMax
 				-- A trick that lands on this reveal: unleash now, or hold (aggression).
 				if r.status.owns and not r.spent and not before.owns then
-					r.plan = rng() < r.p.aggression
+					r.plan = pass == 4 or rng() < r.p.aggression -- Pass 4: unused tricks auto-fire
 					local rung = r.status.ownRung
 					if r.plan and rng() < r.p.design and (rung == 1 or rung == 2 or rung == 5) then
 						r.lockAim = true

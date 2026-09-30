@@ -98,8 +98,13 @@ function Config.defaults()
 		-- finalPassBonus: a modest extra multiplier on all Posture damage in Pass 4, on top of its
 		-- street multiplier (Trey, chat, 2026-09-30: "a modest last-round damage bonus"). 1.0 is
 		-- GAME_SPEC as written. The size is for Trey to pick from `--report final`.
+		-- passOrder: which pass has no card reveal (Trey, chat, 2026-09-30: "First pass (river on
+		-- final)"). "spec" is GAME_SPEC §2 as written: flop, turn, river on Passes 1–3 and a
+		-- full-information Pass 4. "riverLast": Pass 1 rides on hole cards only, and the flop, turn
+		-- and river flip mid-charge on Passes 2–4.
 		proposed = {
 			finalPassBonus = 1.0,
+			passOrder = "spec",
 		},
 
 		-- ── SWITCHES: open questions and gaps, each with 2–3 readings ─────────────────────────

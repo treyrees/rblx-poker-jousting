@@ -191,6 +191,47 @@ going into Pass 4 wins the hand, split by the size of their lead.
   - ×1.5 and above start to make "whoever reads the last pass" a bigger factor. That shows in the
     falling hold on a clear lead: 86% → 78% at ×2.
 
+## Proposed: the river flips on the final pass
+
+Trey, in chat on Sep 30, 2026, answering "Which pass should have no card reveal?": "First pass
+(river on final)". The setting is `proposed.passOrder = "riverLast"`: Pass 1 rides on hole cards
+only, and the flop, turn and river flip mid-charge on Passes 2–4. GAME_SPEC §2 and §8 still say
+the other order (river on Pass 3, then a full-information Pass 4). All runs are 100k hands,
+average vs average unless noted.
+
+| Metric | Spec order | River on the final pass |
+| --- | --- | --- |
+| Knockoffs by pass: P1 / P2 / P3 / P4 | 0.7 / 2.9 / 7.3 / 16.1% | 0.0 / 0.7 / 3.3 / 20.6% |
+| Forced fall at the end | 73.0% | 75.4% |
+| Better hand wins, gap 1 / 2 / 3 | 69.6 / 82.6 / 89.8% | 70.4 / 84.6 / 93.1% |
+| Skilled beats novice holding the worse hand | 71.4% | 70.1% |
+| Trick above the opponent: unleashed / auto-fired | 99.1% / 95.1% | 98.7% / 95.1% |
+| Tricks that fire by auto-fire (vs unleash) | 38% | 78% |
+| Held above, then drawn out | 3.8% | 9.5% |
+| Straights fired at full meter | 38% | 15% |
+| Higher trick wins across rungs | 99.6% | 99.4% |
+| Reads that switch late (hold floor 0.4) | 73.8% | 73.4% |
+
+What changes:
+
+- **Knockoffs gather on the final pass,** where the river lands. Pass 1 has no knockoffs, since
+  there are no tricks before the flop.
+- **Most tricks now fire on the final pass,** because most tricks first appear on the river.
+- **Holding a trick is riskier:** the opponent's river can draw level (a clash) more often.
+- **Straights completed on the river rarely reach a full meter.** The rider must already have been
+  holding from the start of the final charge. This ties into Decision 3 (the straight's meter).
+- **The numeric game and the hold floor barely change.**
+
+With the last-pass bonus under this order (`--report final`):
+
+| Bonus | Knockoff on the final pass | Forced fall | Leader into the final pass holds on: lead under 20 / 20+ |
+| --- | --- | --- | --- |
+| 1.0 | 20.6% | 75.4% | 62.4% / 83.9% |
+| 1.2 | 24.9% | 71.0% | 61.7% / 81.6% |
+| 1.3 | 27.5% | 68.5% | 61.5% / 80.7% |
+| 1.5 | 32.8% | 63.2% | 61.3% / 79.0% |
+| 2.0 | 47.5% | 48.5% | 61.7% / 76.1% |
+
 ## Proposals and questions for Trey
 
 Nothing here is applied. §11 and GAME_SPEC are unchanged.
