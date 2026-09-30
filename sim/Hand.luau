@@ -698,7 +698,15 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 		local s = {}
 		for i, r in riders do
 			local c = e[i].category
-			local p = if cfg.switches.riverFloor == "zero" then math.max(0, r.posture) else r.posture
+			local p = r.posture
+			local floor = cfg.switches.riverFloor
+			if floor == "zero" or (floor == "before" and p < 0) then
+				p = math.max(0, p)
+			end
+			-- before: both lanced on Pass 4, so Posture before the pass stands in (win condition 2's reading).
+			if floor == "before" and rec.lanced[1] and rec.lanced[2] and rec.beforeFinal then
+				p = rec.beforeFinal[i]
+			end
 			if mode == "bonus" or (mode == "riverHit" and proto.riverKnockdown == "bonus") then
 				s[i] = p + handBonus(c)
 			elseif mode == "mult" then

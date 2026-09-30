@@ -115,7 +115,7 @@ function Config.defaults()
 			-- a rider at 0 falls on contact and the bonus never lands. "knockdown": no one is unhorsed on
 			-- Pass 4's contact; the hand's showdown effect always lands, then the lower rider falls.
 			riverRule = "unhorse", -- unhorse | knockdown
-			riverFloor = "below", -- knockdown: below | zero — Posture under 0 counts at the knockdown, or as 0 (gap)
+			riverFloor = "below", -- knockdown: below | zero | before — under 0 counts, counts as 0, or (both lanced) Posture before Pass 4 (gap)
 		},
 
 		-- ── PROTO: values the showdown prototypes use (SHOWDOWN.md). None is a §11 value. ─────
