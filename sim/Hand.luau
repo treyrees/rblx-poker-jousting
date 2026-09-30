@@ -68,7 +68,8 @@ export type Record = {
 	drawnOut: { boolean },
 	units: { number },
 	beforeFinal: { number }?, -- Posture just before Pass 4's contact, if the hand got there
-	posture: { number },
+	posture: { number }, -- Posture after the last contact (at a showdown, may be 0 or below: 0053)
+	lanced: { boolean }, -- taken to 0 or below on Pass 4's contact, then left to the knockdown (0053)
 	reads: number, -- reads taken
 	switches: number, -- reads that moved the aim (a late switch rather than staying on a held aim)
 }
@@ -226,6 +227,7 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 		drawnOut = { false, false },
 		units = { 0, 0 },
 		posture = { 0, 0 },
+		lanced = { false, false },
 		reads = 0,
 		switches = 0,
 	}
@@ -597,7 +599,10 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 			r.charge += made.chargeGain
 		end
 		local down1, down2 = riders[1].posture <= 0, riders[2].posture <= 0
-		if down1 or down2 then
+		-- Pass 4 unhorses no one on contact: the hand bonus always lands, then the knockdown (0053).
+		if pass == 4 then
+			rec.lanced = { down1, down2 }
+		elseif down1 or down2 then
 			local w
 			if down1 and down2 then
 				w = if before[1] > before[2] then 1 elseif before[2] > before[1] then 2 else 0
@@ -621,13 +626,14 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 		rec.drawnOut[i] = r.drawnOut
 		rec.heldAbove[i] = r.heldAbove
 	end
-	-- Showdown knockdown (§2 win condition 3, §4 *Tracks*, 0050): each rider's hand bonus is added
-	-- to their Posture and the lower rider falls; an exact tie goes to the poker hands (§2 win
-	-- condition 4), then a split.
+	-- Showdown knockdown (§2 win condition 3, §4 *Tracks*, 0050, 0053): after Pass 4's contact each
+	-- rider's hand bonus is added to their Posture and the lower rider falls, even one the lance
+	-- took to 0 or below; an exact tie goes to the poker hands (§2 win condition 4), then a split.
 	if rec.finish == "showdown" then
 		local s = {}
 		for i, r in riders do
-			s[i] = r.posture + spec.showdownBonus * e[i].category
+			local p = if cfg.switches.riverFloor == "zero" then math.max(0, r.posture) else r.posture
+			s[i] = p + spec.showdownBonus * e[i].category
 		end
 		local w = 0
 		if s[1] ~= s[2] then

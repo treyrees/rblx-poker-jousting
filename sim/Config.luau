@@ -102,14 +102,19 @@ function Config.defaults()
 			meterThreshold = "reachable", -- reachable | strict                  (c4)
 			twinFavorVsTrick = "negates", -- negates | trickOverrides            (C1)
 			aaEdge = "one", -- one | both | direction                            (C2)
+			riverFloor = "below", -- below | zero: Posture under 0 after Pass 4 counts at the knockdown (0053 gap)
 		},
 	}
 end
 
 -- Override one value by dotted path. Numbers parse as numbers, everything else stays a string.
+-- A numeric key indexes a list: spec.street.3 is Pass 3's street multiplier.
 function Config.set(cfg: any, path: string, raw: string)
 	local node = cfg
-	local keys = string.split(path, ".")
+	local keys: { any } = string.split(path, ".")
+	for i, k in keys do
+		keys[i] = tonumber(k) or k
+	end
 	for i = 1, #keys - 1 do
 		node = node[keys[i]]
 		if type(node) ~= "table" then
