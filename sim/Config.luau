@@ -119,6 +119,7 @@ function Config.defaults()
 			riverPerStep = 20, -- riverHit: Posture per step, before the tier factor
 			riverTier = { crit = 1.5, normal = 1.0, block = 0.25, weak = 0.25 }, -- riverHit: by the tier you land
 			riverKnockdown = "posture", -- riverHit: posture | bonus — what decides if no one falls
+			riverVsTrick = "lands", -- riverHit: lands | warded — a rider firing a trick takes the blow, or not
 			chargeStreet = 1.625, -- charge: the fifth contact's multiplier (Pass 4's is 1.25 × 1.3)
 			chargeBonus = "posture", -- charge: posture (bonus lands before it) | none | hit (as riverHit, on the charge)
 			chargeCardsUp = "yes", -- charge: yes | no — readers see the opponent's exact stats

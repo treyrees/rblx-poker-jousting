@@ -10,7 +10,8 @@
 --   lune run tools/sim.luau --set sim.lean=2 --set spec.showdownBonus=10
 --   lune run tools/sim.luau --smoke                  -- 5k hands: checks it runs; rates not citable
 --
--- Options: --hands N, --seed S, --shard i/n (sweeps and proto: run every n-th row, for parallel runs), --set path=value (repeatable; paths as in sim/Config.luau),
+-- Options: --hands N, --seed S, --shard i/n (sweeps and proto: run every n-th row, for parallel runs),
+-- --only text (sweeps and proto: only rows whose label contains it), --set path=value (repeatable; paths as in sim/Config.luau),
 -- --p1 / --p2 rider profile for the baseline report (default average vs average).
 -- Unknown arguments are an error, so a typo never prints a confident report for the wrong run.
 --
@@ -27,6 +28,7 @@ local hands, seed, report = 100000, 20260930, "baseline"
 local sets: { { string } } = {}
 local p1name, p2name = "average", "average"
 local shard, shards = 1, 1
+local only: string? = nil
 do
 	local args = process.args
 	local i = 1
@@ -54,6 +56,9 @@ do
 			local i1, n1 = string.match(args[i + 1] or "", "^(%d+)/(%d+)$")
 			assert(i1 and n1, "--shard wants i/n")
 			shard, shards = tonumber(i1) :: number, tonumber(n1) :: number
+			i += 2
+		elseif a == "--only" then
+			only = args[i + 1]
 			i += 2
 		elseif a == "--set" then
 			local kv = args[i + 1] or ""
@@ -408,6 +413,23 @@ local SWEEPS: { { any } } = {
 	{ "switches.aaEdge=direction", { { "switches.aaEdge", "direction" } } },
 }
 
+-- The rows of a sweep this process runs: --only filters by label, then --shard picks every n-th.
+local function selectRows(rows: { { any } }): { { any } }
+	local picked = {}
+	for _, r in rows do
+		if only == nil or string.find(r[1], only :: string, 1, true) then
+			table.insert(picked, r)
+		end
+	end
+	local out = {}
+	for idx, r in picked do
+		if (idx - 1) % shards == shard - 1 then
+			table.insert(out, r)
+		end
+	end
+	return out
+end
+
 local function sweepConfig(extra: { any }): any
 	local cfg = baseConfig()
 	for _, kv in extra do
@@ -431,10 +453,7 @@ elseif report == "matchups" then
 elseif report == "sweeps" then
 	print(string.format("%d hands per run; mirror = average vs average; flip = skilled (seat 1) wins with the worse category vs novice", hands))
 	print(ROW_HEAD)
-	for idx, sw in SWEEPS do
-		if (idx - 1) % shards ~= shard - 1 then
-			continue
-		end
+	for _, sw in selectRows(SWEEPS) do
 		local cfg = sweepConfig(sw[2])
 		local t = run(cfg, cfg.riders.average, cfg.riders.average, hands, seed)
 		local m = run(cfg, cfg.riders.skilled, cfg.riders.novice, hands, seed + 1)
@@ -513,6 +532,15 @@ elseif report == "proto" then
 		{ "riverHit 20 + bonus 10 knockdown", { { "switches.showdown", "riverHit" }, { "proto.riverKnockdown", "bonus" }, { "spec.showdownBonus", "10" } } },
 		{ "riverHit 10 + bonus 10 knockdown", { { "switches.showdown", "riverHit" }, { "proto.riverPerStep", "10" }, { "proto.riverKnockdown", "bonus" }, { "spec.showdownBonus", "10" } } },
 		{ "riverHit 20, Posture start 70", { { "switches.showdown", "riverHit" }, { "spec.postureStart", "70" } } },
+		{ "riverHit 10, warded", { { "switches.showdown", "riverHit" }, { "proto.riverPerStep", "10" }, { "proto.riverVsTrick", "warded" } } },
+		{ "riverHit 15, warded", { { "switches.showdown", "riverHit" }, { "proto.riverPerStep", "15" }, { "proto.riverVsTrick", "warded" } } },
+		{ "riverHit 20, warded", { { "switches.showdown", "riverHit" }, { "proto.riverVsTrick", "warded" } } },
+		{ "riverHit 15, warded + bonus 10 knockdown", { { "switches.showdown", "riverHit" }, { "proto.riverPerStep", "15" }, { "proto.riverVsTrick", "warded" }, { "proto.riverKnockdown", "bonus" }, { "spec.showdownBonus", "10" } } },
+		{ "riverHit 20, warded + bonus 10 knockdown", { { "switches.showdown", "riverHit" }, { "proto.riverVsTrick", "warded" }, { "proto.riverKnockdown", "bonus" }, { "spec.showdownBonus", "10" } } },
+		{ "riverHit 10, warded + bonus 10 knockdown", { { "switches.showdown", "riverHit" }, { "proto.riverPerStep", "10" }, { "proto.riverVsTrick", "warded" }, { "proto.riverKnockdown", "bonus" }, { "spec.showdownBonus", "10" } } },
+		{ "riverHit 15, warded + bonus 15 knockdown", { { "switches.showdown", "riverHit" }, { "proto.riverPerStep", "15" }, { "proto.riverVsTrick", "warded" }, { "proto.riverKnockdown", "bonus" }, { "spec.showdownBonus", "15" } } },
+		{ "riverHit 15, warded + bonus 20 knockdown", { { "switches.showdown", "riverHit" }, { "proto.riverPerStep", "15" }, { "proto.riverVsTrick", "warded" }, { "proto.riverKnockdown", "bonus" }, { "spec.showdownBonus", "20" } } },
+		{ "riverHit 20 warded, flat tier + bonus 10", { { "switches.showdown", "riverHit" }, { "proto.riverVsTrick", "warded" }, { "proto.riverTier.crit", "1" }, { "proto.riverTier.block", "1" }, { "proto.riverTier.weak", "1" }, { "proto.riverKnockdown", "bonus" }, { "spec.showdownBonus", "10" } } },
 		{ "charge: bonus up, cards up, ×1.625", { { "switches.showdown", "charge" } } },
 		{ "charge: bonus up, cards down", { { "switches.showdown", "charge" }, { "proto.chargeCardsUp", "no" } } },
 		{ "charge: no bonus, cards up", { { "switches.showdown", "charge" }, { "proto.chargeBonus", "none" } } },
@@ -523,10 +551,7 @@ elseif report == "proto" then
 	}
 	print(string.format("%d hands per run; mirror = average vs average; flip = skilled (seat 1) wins with the worse category vs novice", hands))
 	print("config                                   | sd %  | KO P2  P3   P4   P5  | gap1  gap2  gap3 | flip  | above/design above/off | over  | proj close clear | charge KO flip | passes")
-	for idx, sw in PROTO do
-		if (idx - 1) % shards ~= shard - 1 then
-			continue
-		end
+	for _, sw in selectRows(PROTO) do
 		local cfg = sweepConfig(sw[2])
 		local t = run(cfg, cfg.riders.average, cfg.riders.average, hands, seed)
 		local m = run(cfg, cfg.riders.skilled, cfg.riders.novice, hands, seed + 1)

@@ -619,7 +619,8 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 			local taken, made = byStrike[r.id], own[r.id]
 			local p = r.posture - taken.dmg - made.reflect
 			afterDial[r.id] = p
-			if blows then
+			-- riverVsTrick = warded: a rider firing a trick (unclashed) takes no hand blow.
+			if blows and not (proto.riverVsTrick == "warded" and F[r.id].trick ~= nil) then
 				local o = riders[3 - r.id]
 				p -= handBlow(o.status.eval.category, own[o.id])
 			end
