@@ -159,6 +159,38 @@ From `--report gap`: 100k river deals with no trick, taking each rider's most-lo
 | 1 | 1.43 / 1.54 / 1.65 / 1.71 | 1.09 / 1.17 / 1.23 | 22% / 11% / 6% |
 | 2 | 1.64 / 1.81 / 1.97 / 2.07 | 1.12 / 1.22 / 1.31 | 22% / 11% / 6% |
 
+## Proposed: a last-pass damage bonus
+
+Trey, in chat on Sep 30, 2026: "let's start implementing a modest last-round damage bonus". The
+bonus is `proposed.finalPassBonus` in `sim/Config.luau`: an extra multiplier on all Posture damage
+in Pass 4, on top of its ×1.25 street multiplier. At 1.0 it is GAME_SPEC as written. It is not in
+GAME_SPEC yet.
+
+From `--report final`, 100k hands per row. "Leader into P4 holds on" is how often the rider ahead
+going into Pass 4 wins the hand, split by the size of their lead.
+
+| Bonus | Knockoff on Pass 4 | Forced fall | Leader holds on, lead under 20 | Leader holds on, lead 20+ | Better hand wins, gap 1 | Skill flip |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1.0 (spec) | 16.1% | 73.0% | 63.7% | 86.0% | 69.6% | 71.2% |
+| 1.1 | 18.3% | 70.8% | 63.3% | 84.8% | 68.8% | 72.0% |
+| 1.2 | 20.7% | 68.5% | 63.0% | 83.6% | 68.0% | 72.8% |
+| 1.3 | 23.1% | 66.0% | 62.6% | 82.6% | 67.2% | 73.7% |
+| 1.5 | 28.5% | 60.7% | 62.4% | 80.7% | 65.7% | 75.4% |
+| 2.0 | 42.6% | 46.5% | 62.7% | 77.5% | 62.5% | 78.9% |
+
+- **The bonus mostly turns forced falls into real knockoffs.** It creates few new comebacks. The
+  rider who was going to fall anyway now falls to a lance.
+- **Earned leads survive.**
+  - A clear lead (20+ Posture) going into Pass 4 still holds 83–86% of the time up to ×1.2–1.3.
+  - Close races stay about as open as they are now.
+- **Cards matter slightly less and skill slightly more** as the bonus grows. The last pass is a
+  dial exchange, not a card comparison.
+- **Proposal: ×1.2–1.3.**
+  - Pass 4 knockoffs rise from 16% to 21–23% of hands.
+  - The clear-lead hold stays above 80%.
+  - ×1.5 and above start to make "whoever reads the last pass" a bigger factor. That shows in the
+    falling hold on a clear lead: 86% → 78% at ×2.
+
 ## Proposals and questions for Trey
 
 Nothing here is applied. §11 and GAME_SPEC are unchanged.

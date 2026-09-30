@@ -62,7 +62,7 @@ The headless sim (`sim/`, `tools/sim.luau`) and its tests run under [Lune](https
 
 - Tests: `lune run tests/run.luau`. Set `TESTKIT_QUIET=1` to print only failures.
 - Sim, baseline report (100k hands): `lune run tools/sim.luau`.
-- Other reports: `--report sweeps|matchups|floor|gap`.
+- Other reports: `--report sweeps|matchups|floor|gap|final`.
 - Override one config value: `--set path=value`, for example `--set switches.showdown=points`.
 - Quick check that it runs: `--smoke`.
 

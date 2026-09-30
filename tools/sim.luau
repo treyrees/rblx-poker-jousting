@@ -4,6 +4,7 @@
 --   lune run tools/sim.luau                          -- baseline report, 100k hands per run
 --   lune run tools/sim.luau --report sweeps          -- one row per sweep point (docs/sim/RESULTS.md)
 --   lune run tools/sim.luau --report gap             -- numeric hit gap by category (§4)
+--   lune run tools/sim.luau --report final           -- proposed last-pass damage bonus sweep
 --   lune run tools/sim.luau --set sim.lean=2 --set switches.showdown=points
 --   lune run tools/sim.luau --smoke                  -- 5k hands: checks it runs; rates not citable
 --
@@ -111,6 +112,16 @@ local function run(cfg: any, prof1: any, prof2: any, n: number, s: number): Tall
 		end
 		inc(t, "win." .. r.winner)
 		inc(t, "units1", r.units[1])
+		-- The last pass: does the rider ahead going into Pass 4 hold on, and by what lead?
+		local bf = r.beforeFinal
+		if bf and bf[1] ~= bf[2] then
+			local lead = math.abs(bf[1] - bf[2])
+			local band = if lead < 20 then "close" else "clear"
+			inc(t, "final." .. band)
+			if r.winner == (if bf[1] > bf[2] then 1 else 2) then
+				inc(t, "final." .. band .. ".held")
+			end
+		end
 		inc(t, "reads", r.reads)
 		inc(t, "switches", r.switches)
 		-- Showdown: how often the knockdown goes to the rider ahead on Posture, and to the better hand.
@@ -372,6 +383,20 @@ elseif report == "floor" then
 		local m = run(cfg, cfg.riders.average, cfg.riders.average, hands, seed + 2)
 		print(string.format("holdFloor %s: holder wins %s vs flicker | steady wins %s vs fidget | mirror reads that switch %s",
 			f, pct(t["win.1"], t.hands), pct(u["win.1"], u.hands), pct(m.switches, m.reads)))
+	end
+elseif report == "final" then
+	-- Proposed last-pass damage bonus (sim/Config.luau `proposed`): real knockoffs vs comebacks.
+	print("final pass bonus × Pass 4 damage | mirror = average vs average; flip = skilled wins with the worse category vs novice")
+	print("bonus | KO on P4 | forced fall | leader into P4 holds on: lead <20 / lead 20+ | gap1 better wins | flip")
+	for _, b in { "1.0", "1.1", "1.2", "1.3", "1.5", "2.0" } do
+		local cfg = baseConfig()
+		Config.set(cfg, "proposed.finalPassBonus", b)
+		local t = run(cfg, cfg.riders.average, cfg.riders.average, hands, seed)
+		local m = run(cfg, cfg.riders.skilled, cfg.riders.novice, hands, seed + 1)
+		print(string.format("%s   | %s   | %s      | %s / %s                     | %s          | %s", b,
+			pct(t["ko.pass4"], t.hands), pct(t["finish.showdown"], t.hands),
+			pct(t["final.close.held"], t["final.close"]), pct(t["final.clear.held"], t["final.clear"]),
+			pct(t["gap1.better"], t.gap1), pct(m["p1worse.win"], m.p1worse)))
 	end
 elseif report == "gap" then
 	-- §4: the gap between two riders' numeric hands on a hit, from random river deals.

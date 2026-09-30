@@ -94,6 +94,14 @@ function Config.defaults()
 			flicker = { read = 1.0, hold = 0.0, honesty = 0.5, aggression = 0.5, design = 0.5, yieldBelow = -1 },
 		},
 
+		-- ── PROPOSED: Trey's direction, not yet in GAME_SPEC ─────────────────────────────────
+		-- finalPassBonus: a modest extra multiplier on all Posture damage in Pass 4, on top of its
+		-- street multiplier (Trey, chat, 2026-09-30: "a modest last-round damage bonus"). 1.0 is
+		-- GAME_SPEC as written. The size is for Trey to pick from `--report final`.
+		proposed = {
+			finalPassBonus = 1.0,
+		},
+
 		-- ── SWITCHES: open questions and gaps, each with 2–3 readings ─────────────────────────
 		switches = {
 			showdown = "category", -- category | points | lexicographic        (§11 open)

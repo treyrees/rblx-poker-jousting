@@ -67,6 +67,7 @@ export type Record = {
 	heldAbove: { boolean }, -- held a trick past a decision while above the opponent
 	drawnOut: { boolean },
 	units: { number },
+	beforeFinal: { number }?, -- Posture just before Pass 4's contact, if the hand got there
 	posture: { number },
 	reads: number, -- reads taken
 	switches: number, -- reads that moved the aim (a late switch rather than staying on a held aim)
@@ -285,7 +286,7 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 		end
 		local newBoard = revealed(pass)
 		local hasReveal = pass <= 3
-		local street = spec.street[pass]
+		local street = spec.street[pass] * (if pass == 4 then cfg.proposed.finalPassBonus else 1)
 
 		-- Start of pass: queen restores (Passes 2–4; §5), capped at max Posture.
 		if pass >= 2 then
@@ -562,6 +563,9 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 		local s12 = Contact.strike(F[1], F[2], arena, cfg)
 		local s21 = Contact.strike(F[2], F[1], arena, cfg)
 		local before = { riders[1].posture, riders[2].posture }
+		if pass == 4 then
+			rec.beforeFinal = before
+		end
 		local byStrike = { [1] = s21, [2] = s12 } -- the strike each rider receives
 		local own = { [1] = s12, [2] = s21 } -- the strike each rider makes
 		for _, r in riders do
