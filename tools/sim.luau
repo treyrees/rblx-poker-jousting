@@ -311,7 +311,8 @@ local SWEEPS: { { any } } = {
 	{ "sim.lean=0.5", { { "sim.lean", "0.5" } } },
 	{ "sim.lean=2", { { "sim.lean", "2" } } },
 	{ "spec.boardWeight=0.25 (§11: sim tries lower)", { { "spec.boardWeight", "0.25" } } },
-	{ "spec.holdFloor=0.2", { { "spec.holdFloor", "0.2" } } },
+	{ "spec.holdFloor=0.2 (0052: 0.25)", { { "spec.holdFloor", "0.2" } } },
+	{ "spec.holdFloor=0.4 (was §11)", { { "spec.holdFloor", "0.4" } } },
 	{ "spec.holdFloor=0.6", { { "spec.holdFloor", "0.6" } } },
 	{ "sim.armorRate=0.15", { { "sim.armorRate", "0.15" } } },
 	{ "sim.armorRate=0.4", { { "sim.armorRate", "0.4" } } },
@@ -372,7 +373,7 @@ elseif report == "floor" then
 	-- holder vs flicker is the extreme; the average pair differ only in hold discipline (1 vs 0).
 	print("holder: never reads, holds from the first moment; flicker: always reads, never holds")
 	print("steady / fidget: the average rider with hold discipline 1 / 0 (both read 30%)")
-	for _, f in { "0.2", "0.3", "0.4", "0.5", "0.6" } do
+	for _, f in { "0.2", "0.25", "0.3", "0.4", "0.5", "0.6" } do
 		local cfg = baseConfig()
 		Config.set(cfg, "spec.holdFloor", f)
 		local t = run(cfg, cfg.riders.holder, cfg.riders.flicker, hands, seed)
