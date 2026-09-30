@@ -294,6 +294,44 @@ One idea, "your hand strikes", twice: once through the lance, once flat at the e
   rider on Pass 4 is bigger. Posture 70 also ends 8% of hands on Pass 3, before the river.
 - **The multiplicative bonus is the additive one in disguise.** Same 70%, same trade-off curve.
 
+#### Family 2 grid
+
+Posture start × last-pass bonus, the bonus at 20, everything else at the defaults. 100k hands
+per cell, run with `--set` on the baseline report: average vs average at seed 20260930, and the
+flip from `--p1 skilled --p2 novice --seed 20260931`. **unleash** is a trick unleashed above the
+opponent (pillar 3's case); **auto** is a trick held above until it auto-fires on Pass 4. The
+above/design and above/off columns are the table's above, weighted across tricks.
+
+| Posture start | Last-pass bonus | sd | KO P3 / P4 | gap 1 | flip | above/design | above/off | unleash | auto |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| **100** | **×1.3** | **70.3%** | 3.1 / 25.8 | 74.2% | 56.8% | 96.8% | 92.2% | 99.3% | 93.7% |
+| 100 | ×1.6 | 63.2% | 3.1 / 32.9 | 71.9% | 59.7% | 95.0% | 89.5% | 99.2% | 91.0% |
+| 100 | ×2.0 | 53.3% | 3.1 / 42.9 | 69.4% | 63.1% | 93.0% | 85.4% | 99.0% | 87.4% |
+| 85 | ×1.3 | 61.5% | 4.4 / 33.3 | 72.8% | 58.2% | 94.1% | 89.0% | 98.6% | 90.2% |
+| 85 | ×1.6 | 53.0% | 4.4 / 41.8 | 70.5% | 61.2% | 92.3% | 85.8% | 98.4% | 87.2% |
+| 85 | ×2.0 | 43.9% | 4.4 / 50.9 | 68.4% | 64.5% | 90.5% | 82.3% | 98.3% | 84.0% |
+| 70 | ×1.3 | 49.1% | 8.3 / 41.9 | 71.0% | 60.6% | 92.3% | 84.6% | 96.4% | 87.0% |
+| 70 | ×1.6 | 41.1% | 8.3 / 49.9 | 68.9% | 63.7% | 90.9% | 82.0% | 96.3% | 84.6% |
+| 70 | ×2.0 | 34.3% | 8.3 / 56.7 | 66.9% | 66.9% | 89.0% | 79.4% | 96.2% | 81.8% |
+| 60 | ×1.3 | 39.2% | 13.5 / 46.5 | 69.0% | 62.7% | 90.8% | 80.9% | 94.2% | 84.4% |
+| 60 | ×1.6 | 32.7% | 13.5 / 53.0 | 66.8% | 65.3% | 89.2% | 78.6% | 94.2% | 82.0% |
+| 60 | ×2.0 | 25.8% | 13.5 / 59.9 | 64.6% | 69.0% | 87.5% | 76.1% | 94.0% | 79.3% |
+| 50 | ×1.3 | 28.6% | 21.7 / 48.1 | 66.6% | 65.3% | 88.7% | 77.3% | 91.4% | 81.4% |
+| 50 | ×1.6 | 22.9% | 21.7 / 53.8 | 64.4% | 68.3% | 87.0% | 73.9% | 91.2% | 78.3% |
+| 50 | ×2.0 | 16.4% | 21.7 / 60.3 | 61.9% | 72.2% | 85.3% | 70.3% | 91.0% | 75.0% |
+
+- **For the same showdown share, the last-pass bonus is the better lever.** At about 50%,
+  100 / ×2.0 keeps unleashed tricks at 99.0% and Pass 3 knockouts at 3.1%. 70 / ×1.3 gets there with
+  unleashed tricks at 96.4% and Pass 3 knockouts at 8.3%. Lowering Posture start is what costs
+  pillar 3's own case and cuts the river short.
+- **The trick cost is in held tricks.** Unleashed tricks barely move with the last-pass bonus;
+  auto-fired ones lose 6 points at ×2.0 (93.7% → 87.4%). The bigger Pass 4 hits land on the
+  rider who held.
+- **Every step toward fewer showdowns moves the balance toward skill.** Gap 1 falls and the flip
+  rises in every cell, because the bonus decides fewer hands. Family 2 alone leaves the shape
+  problem where it is; the bonus would need re-tuning after it (see "bonus 10, last-pass bonus
+  2.0" above for how far a smaller bonus moves it).
+
 ### The hand strikes on the river (family 4 and the hybrid C)
 
 Tier factors 1.5 on a crit, 1 on a Normal, ¼ into a Guard or from Neutral, unless noted. "Warded"
@@ -413,6 +451,17 @@ reason.
 Not recommended: the bonus size alone (family 1), the multiplicative bonus (6), Posture start 70
 (the Pass 3 knockouts cut the river), and river blows with Posture alone at the knockdown (the
 cards drop too far and a failed trick is stranded).
+
+### Trey's answers so far
+
+Sep 30, 2026, in chat, on the first version of this brief (problems numbered as there):
+
+- **Problems that matter most:** 1 (most hands end without a lance), 3 (one number holds the
+  balance) and 4/5 (the bonus is coarse; it decides the close races). This brief argues above
+  that coarseness is a feature of 0050; Trey named it as a problem.
+- **Families to sim:** 2 first. The grid is in *Family 2 grid*.
+- **Passes 2–4:** Trey confirmed the reveal structure as written (§8: the street's card flips
+  mid-charge, with time left to react). Nothing changes.
 
 ### What Trey would decide
 
