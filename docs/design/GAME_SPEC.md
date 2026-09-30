@@ -63,8 +63,10 @@ Also important: **learnability** (for example, betting is beginner-ignorable, §
 
 ## 2. Hand structure and betting
 
-One hand is one match: four bets and four passes. A match's result is the units won or lost. Cards reveal mid-charge, so each bet is
-made before the card it rides into, as in hold'em where you call and then see the card.
+One hand is one match: four bets and four passes. A match's result is the units won or lost.
+Pass 1 rides on hole cards alone; the flop, turn and river reveal mid-charge on Passes 2, 3 and
+4. So Bets 2–4 are each made before the card they ride into, as in hold'em where you call and
+then see the card, and the river lands on the final charge.
 
 ### The yard
 
@@ -90,26 +92,28 @@ matched.
 | --- | --- | --- |
 | Ante | Both riders post 1 unit | n/a |
 | Bet 1 | Stay / Raise / Yield on hole cards only | n/a |
-| Pass 1 | Charge; flop reveals mid-charge | Hole + flop |
+| Pass 1 | Charge on hole cards; no reveal | Hole cards |
 | Bet 2 | Stay / Raise / Yield | n/a |
-| Pass 2 | Charge; turn reveals mid-charge | Hole + flop + turn |
-| Bet 3 | Stay / Raise / Yield | n/a |
-| Pass 3 | Charge; river reveals mid-charge | All 7 cards |
-| Bet 4 | Stay / Raise / Yield | n/a |
-| Pass 4 (showdown) | Charge with full information; unused tricks auto-fire | All 7 cards |
+| Pass 2 | Charge; flop reveals mid-charge | Hole + flop |
+| Bet 3 | Stay / Raise / Yield on the flop | n/a |
+| Pass 3 | Charge; turn reveals mid-charge | Hole + flop + turn |
+| Bet 4 | Stay / Raise / Yield on the turn | n/a |
+| Pass 4 (showdown) | Charge; river reveals mid-charge; unused tricks auto-fire; then the showdown | All 7 cards |
 
 Street multipliers apply to all Posture damage in that pass: Pass 1 = 0.5,
-Pass 2 = 0.75, Pass 3 = 1.0, Pass 4 = 1.25. Early passes rarely unhorse; the hand builds
-toward the river.
+Pass 2 = 0.75, Pass 3 = 1.0, Pass 4 = 1.25. Pass 4 also carries the last-pass bonus, ×1.3 on
+top of its street multiplier, so more hands end with a real unhorse on the river. Early passes
+rarely unhorse; the hand builds toward the river.
 
 ### Win conditions
 
 1. A rider whose Posture reaches 0 is unhorsed. The other rider wins the pot immediately.
 2. If both riders are unhorsed on the same contact, the rider with more Posture before the
    pass wins; if equal, split.
-3. If no one is unhorsed after Pass 4, a knockdown is forced at showdown. Hand strength
-   forces it, and Posture still counts (§4).
-4. Showdown tie: compare poker hands with kickers. Still tied: split the pot.
+3. If no one is unhorsed after Pass 4, a knockdown is forced at showdown: each rider's hand
+   bonus is added to their Posture, and the rider lower on Posture is knocked down (§4).
+4. Showdown tie (equal Posture after the hand bonus): compare poker hands with kickers. Still
+   tied: split the pot.
 5. A rider who Yields forfeits the pot.
 
 ### Betting rules (v1)
@@ -376,10 +380,12 @@ sim values (§11).
 
 - **Posture:** starts at 100 plus the ♥ bonus. Reaches 0 = unhorsed. Heals only from clean
   blocks, queen effects and ♥ gains on a reveal, capped at max Posture.
-- **Showdown:** if no one is unhorsed after Pass 4, a knockdown is forced. Hand strength
-  forces it, and Posture still counts: the rider who is weaker on hand strength and Posture
-  together is knocked down. How hand strength converts, and how much it weighs against
-  Posture, is open (§11).
+- **Showdown:** if no one is unhorsed after Pass 4, a knockdown is forced. Each rider's hand
+  bonus is added to their Posture: 20 Posture per step of hand category above high card (pair
+  +20, two pair +40, trips +60, and so on up the categories). Riders in the same category get
+  the same bonus, so Posture decides between them; kickers break only an exact tie (§2). The
+  rider lower on Posture after the bonus is knocked down, even above 0. The bonus is shown
+  landing on the Posture bar before the knockdown (§8).
 
 ### Sanity checks (to confirm in sim)
 
@@ -387,7 +393,8 @@ sim values (§11).
   knockouts are near impossible.
 - Pass 3 crit, trips-loaded ♣, full hold: about 30 × 1.45 × 1.0 × 1.0 = 43 Posture. Two such
   reads unhorse.
-- Pass 4 crit with the same: about 54 Posture.
+- Pass 4 crit with the same, with the last-pass bonus: about 30 × 1.45 × 1.25 × 1.3 = 71
+  Posture.
 
 ## 5. Broadway cards
 
@@ -433,9 +440,9 @@ through the joust; no rule declares it.
 
 Frequency, from a deal sim: a rider owns a trick (see *Ownership*) by the river in about 10%
 of hands (straight 4.4%, flush 2.9%, full house 2.5%, quads 0.15%, straight flush 0.02%). Of
-those tricks, about 63% first appear on the river, 29% on the turn and 8% on the flop. About
-18% of hands have an owned trick on at least one side, and about 2% on both; three quarters
-of those are the same category. The board alone makes a trick in about 0.8% of hands. These
+those tricks, about 63% first appear on the river (Pass 4), 29% on the turn (Pass 3) and 8% on
+the flop (Pass 2). About 18% of hands have an owned trick on at least one side, and about 2%
+on both; three quarters of those are the same category. The board alone makes a trick in about 0.8% of hands. These
 are rates for random deals; prefolding in the yard shifts them.
 
 ### The trick ladder
@@ -474,8 +481,7 @@ are rates for random deals; prefolding in the yard shifts them.
 
 ### Unleash rules
 
-- Declared during the decision window after a card reveal (or any time in the Pass 4 run-
-  up). Once per hand.
+- Declared during the decision window after a card reveal. Once per hand.
 - Declaring announces the trick's rung to both riders ("Straight unleashed"). A flush also
   shows its suit. The trick's cards stay hidden until contact. A held trick that answers
   is not announced; it shows at contact.
@@ -487,8 +493,9 @@ are rates for random deals; prefolding in the yard shifts them.
 A starting draft, to be tuned in the sim.
 
 - **The hit.** An unleashed trick's hit is sized to unhorse the opponent from full Posture on
-  any pass, Pass 1 included, when the trick is played to its design: a straight held (*The
-  straight's meter*), a flush aimed at its suit's home (*Flush by suit*). Full house and quads
+  any pass, even the earliest a trick can fire on (Pass 2, the flop, at ×0.75), when the trick
+  is played to its design: a straight held (*The straight's meter*), a flush aimed at its
+  suit's home (*Flush by suit*). Full house and quads
   are unconditional. Hit sizes are sim values. Armor is a flat reduction per hit (§4),
   so a hit that size gets through any sector, a Block included.
 - **The out.** What a trick changes on the dial sets its out: the narrow way a numeric rider
@@ -554,7 +561,7 @@ base stat; half steps share the tilt as on the compass. The suit is announced on
   to beat the tricks below it on the dial. Where two tricks' rules contradict outright, the
   higher trick's rule wins that contradiction; everything else still applies.
 
-### Board-made tricks (arena effects, both riders, all passes after the reveal)
+### Board-made tricks (arena effects, both riders, from the river's reveal)
 
 | Board makes | Arena effect |
 | --- | --- |
@@ -614,8 +621,8 @@ out a TV-poker hole-card cam, which would let a friend on the rail relay informa
 
 ## 8. Pass timeline and presentation
 
-A pass lasts about 8 s from the start of the charge to contact. The card reveal lands mid-
-charge with a brief slow-motion beat, then riders decide and commit before contact.
+A pass lasts about 8 s from the start of the charge to contact. On Passes 2–4 the card reveal
+lands mid-charge with a brief slow-motion beat, then riders decide and commit before contact.
 
 | Time (s) | Beat | Notes |
 | --- | --- | --- |
@@ -627,7 +634,14 @@ charge with a brief slow-motion beat, then riders decide and commit before conta
 | 7.7 | Aim lock | No input after this |
 | 8.0 | Contact and resolution | Setup/counter animation, then post-pass reveal |
 
-Pass 4 has no card reveal. Its full 8 s is approach and decision, and unused tricks auto-fire.
+Pass 1 has no card reveal: riders charge on hole cards alone, and its full 8 s is approach and
+decision. On Pass 4 the river lands mid-charge, unused tricks auto-fire, and the showdown
+follows contact.
+
+**Showdown.** If no one falls on Pass 4's contact, each rider's hand bonus pours into their
+Posture bar ("PAIR +20"), and only then is the rider lower on Posture knocked down. The fall is
+sized to the gap: a clean unhorse for a wide gap, a stagger and fall for a middling one, a photo
+finish for a few points.
 
 **Arena reveals.** Each revealed card changes the environment: suit sets the sky and
 lighting color (hearts and diamonds red-toned, clubs and spades dark-toned), face cards
@@ -753,7 +767,6 @@ whether a trick above the opponent wins overwhelmingly.
   never purchasable currency, until checked.
 - Ghost betting: which public and private inputs a ghost's betting habits condition on.
 - Should spur and momentum return as a second run-up currency?
-- Showdown knockdown: how hand strength converts, and how much it weighs against Posture.
 - How slow-motion time counts toward the hold fraction (§3, §8).
 - A hit's size is public: can one hit identify a hand's rank at display precision?
 
@@ -770,6 +783,7 @@ whether a trick above the opponent wins overwhelmingly.
 | Stat rates per point | ♣ +5% on a hit (S_♣ / 20); ♥ Posture, ♥ lean damage cut, ♦ armor, ♠ piercing and charge set by the sim |
 | Hold multiplier | 0.4 + 0.6 × h |
 | Street multipliers (Passes 1–4) | 0.5 / 0.75 / 1.0 / 1.25 |
+| Last-pass bonus (Pass 4, on top of its street multiplier) | ×1.3 |
 | Clean block restore | 3 Posture |
 | Aim lock before contact | 0.3 s |
 | Pass length | 8 s |
@@ -777,7 +791,7 @@ whether a trick above the opponent wins overwhelmingly.
 | ♦ armor: Guard / ordinary / exposure | Thick / thin / sliver; values set by the sim |
 | ♠ charge per non-crit hit, and piercing | Set by the sim |
 | Aim lean: multiplier on card points, and the half-step share | Set by the sim |
-| Showdown: hand strength weight against Posture | Set by the sim |
+| Showdown hand bonus | 20 Posture per step of hand category |
 | Queen restore (hole / board) | 6 / 3 per pass |
 | King lock penalty (hole / board) | 0.15 / 0.08 s |
 | Ace crit base (hole / board bonus) | 35 / +2 |

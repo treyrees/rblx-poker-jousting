@@ -72,5 +72,8 @@ Add a row below in the same commit. Check the latest `main` for the next free id
 | [0046](0046-charge-clauses-dropped.md) | The Charge drops "can't be Blocked" and its widened exposure; the meter is its cost | 2026-09-30 |
 | [0047](0047-straight-draws-hold.md) | The spec says outright that a straight draw pays for holding from the start of the charge | 2026-09-30 |
 | [0048](0048-held-straight-passive-grows-with-hold.md) | A held straight's passive grows with hold on each pass | 2026-09-30 |
+| [0049](0049-river-on-the-final-pass.md) | The river flips on the final pass; Pass 1 rides on hole cards | 2026-09-30 |
+| [0050](0050-showdown-hand-bonus.md) | The showdown adds a hand bonus to Posture, and the lower rider falls | 2026-09-30 |
+| [0051](0051-last-pass-bonus.md) | Pass 4 carries a ×1.3 last-pass damage bonus | 2026-09-30 |
 
-Next free id: **0049**.
+Next free id: **0052**.
