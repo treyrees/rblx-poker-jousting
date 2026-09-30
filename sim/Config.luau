@@ -102,6 +102,26 @@ function Config.defaults()
 			meterThreshold = "reachable", -- reachable | strict                  (c4)
 			twinFavorVsTrick = "negates", -- negates | trickOverrides            (C1)
 			aaEdge = "one", -- one | both | direction                            (C2)
+			-- How the hand ends when no one is unhorsed after Pass 4 (docs/sim/SHOWDOWN.md prototypes).
+			-- "bonus" is GAME_SPEC (0050); the rest are proposals, off by default.
+			--   bonus     +showdownBonus Posture per category step, the lower rider falls
+			--   mult      Posture × (1 + proto.mult × steps), the lower rider falls
+			--   riverHit  the hand strikes on Pass 4: proto.riverPerStep per step lands on the opponent
+			--             at contact, scaled by the tier your own strike lands (proto.riverTier); then the
+			--             lower rider on Posture alone falls
+			--   charge    cards up and one more contact (the final charge); proto.charge* set it
+			showdown = "bonus", -- bonus | mult | riverHit | charge
+		},
+
+		-- ── PROTO: values the showdown prototypes use (SHOWDOWN.md). None is a §11 value. ─────
+		proto = {
+			mult = 0.2, -- mult: Posture × (1 + mult × steps)
+			riverPerStep = 20, -- riverHit: Posture per step, before the tier factor
+			riverTier = { crit = 1.5, normal = 1.0, block = 0.25, weak = 0.25 }, -- riverHit: by the tier you land
+			riverKnockdown = "posture", -- riverHit: posture | bonus — what decides if no one falls
+			chargeStreet = 1.625, -- charge: the fifth contact's multiplier (Pass 4's is 1.25 × 1.3)
+			chargeBonus = "posture", -- charge: posture (bonus lands before it) | none | hit (as riverHit, on the charge)
+			chargeCardsUp = "yes", -- charge: yes | no — readers see the opponent's exact stats
 		},
 	}
 end

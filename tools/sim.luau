@@ -6,10 +6,11 @@
 --   lune run tools/sim.luau --report gap             -- numeric hit gap by category (§4)
 --   lune run tools/sim.luau --report final           -- last-pass bonus sweep (0051)
 --   lune run tools/sim.luau --report showdown        -- how the forced knockdown is decided (0050)
+--   lune run tools/sim.luau --report proto           -- the showdown prototypes (docs/sim/SHOWDOWN.md)
 --   lune run tools/sim.luau --set sim.lean=2 --set spec.showdownBonus=10
 --   lune run tools/sim.luau --smoke                  -- 5k hands: checks it runs; rates not citable
 --
--- Options: --hands N, --seed S, --shard i/n (sweeps: run every n-th row, for parallel runs), --set path=value (repeatable; paths as in sim/Config.luau),
+-- Options: --hands N, --seed S, --shard i/n (sweeps and proto: run every n-th row, for parallel runs), --set path=value (repeatable; paths as in sim/Config.luau),
 -- --p1 / --p2 rider profile for the baseline report (default average vs average).
 -- Unknown arguments are an error, so a typo never prints a confident report for the wrong run.
 --
@@ -100,6 +101,20 @@ local function pct(n: number?, d: number?): string
 	return string.format("%5.1f%%", 100 * (n or 0) / d)
 end
 
+-- The showdown standing a rider would have from a Posture and a river category, under the
+-- showdown reading in play (switches.showdown). Used to project the result at the river reveal:
+-- "cards up at the river" (SHOWDOWN.md) shows this standing during Pass 4.
+local function standing(cfg: any, posture: number, category: number): number
+	local mode = cfg.switches.showdown
+	local proto = cfg.proto
+	if mode == "bonus" or (mode == "riverHit" and proto.riverKnockdown == "bonus") or (mode == "charge" and proto.chargeBonus == "posture") then
+		return posture + cfg.spec.showdownBonus * category
+	elseif mode == "mult" then
+		return posture * (1 + proto.mult * category)
+	end
+	return posture
+end
+
 -- Plays `n` hands of p1 vs p2 and tallies every §11 metric. Seats alternate the button.
 local function run(cfg: any, prof1: any, prof2: any, n: number, s: number): Tally
 	local rng = makeRng(s)
@@ -108,13 +123,48 @@ local function run(cfg: any, prof1: any, prof2: any, n: number, s: number): Tall
 		local r = Hand.play(cfg, rng, prof1, prof2, (i % 2) + 1)
 		inc(t, "hands")
 		inc(t, "finish." .. r.finish)
+		inc(t, "passes", r.pass)
+		local bf = r.beforeFinal
 		if r.finish == "unhorse" then
 			inc(t, "ko.pass" .. r.pass)
+		end
+		-- The joust's verdict after Pass 4's contact vs the hand's result: how often the showdown
+		-- rule (bonus, mult, the charge) overturns the rider ahead on Posture.
+		local af = r.afterFinal
+		if af and af[1] ~= af[2] then
+			inc(t, "after.n")
+			if r.winner == (if af[1] > af[2] then 1 else 2) then
+				inc(t, "after.leaderWins")
+			end
+		end
+		-- Projected at the river: the rider ahead on the showdown standing before Pass 4's contact.
+		if bf then
+			local s1 = standing(cfg, bf[1], r.category[1])
+			local s2 = standing(cfg, bf[2], r.category[2])
+			if s1 ~= s2 then
+				local band = if math.abs(s1 - s2) < 20 then "close" else "clear"
+				inc(t, "proj." .. band)
+				if r.winner == (if s1 > s2 then 1 else 2) then
+					inc(t, "proj." .. band .. ".held")
+				end
+			end
+		end
+		-- The final charge (switches.showdown = charge): how often it changes the standing.
+		if r.chargeStanding ~= nil then
+			inc(t, "charge.n")
+			if r.finish == "unhorse" and r.pass == 5 then
+				inc(t, "charge.ko")
+			end
+			if r.chargeStanding ~= 0 then
+				inc(t, "charge.standing")
+				if r.winner ~= r.chargeStanding then
+					inc(t, "charge.flip")
+				end
+			end
 		end
 		inc(t, "win." .. r.winner)
 		inc(t, "units1", r.units[1])
 		-- The last pass: does the rider ahead going into Pass 4 hold on, and by what lead?
-		local bf = r.beforeFinal
 		if bf and bf[1] ~= bf[2] then
 			local lead = math.abs(bf[1] - bf[2])
 			local band = if lead < 20 then "close" else "clear"
@@ -127,7 +177,8 @@ local function run(cfg: any, prof1: any, prof2: any, n: number, s: number): Tall
 		inc(t, "switches", r.switches)
 		-- Showdown: how often the knockdown goes to the rider ahead on Posture, and to the better hand.
 		if r.finish == "showdown" then
-			local p1, p2 = r.posture[1], r.posture[2]
+			local af2 = r.afterFinal or r.posture
+			local p1, p2 = af2[1], af2[2]
 			-- How close the riders are when the knockdown is forced (--report showdown).
 			inc(t, "sd.postureSum", p1 + p2)
 			inc(t, "sd.lowerPosture", math.min(p1, p2))
@@ -247,14 +298,19 @@ local function printBaseline(t: Tally, label: string)
 	print(string.format("finish     unhorse %s  showdown %s  yield %s   (unhorse : showdown = %.2f)",
 		pct(t["finish.unhorse"], n), pct(t["finish.showdown"], n), pct(t["finish.yield"], n),
 		(t["finish.unhorse"] or 0) / math.max(1, t["finish.showdown"] or 0)))
-	print(string.format("KO by pass P1 %s  P2 %s  P3 %s  P4 %s",
-		pct(t["ko.pass1"], n), pct(t["ko.pass2"], n), pct(t["ko.pass3"], n), pct(t["ko.pass4"], n)))
+	print(string.format("KO by pass P1 %s  P2 %s  P3 %s  P4 %s  P5 %s   passes/hand %.2f",
+		pct(t["ko.pass1"], n), pct(t["ko.pass2"], n), pct(t["ko.pass3"], n), pct(t["ko.pass4"], n), pct(t["ko.pass5"], n),
+		(t.passes or 0) / n))
 	print(string.format("seat 1 wins %s  seat 2 %s  split %s   seat-1 units/hand %+.3f",
 		pct(t["win.1"], n), pct(t["win.2"], n), pct(t["win.0"], n), (t.units1 or 0) / n))
 	print(string.format("reads      %.2f per hand; %s of them switch late rather than stay on the held aim",
 		(t.reads or 0) / n, pct(t.switches, t.reads)))
 	print(string.format("showdown   Posture leader wins %s   better poker hand wins %s",
 		pct(t["sd.postureLeaderWins"], t["sd.postureDiff"]), pct(t["sd.betterHandWins"], t["sd.handDiff"])))
+	print(string.format("after P4   leader on Posture wins %s (n=%d) | projected at the river holds: close %s  clear %s | charge: KO %s, flips the standing %s (n=%d)",
+		pct(t["after.leaderWins"], t["after.n"]), t["after.n"] or 0,
+		pct(t["proj.close.held"], t["proj.close"]), pct(t["proj.clear.held"], t["proj.clear"]),
+		pct(t["charge.ko"], t["charge.n"]), pct(t["charge.flip"], t["charge.standing"]), t["charge.n"] or 0))
 	local nn = t.numeric or 0
 	print(string.format("numeric hands %s of all; of them unhorse %s", pct(nn, n), pct(t["numeric.unhorse"], nn)))
 	for g = 1, 3 do
@@ -432,6 +488,62 @@ elseif report == "showdown" then
 		print(string.format("  Posture leader wins %s | leader holds the worse hand in %s of showdowns; cards win %s of those | gap1 better wins %s | flip %s",
 			pct(t["sd.postureLeaderWins"], t["sd.postureDiff"]), pct(t["sd.leaderWorse"], sd),
 			pct(t["sd.leaderWorse.cardsWin"], t["sd.leaderWorse"]), pct(t["gap1.better"], t.gap1), pct(m["p1worse.win"], m.p1worse)))
+		print(string.format("  projected at the river (Posture + bonus before Pass 4's contact) holds: margin <20 %s (n=%d), 20+ %s (n=%d)",
+			pct(t["proj.close.held"], t["proj.close"]), t["proj.close"] or 0, pct(t["proj.clear.held"], t["proj.clear"]), t["proj.clear"] or 0))
+	end
+elseif report == "proto" then
+	-- The showdown prototypes (docs/sim/SHOWDOWN.md): one row per reading, at 100k hands per run.
+	-- "over" = the hand's showdown effect (bonus, mult, blows, charge) overturns the rider ahead on
+	-- Posture after Pass 4's dial exchange (1 − after-P4 leader wins); "proj" = the rider ahead on the projected standing at the river reveal wins, close (<20)
+	-- and clear (20+) margins; "flip" here is the pillar 2 skill flip as in the sweeps.
+	local PROTO: { { any } } = {
+		{ "bonus 20 (0050)", {} },
+		{ "bonus 20, Posture start 70", { { "spec.postureStart", "70" } } },
+		{ "bonus 20, last-pass bonus 2.0", { { "spec.finalPassBonus", "2.0" } } },
+		{ "bonus 10, last-pass bonus 2.0", { { "spec.showdownBonus", "10" }, { "spec.finalPassBonus", "2.0" } } },
+		{ "mult 0.2", { { "switches.showdown", "mult" } } },
+		{ "mult 0.35", { { "switches.showdown", "mult" }, { "proto.mult", "0.35" } } },
+		{ "mult 0.5", { { "switches.showdown", "mult" }, { "proto.mult", "0.5" } } },
+		{ "riverHit 10, tier 1.5/1/0.25", { { "switches.showdown", "riverHit" }, { "proto.riverPerStep", "10" } } },
+		{ "riverHit 15, tier 1.5/1/0.25", { { "switches.showdown", "riverHit" }, { "proto.riverPerStep", "15" } } },
+		{ "riverHit 20, tier 1.5/1/0.25", { { "switches.showdown", "riverHit" } } },
+		{ "riverHit 30, tier 1.5/1/0.25", { { "switches.showdown", "riverHit" }, { "proto.riverPerStep", "30" } } },
+		{ "riverHit 20, flat tier (the reveal blow)", { { "switches.showdown", "riverHit" }, { "proto.riverTier.crit", "1" }, { "proto.riverTier.block", "1" }, { "proto.riverTier.weak", "1" } } },
+		{ "riverHit 20, tier 2/1/0", { { "switches.showdown", "riverHit" }, { "proto.riverTier.crit", "2" }, { "proto.riverTier.block", "0" }, { "proto.riverTier.weak", "0" } } },
+		{ "riverHit 20 + bonus 10 knockdown", { { "switches.showdown", "riverHit" }, { "proto.riverKnockdown", "bonus" }, { "spec.showdownBonus", "10" } } },
+		{ "riverHit 10 + bonus 10 knockdown", { { "switches.showdown", "riverHit" }, { "proto.riverPerStep", "10" }, { "proto.riverKnockdown", "bonus" }, { "spec.showdownBonus", "10" } } },
+		{ "riverHit 20, Posture start 70", { { "switches.showdown", "riverHit" }, { "spec.postureStart", "70" } } },
+		{ "charge: bonus up, cards up, ×1.625", { { "switches.showdown", "charge" } } },
+		{ "charge: bonus up, cards down", { { "switches.showdown", "charge" }, { "proto.chargeCardsUp", "no" } } },
+		{ "charge: no bonus, cards up", { { "switches.showdown", "charge" }, { "proto.chargeBonus", "none" } } },
+		{ "charge: hand blows on the charge (20)", { { "switches.showdown", "charge" }, { "proto.chargeBonus", "hit" } } },
+		{ "charge: hand blows on the charge (10)", { { "switches.showdown", "charge" }, { "proto.chargeBonus", "hit" }, { "proto.riverPerStep", "10" } } },
+		{ "charge: bonus up, ×2.5", { { "switches.showdown", "charge" }, { "proto.chargeStreet", "2.5" } } },
+		{ "charge: bonus up, Posture start 70", { { "switches.showdown", "charge" }, { "spec.postureStart", "70" } } },
+	}
+	print(string.format("%d hands per run; mirror = average vs average; flip = skilled (seat 1) wins with the worse category vs novice", hands))
+	print("config                                   | sd %  | KO P2  P3   P4   P5  | gap1  gap2  gap3 | flip  | above/design above/off | over  | proj close clear | charge KO flip | passes")
+	for idx, sw in PROTO do
+		if (idx - 1) % shards ~= shard - 1 then
+			continue
+		end
+		local cfg = sweepConfig(sw[2])
+		local t = run(cfg, cfg.riders.average, cfg.riders.average, hands, seed)
+		local m = run(cfg, cfg.riders.skilled, cfg.riders.novice, hands, seed + 1)
+		local n = t.hands
+		local w1, n1 = aboveRate(t, "design")
+		local w2, n2 = aboveRate(t, "off")
+		local over = if (t["after.n"] or 0) > 0 then string.format("%5.1f%%", 100 * (1 - (t["after.leaderWins"] or 0) / t["after.n"])) else "  n/a"
+		print(string.format("%-40s | %s | %4.1f %4.1f %4.1f %4.1f | %s %s %s | %s | %s   %s | %s | %s %s | %s %s | %.2f",
+			sw[1], pct(t["finish.showdown"], n),
+			100 * (t["ko.pass2"] or 0) / n, 100 * (t["ko.pass3"] or 0) / n, 100 * (t["ko.pass4"] or 0) / n, 100 * (t["ko.pass5"] or 0) / n,
+			pct(t["gap1.better"], t.gap1), pct(t["gap2.better"], t.gap2), pct(t["gap3.better"], t.gap3),
+			pct(m["p1worse.win"], m.p1worse),
+			pct(w1, n1), pct(w2, n2),
+			over,
+			pct(t["proj.close.held"], t["proj.close"]), pct(t["proj.clear.held"], t["proj.clear"]),
+			pct(t["charge.ko"], t["charge.n"]), pct(t["charge.flip"], t["charge.standing"]),
+			(t.passes or 0) / n))
 	end
 elseif report == "gap" then
 	-- §4: the gap between two riders' numeric hands on a hit, from random river deals.

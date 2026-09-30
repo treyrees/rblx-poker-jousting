@@ -59,7 +59,7 @@ export type TrickRecord = {
 export type Record = {
 	winner: number, -- 1, 2, or 0 for a split
 	finish: string, -- unhorse | showdown | yield
-	pass: number, -- pass the hand ended on (4 for showdown)
+	pass: number, -- pass the hand ended on (4 for showdown; 5 when a final charge was ridden)
 	category: { number }, -- river best-five category per rider
 	value: { number },
 	riverRung: { number },
@@ -68,6 +68,9 @@ export type Record = {
 	drawnOut: { boolean },
 	units: { number },
 	beforeFinal: { number }?, -- Posture just before Pass 4's contact, if the hand got there
+	afterFinal: { number }?, -- Posture after Pass 4's dial exchange, before the hand's showdown effect
+	-- (bonus, mult, the hand's blows, the charge), when neither rider fell to the exchange itself
+	chargeStanding: number?, -- switches.showdown = charge: the rider ahead before the charge (0: level)
 	posture: { number },
 	reads: number, -- reads taken
 	switches: number, -- reads that moved the aim (a late switch rather than staying on a held aim)
@@ -225,6 +228,8 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 		heldAbove = { false, false },
 		drawnOut = { false, false },
 		units = { 0, 0 },
+		afterFinal = nil,
+		chargeStanding = nil,
 		posture = { 0, 0 },
 		reads = 0,
 		switches = 0,
@@ -232,7 +237,25 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 
 	-- Community cards known once each pass's reveal has landed (§2 *Sequence*): Pass 1 rides on
 	-- hole cards, and the flop, turn and river flip mid-charge on Passes 2–4.
-	local SHOWN = { [0] = 0, 0, 3, 4, 5 }
+	local SHOWN = { [0] = 0, 0, 3, 4, 5, 5 }
+	local mode = cfg.switches.showdown
+	local proto = cfg.proto
+	-- The hand bonus (0050): steps of hand category above high card.
+	local function handBonus(category: number): number
+		return spec.showdownBonus * category
+	end
+	-- SHOWDOWN.md prototypes: the hand strikes. The blow a rider's hand lands on the opponent at
+	-- contact, scaled by the tier their own strike landed; a trick's hit is its own, so none there.
+	local function handBlow(category: number, made: Contact.Strike): number
+		if made.trickHit or made.parried then
+			return 0
+		end
+		local f = proto.riverTier[made.tier]
+		if f == nil then
+			return 0
+		end
+		return proto.riverPerStep * category * f
+	end
 	local function revealed(pass: number): { number }
 		return table.move(board, 1, SHOWN[pass], 1, {})
 	end
@@ -278,20 +301,37 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 		end
 	end
 
-	for pass = 1, 4 do
+	for pass = 1, 5 do
+		-- Pass 5 is the final charge (switches.showdown = charge): cards up, no bet, no reveal, one
+		-- more contact. It is ridden only when no one fell on Pass 4.
+		local charge = pass == 5
+		if charge then
+			if mode ~= "charge" then
+				break
+			end
+			if proto.chargeBonus == "posture" then
+				for _, r in riders do
+					local b = handBonus(r.status.eval.category)
+					r.posture += b
+					r.maxPosture += b
+				end
+			end
+			local p1c, p2c = riders[1].posture, riders[2].posture
+			rec.chargeStanding = if p1c > p2c then 1 elseif p2c > p1c then 2 else 0
+		end
 		-- Bet before the pass.
 		local prevBoard = if pass == 1 then {} else revealed(pass - 1)
-		local yielder = bet(pass, prevBoard)
+		local yielder = if charge then nil else bet(pass, prevBoard)
 		if yielder then
 			finish(3 - yielder, "yield", pass)
 			break
 		end
 		local newBoard = revealed(pass)
 		local hasReveal = SHOWN[pass] > SHOWN[pass - 1]
-		local street = spec.street[pass] * (if pass == 4 then spec.finalPassBonus else 1)
+		local street = if charge then proto.chargeStreet else spec.street[pass] * (if pass == 4 then spec.finalPassBonus else 1)
 
 		-- Start of pass: queen restores (Passes 2–4; §5), capped at max Posture.
-		if pass >= 2 then
+		if pass >= 2 and not charge then
 			for _, r in riders do
 				local q = holeFace(r, prevBoard, 12)
 				local restore = if q == 2 then spec.qqRestore elseif q == 1 then spec.queenRestore.hole else 0
@@ -305,7 +345,7 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 			r.plan = false
 			r.lockAim = false
 			local st = r.status
-			if st.owns and not r.spent then
+			if st.owns and not r.spent and not charge then
 				r.plan = pass == 4 or rng() < r.p.aggression
 			end
 			local design = r.plan and rng() < r.p.design
@@ -429,9 +469,10 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 		local function hOf(r: Rider, t: number?): number
 			return Timeline.hold(t, cfg, hasReveal)
 		end
+		local cardsUp = charge and proto.chargeCardsUp == "yes"
 		local function bestResponse(r: Rider, o: Rider, oAim: number?, oT: number?): number?
 			local myPts = points(r, newBoard, 1, false, cfg)
-			local oPts = publicPoints(newBoard, cfg)
+			local oPts = if cardsUp then points(o, newBoard, 1, false, cfg) else publicPoints(newBoard, cfg)
 			local arena = { street = street, openLists = 1, siege = 1 }
 			local oS, oCut = statsAt(oPts, oAim, cfg)
 			local oF: Contact.Fighter = {
@@ -570,9 +611,18 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 		end
 		local byStrike = { [1] = s21, [2] = s12 } -- the strike each rider receives
 		local own = { [1] = s12, [2] = s21 } -- the strike each rider makes
+		-- riverHit: on Pass 4 each hand strikes with its river category; charge with chargeBonus = hit:
+		-- the same on the charge.
+		local blows = (pass == 4 and mode == "riverHit") or (charge and proto.chargeBonus == "hit")
+		local afterDial = { 0, 0 }
 		for _, r in riders do
 			local taken, made = byStrike[r.id], own[r.id]
 			local p = r.posture - taken.dmg - made.reflect
+			afterDial[r.id] = p
+			if blows then
+				local o = riders[3 - r.id]
+				p -= handBlow(o.status.eval.category, own[o.id])
+			end
 			if taken.cleanBlock then
 				p = math.min(r.maxPosture, p + spec.cleanBlockRestore)
 			end
@@ -595,6 +645,9 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 				r.charge = 0
 			end
 			r.charge += made.chargeGain
+		end
+		if pass == 4 and afterDial[1] > 0 and afterDial[2] > 0 then
+			rec.afterFinal = afterDial
 		end
 		local down1, down2 = riders[1].posture <= 0, riders[2].posture <= 0
 		if down1 or down2 then
@@ -624,10 +677,20 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 	-- Showdown knockdown (§2 win condition 3, §4 *Tracks*, 0050): each rider's hand bonus is added
 	-- to their Posture and the lower rider falls; an exact tie goes to the poker hands (§2 win
 	-- condition 4), then a split.
+	-- The prototypes (switches.showdown, SHOWDOWN.md) change what is compared: mult multiplies
+	-- Posture by the steps; riverHit and charge have already dealt the hand's blows (or the bonus)
+	-- and compare Posture alone, unless riverKnockdown = bonus.
 	if rec.finish == "showdown" then
 		local s = {}
 		for i, r in riders do
-			s[i] = r.posture + spec.showdownBonus * e[i].category
+			local c = e[i].category
+			if mode == "bonus" or (mode == "riverHit" and proto.riverKnockdown == "bonus") then
+				s[i] = r.posture + handBonus(c)
+			elseif mode == "mult" then
+				s[i] = r.posture * (1 + proto.mult * c)
+			else
+				s[i] = r.posture
+			end
 		end
 		local w = 0
 		if s[1] ~= s[2] then
@@ -635,7 +698,7 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 		elseif e[1].value ~= e[2].value then
 			w = if e[1].value > e[2].value then 1 else 2
 		end
-		finish(w, "showdown", 4)
+		finish(w, "showdown", if mode == "charge" then 5 else 4)
 	end
 	for _, t in tricks do
 		t.won = rec.winner == t.rider
