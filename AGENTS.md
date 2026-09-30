@@ -56,7 +56,18 @@ borrows names the source repo, branch and file.
 
 ## Commands
 
-None yet: there is no code in the repo.
+The headless sim (`sim/`, `tools/sim.luau`) and its tests run under [Lune](https://github.com/lune-org/lune)
+0.10.5, the version rblx-joust-tourney pins. It's a single binary from the release zip
+(`lune-0.10.5-linux-x86_64.zip`). Run everything from the repo root.
+
+- Tests: `lune run tests/run.luau`. Set `TESTKIT_QUIET=1` to print only failures.
+- Sim, baseline report (100k hands): `lune run tools/sim.luau`.
+- Other reports: `--report sweeps|matchups|floor|gap|final`.
+- Override one config value: `--set path=value`, for example `--set sim.lean=2`.
+- Quick check that it runs: `--smoke`.
+
+All sim values live in `sim/Config.luau`. What the sim found is in
+[docs/sim/RESULTS.md](docs/sim/RESULTS.md).
 
 ## Next step
 
