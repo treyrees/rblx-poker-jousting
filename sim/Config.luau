@@ -25,7 +25,7 @@ function Config.defaults()
 			boardWeight = 0.5, -- "½ of a hole card; the sim tries lower"
 			handMult = { pair = 2, twoPair = 2, trips = 3 },
 			clubRate = 1 / 20, -- ♣ scales hits by S♣ / 20
-			holdFloor = 0.4, -- hold multiplier 0.4 + 0.6·h (the slope is 1 − floor)
+			holdFloor = 0.25, -- hold multiplier 0.25 + 0.75·h (0052; the slope is 1 − floor)
 			street = { 0.5, 0.75, 1.0, 1.25 },
 			finalPassBonus = 1.3, -- last-pass bonus on Pass 4, on top of its street multiplier (0051)
 			showdownBonus = 20, -- showdown: Posture per step of hand category (0050)

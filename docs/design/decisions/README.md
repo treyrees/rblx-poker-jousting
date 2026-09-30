@@ -75,5 +75,6 @@ Add a row below in the same commit. Check the latest `main` for the next free id
 | [0049](0049-river-on-the-final-pass.md) | The river flips on the final pass; Pass 1 rides on hole cards | 2026-09-30 |
 | [0050](0050-showdown-hand-bonus.md) | The showdown adds a hand bonus to Posture, and the lower rider falls | 2026-09-30 |
 | [0051](0051-last-pass-bonus.md) | Pass 4 carries a ×1.3 last-pass damage bonus | 2026-09-30 |
+| [0052](0052-hold-floor-0-25.md) | The hold floor is 0.25, so holding can beat a last-instant switch | 2026-09-30 |
 
-Next free id: **0052**.
+Next free id: **0053**.

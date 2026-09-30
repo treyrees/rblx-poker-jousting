@@ -1,8 +1,8 @@
 # Sanity check: is the GAME_SPEC draft simulatable?
 
 Sep 30, 2026. Checked against `main` at 08e3ff3 (GAME_SPEC through decision 0048), then brought
-up to date with Trey's calls 0049–0051 (PR #10): the river flips on the final pass, the showdown
-adds a hand bonus to Posture, and Pass 4 carries a ×1.3 last-pass bonus.
+up to date with Trey's calls 0049–0052: the river flips on the final pass, the showdown adds a
+hand bonus to Posture, Pass 4 carries a ×1.3 last-pass bonus (PR #10), and the hold floor is 0.25.
 
 This report proposes; it decides nothing. Every value below marked **sim config** lives in the
 sim's config file and nowhere else. It is never written into GAME_SPEC. Every open question stays
@@ -67,7 +67,8 @@ All of these are **sim config**, in `sim/Config.luau` under `SIM_SET`.
 | Question (§11) | Switch | Readings |
 | --- | --- | --- |
 | How slow-motion time counts toward h | `slowmo` | `wall`: every wall-clock second counts; the run-up is 7.7 s. `game`: slow motion counts at 0.4×; the run-up is 6.8 s. `excluded`: 3.0–4.5 s doesn't count; the run-up is 6.2 s. |
-| Is the 0.4 hold floor collapsing half-holds? | `holdFloor` | 0.2, 0.4 (§11 value), 0.6. It is a sweep, not a switch: 0.4 is the §11 value, and the sweep is what §3 asks for. |
+
+The hold-floor question was a sweep (`holdFloor` 0.2–0.6). 0052 answers it: the floor is 0.25.
 
 The unhorse-as-a-roll question is not modelled. The spec says hard 0, and the sim builds that.
 
@@ -201,7 +202,7 @@ cardless rider's piercing (1).
 
 | Check | Spec | With armor and piercing |
 | --- | --- | --- |
-| Pass 1 Normal, high card, half hold | 3.5 | 3.5 |
+| Pass 1 Normal, high card, half hold | 3.1 | 3.1 |
 | Pass 3 Crit, trips-loaded ♣, full hold | 43 | 43.5 |
 | Pass 4 Crit, the same, with the last-pass bonus | 71 | 70.7 |
 

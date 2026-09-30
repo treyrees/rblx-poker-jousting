@@ -46,7 +46,7 @@ function Timeline.hold(t: number?, cfg: any, hasReveal: boolean): number
 	return counted(t, lock, cfg, hasReveal) / counted(0, lock, cfg, hasReveal)
 end
 
--- Strike power and Guard armor multiplier: floor + (1 − floor)·h. §11: 0.4 + 0.6 × h.
+-- Strike power and Guard armor multiplier: floor + (1 − floor)·h. §11: 0.25 + 0.75 × h (0052).
 function Timeline.mult(h: number, cfg: any): number
 	local f = cfg.spec.holdFloor
 	return f + (1 - f) * h

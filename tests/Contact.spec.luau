@@ -28,10 +28,10 @@ kit.describe("Contact: §4 sanity checks (lean off, no armor, no piercing)", fun
 	local cfg = Config.defaults()
 	cfg.sim.armorRate = 0
 	cfg.sim.pierceRate = 0
-	kit.it("Pass 1 Normal, high card, half hold: 10 × 1.0 × 0.7 × 0.5 = 3.5", function()
+	kit.it("Pass 1 Normal, high card, half hold: 10 × 1.0 × 0.625 × 0.5 = 3.125", function()
 		local s = Contact.strike(fighter({ aim = 9, h = 0.5 }), fighter({ aim = 0 }), arena(0.5), cfg)
 		kit.expectEqual(s.tier, "normal")
-		kit.expectNear(s.dmg, 3.5)
+		kit.expectNear(s.dmg, 3.125)
 	end)
 	kit.it("Pass 3 Crit, trips-loaded ♣ (×1.45), full hold: about 43", function()
 		local s = Contact.strike(fighter({ aim = 1, S = { 29, 20, 20, 20 } }), fighter({ aim = 0 }), arena(1.0), cfg)
@@ -48,7 +48,7 @@ end)
 kit.describe("Contact: steps 4–6", function()
 	local cfg = Config.defaults()
 	kit.it("a Block nothing gets through is a clean block", function()
-		-- A switched late (h = 0): 10 × 0.4 × 0.5 = 2 into Guard armor 0.25 × 20 = 5, less 1 pierce.
+		-- A switched late (h = 0): 10 × 0.25 × 0.5 = 1.25 into Guard armor 0.25 × 20 = 5, less 1 pierce.
 		local s = Contact.strike(fighter({ aim = 8, h = 0 }), fighter({ aim = 0 }), arena(0.5), cfg)
 		kit.expectEqual(s.tier, "block")
 		kit.expectEqual(s.dmg, 0)

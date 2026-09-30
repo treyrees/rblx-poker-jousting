@@ -223,15 +223,15 @@ is the perfect read.
 - Hold fraction h = the fraction of the run-up, from the start of the charge to aim lock,
   that the final aim position was held (0 to 1). Changing aim position resets h for the new
   position. How slow-motion time counts is open (§11).
-- Strike power and Guard armor both scale by the hold multiplier: `0.4 + 0.6 × h`.
+- Strike power and Guard armor both scale by the hold multiplier: `0.25 + 0.75 × h`.
 - The hold meter is public. Holding is the value bet; a late switch is the bluff, and it costs
   power. This is a price, not a lock: players commit by degrees, which keeps bluffing a dial
   instead of a yes/no.
-- The 0.4 floor is a placeholder. Because aim is public, a last-instant switch onto a held
-  aim wins the exchange when the floor is above what the holder deals back divided by what
-  the switch deals: Normal/Crit = 1/3 on a CN row, lower on a CB row. Turbo Jousting's sim
-  found a floor can collapse half-held aims toward last-instant flicks; the sim sweeps it
-  (§11).
+- The floor (0.25) sits below 1/3 so that holding can beat the bluff (0052). Because aim is
+  public, a last-instant switch onto a held aim wins the exchange when the floor is above what
+  the holder deals back divided by what the switch deals: Normal/Crit = 1/3 on a CN row, lower
+  on a CB row. At 0.25 and equal stats, a last-instant switch onto a CN row beats a hold of
+  under two thirds of the run-up; a longer hold beats the switch.
 
 ### Aim lock
 
@@ -361,7 +361,7 @@ sim values (§11).
 2. Base values: Weak 4, Normal 10, Crit 30.
 3. Hit output, scaled by ♣:
    ```
-   Out = Base · (S_♣,A / 20) · (0.4 + 0.6·h_A) · Street · Mods
+   Out = Base · (S_♣,A / 20) · (0.25 + 0.75·h_A) · Street · Mods
    ```
    S_♣,A includes A's aim lean (*Stat value*), as do ♠ and ♦ below.
 4. ♠ Pierce:
@@ -389,7 +389,7 @@ sim values (§11).
 
 ### Sanity checks (to confirm in sim)
 
-- Pass 1 normal hit, high card, half hold: about 10 × 1.0 × 0.7 × 0.5 = 3.5 Posture. Early
+- Pass 1 normal hit, high card, half hold: about 10 × 1.0 × 0.625 × 0.5 = 3.1 Posture. Early
   knockouts are near impossible.
 - Pass 3 crit, trips-loaded ♣, full hold: about 30 × 1.45 × 1.0 × 1.0 = 43 Posture. Two such
   reads unhorse.
@@ -529,7 +529,7 @@ run-up (hold fraction h ≥ 1/5, 2/5, … 5/5, §3). Changing aim resets it with
   power arrives toward the end of the hold.
 - A higher straight's cards are higher, so it builds bigger and reaches an unhorsing hit
   sooner.
-- The meter replaces the hold multiplier (0.4 + 0.6 × h) for the trick's hit. The base x, and
+- The meter replaces the hold multiplier (0.25 + 0.75 × h) for the trick's hit. The base x, and
   how y maps to hit size, are sim values.
 - A rider drawing to a straight who wants to unleash on the pass it lands must hold from the
   start of the charge: the meter counts hold from then, and the card lands at 3.0 s (§8).
@@ -755,9 +755,6 @@ whether a trick above the opponent wins overwhelmingly.
   trick win rates by whether the trick was played to its design.
 - Should the unhorse be a visible-odds roll at low Posture (the Turbo Jousting teeter)
   instead of a hard 0?
-- Is the 0.4 hold floor collapsing half-holds toward last-instant flicks? A switch onto a
-  held aim wins when the floor is above what the holder deals back divided by what the
-  switch deals: Normal/Crit = 1/3 on a CN row, lower on a CB row (§3).
 - Is an 8 s pass long enough to read the reveal, decide, and react to a hold?
 - Prefold cost: what does prefolding in the yard cost (units, time, or both)?
 - Preflop redraw for a price: a second hand-selection tool alongside the prefold. What can be
@@ -781,7 +778,7 @@ whether a trick above the opponent wins overwhelmingly.
 | Board card weight | ½ of a hole card; the sim tries lower |
 | Hand multipliers on made cards: pair / two pair / trips | ×2 / ×2 / ×3 |
 | Stat rates per point | ♣ +5% on a hit (S_♣ / 20); ♥ Posture, ♥ lean damage cut, ♦ armor, ♠ piercing and charge set by the sim |
-| Hold multiplier | 0.4 + 0.6 × h |
+| Hold multiplier | 0.25 + 0.75 × h |
 | Street multipliers (Passes 1–4) | 0.5 / 0.75 / 1.0 / 1.25 |
 | Last-pass bonus (Pass 4, on top of its street multiplier) | ×1.3 |
 | Clean block restore | 3 Posture |
