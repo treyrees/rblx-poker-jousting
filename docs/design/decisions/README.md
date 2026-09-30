@@ -63,5 +63,14 @@ Add a row below in the same commit. Check the latest `main` for the next free id
 | [0037](0037-lean-multiplies-card-points.md) | Aim lean multiplies what your cards give a stat; a stat meter shows it as you rotate | 2026-09-29 |
 | [0038](0038-heart-lean-at-contact.md) | A ♥ lean acts at contact, cutting the Posture damage you take; max Posture ignores the lean | 2026-09-29 |
 | [0039](0039-faces-stay-on-the-curve.md) | Face cards stay on the linear rank curve; their effects make them strong | 2026-09-29 |
+| [0040](0040-board-made-arena-effects.md) | Board-made arena effects drop Score and the flush's stat bonus; arena multipliers are numeric only | 2026-09-29 |
+| [0041](0041-board-trick-rung.md) | Riders playing the board's trick stand on its rung but can't unleash it | 2026-09-29 |
+| [0042](0042-trick-lost-to-the-board.md) | A held trick the board plays over is lost; your hand is your current best five cards | 2026-09-29 |
+| [0043](0043-trick-tuning-rows.md) | The §11 trick rows follow the rebuilt tricks | 2026-09-29 |
+| [0044](0044-trick-win-targets.md) | The trick win-rate question becomes the sim's trick targets | 2026-09-29 |
+| [0045](0045-gilded-mirror.md) | The ♦ flush is renamed Gilded Mirror | 2026-09-29 |
+| [0046](0046-charge-clauses-dropped.md) | The Charge drops "can't be Blocked" and its widened exposure; the meter is its cost | 2026-09-30 |
+| [0047](0047-straight-draws-hold.md) | The spec says outright that a straight draw pays for holding from the start of the charge | 2026-09-30 |
+| [0048](0048-held-straight-passive-grows-with-hold.md) | A held straight's passive grows with hold on each pass | 2026-09-30 |
 
-Next free id: **0040**.
+Next free id: **0049**.
