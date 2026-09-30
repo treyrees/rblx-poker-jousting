@@ -584,7 +584,7 @@ Design rule: each tell must have at least two plausible causes.
 - The lance shows one hole card's color and the shield shows the other's. Assignment is
   random per hand, so the lance/shield position leaks no rank.
 - Red = defensive suit (♥ ♦), black = offensive suit (♣ ♠). Colors reveal offense/defense
-  lean, never the axis.
+  lean, never which suit.
 - Colors sharpen as the board develops. Red-red with a three-red flop is a visible flush
   threat.
 - A jack in the hole shows a random color, not a blank. A hidden or neutral color would
@@ -596,7 +596,7 @@ Design rule: each tell must have at least two plausible causes.
 | --- | --- | --- | --- |
 | Stance (aim lean) | Aim position | Which stats the rider's cards load | Could be a bluff stance or a pure sector read |
 | Hold meter | Hold fraction | Confidence in the current aim | Late switches cost power but are legal |
-| Lance/shield color | Hole card colors | Offense vs defense lean | Axis hidden; jack randomizes |
+| Lance/shield color | Hole card colors | Offense vs defense lean | Suit hidden; jack randomizes |
 | Clean blocks | Block outcome | Thick Guard armor (♦) | Could be hold, not cards |
 | First exit from Neutral | Timing | Eagerness or confidence | Could be habit |
 
