@@ -86,4 +86,21 @@ rank points to their suit's stat like any card (0036, 0039).
 - Faces could return in v2 as the favorite-rank class buffs (§10); that is not decided here.
 - Trey's earlier choice of the Feint as the Jack's signature lapses with the effects.
 
-## 4. Tricks built on the stats: next
+## 4. Tricks built on the stats (Trey's calls, Oct 1)
+
+**Flushes: each suit's stat at its limit** (0011's principle, on the new stats). Trey: "Yes, as
+proposed".
+
+| Flush | At the limit | Change |
+| --- | --- | --- |
+| ♠ Needle | Every hit you land is a Crit that pierces all armor | Drops "spends your charge" |
+| ♦ Gilded Mirror | Armor covers your whole dial, exposure included, and what it stops reflects back | None |
+| ♣ Shattering Blow | Your hit lands in full even into a Block, and the target stays Battered for the rest of the hand | Adds the Battered extreme |
+| ♥ Unbroken | You can't fall below 1 this pass, and after contact you heal back everything the pass took | Adds the heal extreme |
+
+- **Flush aim stays strongly tied to home** (0059: full at home, half on the diagonals beside it,
+  nothing elsewhere). Trey chose "Strongly, as now". The flush commits in space as the straight
+  commits in time, and its predictability is the numeric rider's out.
+- **The straight.** Trey: "The innate, wordless 'feel' of the straight to me is 'straightly'
+  charging without changing aim. i don't care how the math works." Holding one aim through the
+  charge is what makes it strong; the sim sets the math to match.
