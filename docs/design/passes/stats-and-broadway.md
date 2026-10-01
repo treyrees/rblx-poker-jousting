@@ -86,6 +86,20 @@ rank points to their suit's stat like any card (0036, 0039).
 - Faces could return in v2 as the favorite-rank class buffs (§10); that is not decided here.
 - Trey's earlier choice of the Feint as the Jack's signature lapses with the effects.
 
+**Where faces could still be special (explored Oct 1).** Three spaces that avoid one-cause tells:
+board faces as arena rules (public), hole faces as private information, and effects that fire at
+the showdown reveal.
+
+- **Hole faces as private information: v2.** Trey: "I want to like hole faces granting info but
+  thats hard to capture, so mark it as a v2 feature."
+- **Board-face arena rules: no.** A sketch tied one rule to each rank (A crits ×1.5, K earlier
+  lock, Q bigger heals, J hidden hold meters), with flop-only and board-pair triggers to control
+  how often they apply (a face is on 85% of boards by the river). Trey: "Not worth it. Board effects
+  don't have the right 'player power' feel as something they do if theyre in your hand. which can
+  only be private information if we dont want to give any tells. im stuck with admitting that court
+  cards will be boring, for now."
+- So in v1 faces are numbers everywhere, and board faces are presentation only (§8 emblems).
+
 ## 4. Tricks built on the stats (Trey's calls, Oct 1)
 
 **Flushes: each suit's stat at its limit** (0011's principle, on the new stats). Trey: "Yes, as
