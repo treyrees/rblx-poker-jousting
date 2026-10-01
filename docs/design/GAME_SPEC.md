@@ -384,8 +384,9 @@ rates (max Posture per point, heal share), ♦ rates (armor per unit of S♦, Gu
    is a clean block: B restores 3 Posture.
 6. If B is Battered, what gets through is raised by x%. B's ♥ buffer (*Stances*) absorbs it first,
    and the rest is Posture damage to B.
-7. After contact: B heals a share of the Posture damage this contact dealt, by B's ♥ (capped at
-   max Posture). If A's hit dealt damage and A was leaning into ♣, B is now Battered.
+7. After contact: on Passes 1–3 a rider at 0 is unhorsed first, so the heal can't save them.
+   Otherwise B heals a share of the Posture damage this contact dealt, by B's ♥ (capped at max
+   Posture). If A's hit dealt damage and A was leaning into ♣, B is now Battered.
 
 ### Tracks and showdown
 

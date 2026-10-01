@@ -26,3 +26,5 @@ worlds of now + later across club's contributions."
 
 - §4 describes it; x is a sim value (§11).
 - A clean Block gains a second job: shrugging off Battered.
+- The clean block's +3 Posture is kept (Trey, Oct 1: "Keep +3"): a small reward for the perfect
+  defensive read, and a second cause for a healing bar.

@@ -29,3 +29,6 @@ Trey chose:
 - §4 *The four stats* and *Tracks and showdown* are rewritten. Max Posture still uses unleaned ♥
   points (0038).
 - The heal share and the buffer per leaned point are sim values (§11).
+- Contact order, confirmed by Trey on Oct 1: armor, then Battered's +x%, then the ♥ buffer, then
+  Posture damage; after contact the heal, then a new Battered. On Passes 1–3 a rider at 0 is
+  unhorsed before the heal: "Unhorsed first".
