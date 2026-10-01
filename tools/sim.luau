@@ -394,8 +394,13 @@ local SWEEPS: { { any } } = {
 	{ "sim.armorRate=0.4", { { "sim.armorRate", "0.4" } } },
 	{ "sim.heartPosture=2", { { "sim.heartPosture", "2" } } },
 	{ "sim.heartPosture=5", { { "sim.heartPosture", "5" } } },
-	{ "sim.chargeRate=0", { { "sim.chargeRate", "0" } } },
-	{ "sim.chargeRate=6", { { "sim.chargeRate", "6" } } },
+	{ "sim.battered=0 (0068 off)", { { "sim.battered", "0" } } },
+	{ "sim.battered=0.5", { { "sim.battered", "0.5" } } },
+	{ "sim.healShare=0 (0070 heal off)", { { "sim.healShare", "0" } } },
+	{ "sim.healShare=0.3", { { "sim.healShare", "0.3" } } },
+	{ "sim.critRelief=0 and guardRelief=0 (0069 off)", { { "sim.critRelief", "0" }, { "sim.guardRelief", "0" } } },
+	{ "sim.critRelief=0.6 and guardRelief=0.6", { { "sim.critRelief", "0.6" }, { "sim.guardRelief", "0.6" } } },
+	{ "sim.extraTime=0 (0069 last move off)", { { "sim.extraTime", "0" } } },
 	{ "sim.straightX=1.15", { { "sim.straightX", "1.15" }, { "sim.straightK", "180" } } },
 	{ "sim.straightX=2 (wards not rescaled)", { { "sim.straightX", "2" }, { "sim.straightK", "12" } } },
 	{ "trick hits and wards ×0.5", { { "sim.straightK", "50" }, { "sim.hit.flush", "300" }, { "sim.hit.fullHouse", "6500" }, { "sim.hit.quads", "10000" }, { "sim.hit.straightFlush", "30000" }, { "sim.ward.flush", "3250" }, { "sim.ward.fullHouse", "4500" }, { "sim.ward.quads", "11000" }, { "sim.ward.straightFlush", "16500" } } },
@@ -412,9 +417,6 @@ local SWEEPS: { { any } } = {
 	{ "switches.statBasis=points", { { "switches.statBasis", "points" } } },
 	{ "switches.flushHit=F2", { { "switches.flushHit", "F2" } } },
 	{ "switches.meterThreshold=strict", { { "switches.meterThreshold", "strict" } } },
-	{ "switches.twinFavorVsTrick=trickOverrides", { { "switches.twinFavorVsTrick", "trickOverrides" } } },
-	{ "switches.aaEdge=both", { { "switches.aaEdge", "both" } } },
-	{ "switches.aaEdge=direction", { { "switches.aaEdge", "direction" } } },
 }
 
 -- The rows of a sweep this process runs: --only filters by label, then --shard picks every n-th.

@@ -33,19 +33,10 @@ function Config.defaults()
 			passLength = 8.0,
 			-- Standard dial, half steps from aim: E exposure, O ordinary, G Guard.
 			layout = "EEEEEOOOGOGGGOOO",
-			queenRestore = { hole = 6, board = 3 },
-			kingLock = { hole = 0.15, board = 0.08 },
-			aceCrit = { hole = 35, boardBonus = 2 },
 			fortressGuardDirections = 7,
 			heldPassive = { straight = 3, flush = 4, fullHouse = 4, quads = 4 },
 			raise = { 1, 1, 2, 2 }, -- before Passes 1–4
 			ante = 1,
-			-- §5 pocket pairs
-			qqRestore = 10,
-			qqFloor = 20,
-			kkLock = 0.3,
-			kkGuardHalve = 0.5,
-			aaCrit = 40,
 			-- §6 board-made arena effects (0040: placeholders, not yet in §11)
 			openLists = 1.5,
 			siege = 0.5,
@@ -57,12 +48,16 @@ function Config.defaults()
 		sim = {
 			lean = 1.0, -- λ: a stat leaned into at weight w counts points × (1 + λw)
 			halfStepShare = 0.75, -- a half step's share to the nearer cardinal
-			heartPosture = 3, -- Posture per unleaned ♥ point
-			heartCut = 0.5, -- damage cut per leaned ♥ point (the lean's extra points)
+			heartPosture = 3, -- max Posture per unleaned ♥ point (everyone starts at postureStart, 0070)
+			heartBuffer = 0.5, -- buffer per leaned ♥ point (the lean's extra points): absorbs damage first
+			healShare = 0.15, -- after contact, heal this share × S♥ / 20 of the damage taken (0070)
+			battered = 0.25, -- Battered: +x damage taken, × the striker's ♣ lean weight (0068)
+			critRelief = 0.3, -- on a Crit, × S♠ / 20 of the hold multiplier's shortfall is restored (0069)
+			guardRelief = 0.3, -- the same for Guard armor, by S♦ (0069)
+			extraTime = 0.15, -- s past the aim lock at a full lean into ♠ or ♦ (0069)
 			armorRate = 0.25, -- armor per ♦ stat unit (see switches.statBasis)
 			armorZone = { guard = 1.0, ordinary = 0.2, exposure = 0.05 },
 			pierceRate = 0.05, -- piercing per ♠ stat unit
-			chargeRate = 3, -- charge banked per non-crit hit, × S♠ / 20
 			blockBase = 10, -- a Block is a Normal hit into thick armor (c2, 0058)
 			earliestCommit = 0.3, -- the earliest a rider leaves Neutral (s)
 			readTime = 7.4, -- when a read's late switch lands (s)
@@ -96,13 +91,11 @@ function Config.defaults()
 
 		-- ── SWITCHES: open questions and gaps, each with 2–3 readings ─────────────────────────
 		switches = {
-			-- Answered by Trey (0055–0061): the default is GAME_SPEC; the other readings stay for comparison.
+			-- Answered by Trey (0057–0061): the default is GAME_SPEC; the other readings stay for comparison.
 			slowmo = "excluded", -- wall | game | excluded                       (0061)
 			statBasis = "value", -- value | points: what ♦ and ♠ convert        (c1, 0057)
 			flushHit = "F1", -- F1 per-rung hit × home factor | F2 exploded stat (c3, 0059)
 			meterThreshold = "reachable", -- reachable | strict                  (c4, 0060)
-			twinFavorVsTrick = "negates", -- negates | trickOverrides            (C1, 0055)
-			aaEdge = "one", -- one | both | direction                            (C2, 0056)
 			-- How the hand ends when no one is unhorsed after Pass 4 (docs/sim/SHOWDOWN.md prototypes).
 			-- "bonus" is GAME_SPEC (0050); the rest are proposals, off by default.
 			--   bonus     +showdownBonus Posture per category step, the lower rider falls
