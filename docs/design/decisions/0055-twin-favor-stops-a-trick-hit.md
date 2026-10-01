@@ -4,7 +4,7 @@ title: Twin Favor stops a trick's hit too
 date: 2026-09-30
 decided-by: trey (chat, open-questions session, 2026-09-30)
 supersedes: []
-superseded-by: null
+superseded-by: 0071
 ---
 
 ## Context

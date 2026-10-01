@@ -4,7 +4,7 @@ title: ♠ non-crits build a hidden charge that the next crit spends
 date: 2026-09-26
 decided-by: trey (chat, §3 review session, 2026-09-26)
 supersedes: []
-superseded-by: null
+superseded-by: 0067
 ---
 
 ## Context

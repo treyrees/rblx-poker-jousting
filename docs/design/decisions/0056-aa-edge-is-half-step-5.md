@@ -4,7 +4,7 @@ title: AA Champion's edge notch is the half step just past the exposure's far ed
 date: 2026-09-30
 decided-by: trey (chat, open-questions session, 2026-09-30)
 supersedes: []
-superseded-by: null
+superseded-by: 0071
 ---
 
 ## Context

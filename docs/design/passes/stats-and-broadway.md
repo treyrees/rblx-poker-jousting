@@ -1,8 +1,8 @@
 # Design pass: stats, broadway cards and the tricks built on them
 
-Started Sep 30, 2026, in chat with Trey. A working record of his calls, pass by pass. Nothing here
-is in GAME_SPEC yet: when the pass settles, each call becomes a decision in
-[decisions/](../decisions/README.md) and GAME_SPEC is updated in the same PR (WORKFLOW.md).
+Started Sep 30, 2026, in chat with Trey. A working record of his calls, pass by pass. Recorded as
+decisions [0067–0073](../decisions/README.md) and applied to GAME_SPEC §3–§7 and §11 on Oct 1; the
+sim follows.
 
 Trey's framing: "Design via concept, fantasy, game and skill expression is more important than any
 existing balance findings." Earlier decisions (through 0066) stay as history; this pass may

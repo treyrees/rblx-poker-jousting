@@ -49,7 +49,7 @@ Also important: **learnability** (for example, betting is beginner-ignorable, §
 | The four stats: what they are and what they do | §4 | Settled in shape |
 | Card values, board weight and hand multipliers | §4 | Proposed, needs sim |
 | Contact resolution, Posture and the showdown knockdown | §4 | Proposed, needs sim |
-| Broadway effects | §5 | Proposed, needs sim |
+| Broadway cards: rank value only, no effects in v1 | §5 | Settled for v1 |
 | Tricks: ladder, ownership, held and unleash rules, trick vs trick | §6 | Settled in shape |
 | Trick effects on the unleash pass | §6 | Proposed, needs sim |
 | Board-made tricks | §6 | Proposed, needs sim |
@@ -236,7 +236,7 @@ is the perfect read.
 
 ### Aim lock
 
-Aim locks 0.3 s before contact. After lock, no input changes the outcome, so resolution is
+Aim locks 0.3 s before contact. A rider leaning into ♠ or ♦ locks a little later (§4, 0069). After lock, no input changes the outcome, so resolution is
 server-side and the setup/counter animation can start. The lock doesn't remove latency: the
 last inputs before it are blind to the opponent, and a rider with higher ping has to commit
 about one ping earlier.
@@ -249,7 +249,7 @@ about one ping earlier.
 | Aim timing: when each rider moved | Whether your cards back your aim's lean |
 | Hold meter | Whether you hold a trick |
 | Posture | Your hand's exact suit mix |
-| Board cards and arena effects | True colors behind a jack |
+| Board cards and arena effects | |
 | Lance and shield colors (see Information design) | |
 
 A hit's size is public, so after contact it shows the attacker's stat on that hit. Whether
@@ -264,20 +264,30 @@ and the other is circumstantial.
 
 | | Raw, linear | Circumstantial |
 | --- | --- | --- |
-| Offense | ♣ Knockoff | ♠ Pierce |
-| Defense | ♥ Sturdiness | ♦ Armor |
+| Offense | ♣ Strength | ♠ Accuracy |
+| Defense | ♥ Posture | ♦ Armor |
 
-- **♥ Sturdiness is Posture.** Max and starting Posture grow with ♥. When a reveal raises ♥,
-  you gain the difference. When a reveal lowers it, your max drops but your current Posture
-  isn't taken away.
-- **♦ Armor** is a flat reduction per hit, mapped onto your dial: thick on your Guard, thin on
-  your ordinary positions, a sliver on your exposure. A Block is a hit into thick armor.
-  Guard armor scales with hold. Its value depends on how damage arrives: it erases a grind
-  of small hits and barely dents the crit that finds your exposure.
-- **♣ Knockoff** is raw damage: it scales your hits linearly.
-- **♠ Pierce** is the crit stat. It pierces armor on every hit and pays later, through
-  crits: your non-crit hits build a hidden charge that your next crit spends (contact
-  resolution, step 4).
+Each offense stat mirrors a defense stat: Strength against Posture (damage against health),
+Accuracy against Armor (penetration against reduction, crits against blocks). Each acts all the
+time and does more when you aim at it (*Stances*).
+
+| Stat | Always | When you aim at it |
+| --- | --- | --- |
+| ♣ Strength | Raw damage: it scales your hits linearly | More damage, and a hit that deals damage leaves the target **Battered** |
+| ♠ Accuracy | Pierces armor on every hit. Crits need less hold to reach full power, and hit bigger | More of both, and your aim locks a little later |
+| ♦ Armor | A flat reduction per hit, thick on your Guard, thin on your ordinary positions, a sliver on your exposure. Your Guard needs less hold to reach full armor | More of both, and your aim locks a little later |
+| ♥ Posture | Health: max Posture grows with ♥. After every contact you heal a share of the damage that contact dealt you | Health before contact: a buffer that absorbs that contact's damage first |
+
+- **Battered:** the target takes +x% damage through their next contact. A new aimed ♣ hit
+  refreshes it; it doesn't stack. A clean Block (nothing gets through) doesn't apply it.
+- **Easier crits and blocks.** A late read onto the exposure keeps more of its punch with ♠; a
+  late Guard still blocks well with ♦. Leaning into either also buys extra time past the aim lock
+  (§3); when both riders lean into ♠ or ♦, their extra times offset.
+- **Armor** erases a grind of small hits and barely dents the crit that finds your exposure. A
+  Block is a hit into thick armor, and Guard armor scales with hold.
+- **Posture.** Everyone starts at 80. ♥ raises max Posture, so you can heal above 80, but it
+  doesn't raise the start: your ♥ shows only once you heal. When a reveal lowers ♥, your max drops
+  but your current Posture isn't taken away.
 
 ### Stances
 
@@ -291,9 +301,9 @@ and so do the red suits, so a diagonal can lean all offense or all defense.
 
 | Aim | Leans into | Reads as |
 | --- | --- | --- |
-| Up | ♣ Knockoff | Raw hit |
-| Out | ♠ Pierce | Crit hunter |
-| Down | ♥ Sturdiness | Posture |
+| Up | ♣ Strength | Raw hit |
+| Out | ♠ Accuracy | Crit hunter |
+| Down | ♥ Posture | Health |
 | In | ♦ Armor | Armor |
 | Up-Out | ♣ ♠ | All offense |
 | Down-In | ♥ ♦ | All defense |
@@ -308,8 +318,8 @@ into no stat.
 A lean multiplies the card points (*Card values*) of the stats it points at. It amplifies what
 your cards give: a lean into a stat with no points adds nothing, and high cards of a suit reward
 aiming at its home. ♥ takes its lean at contact: max Posture uses your ♥ points without the
-lean, and a lean into ♥ cuts the Posture damage you take on that hit. How much a lean
-multiplies, how much a leaned ♥ point cuts, and the half-step share are sim values (§11).
+lean, and a lean into ♥ is the buffer that absorbs that contact's damage first. How much a lean
+multiplies, how much buffer a leaned ♥ point gives, and the half-step share are sim values (§11).
 
 **The stat meter.** The rider sees a meter of their four stats with the current lean applied,
 live as they rotate, so they can see which aims their cards back. The meter is the rider's own:
@@ -322,8 +332,8 @@ Color pairing: black suits (♣ ♠) are offense, red suits (♥ ♦) are defens
 
 Every revealed card adds points to its suit's stat. r = rank, 2 = 2 up to A = 14.
 
-- **Rank value:** `1 + (r − 2) / 6` points. 2 = 1, 8 = 2, J = 2.5, A = 3. J, Q, K and A stay
-  on this curve and carry it on top of their §5 effect.
+- **Rank value:** `1 + (r − 2) / 6` points. 2 = 1, 8 = 2, J = 2.5, A = 3. J, Q, K and A are the
+  top of this curve and have no other effect (§5).
 - **Hole or board:** your hole cards count in full. Board cards count at the board weight (half
   to start), for both riders.
 - Every revealed card counts, kickers included. Kickers also break exact ties at showdown (§2).
@@ -352,9 +362,9 @@ S_suit = 20 + points_suit
 takes its lean at contact instead). Base
 20 is the "cardless jouster" floor. Each stat turns its value into its effect at its own rate:
 ♣ scales your hits by `S_♣ / 20` (contact resolution, step 3), so each ♣ point is +5% on a hit.
-♦ armor and ♠ piercing and charge also convert the stat value, so a cardless rider has a real
-Guard. The ♥ rate (Posture per point), ♦ rate (armor per unit of S♦) and ♠ rates (piercing and
-charge per unit of S♠) are sim values (§11).
+♦ armor and ♠ piercing also convert the stat value, so a cardless rider has a real Guard. The ♥
+rates (max Posture per point, heal share), ♦ rates (armor per unit of S♦, Guard hold relief) and
+♠ rates (piercing per unit of S♠, crit scale, crit hold relief) are sim values (§11).
 
 ### Contact resolution (A strikes B; both directions resolve simultaneously)
 
@@ -363,26 +373,25 @@ charge per unit of S♠) are sim values (§11).
 2. Base values: Weak 4, Normal 10, Crit 30. A Block is a Normal hit into thick armor.
 3. Hit output, scaled by ♣:
    ```
-   Out = Base · (S_♣,A / 20) · (0.25 + 0.75·h_A) · Street · Mods
+   Out = Base · (S_♣,A / 20) · Hold_A · Street · Mods
    ```
-   S_♣,A includes A's aim lean (*Stat value*), as do ♠ and ♦ below.
-4. ♠ Pierce:
-   - On every hit, A's ♠ pierces B's armor.
-   - On a Normal or Block, the hit adds to A's charge.
-   - On a Crit, A's ♠ scales the crit, and the crit spends all of A's charge as a bonus. A
-     crossed-lances crit (CC) spends it too.
-   - Charge lasts the whole hand, so charge built on early passes pays at Pass 4's higher
-     street multiplier. The outcomes that build it are public; the amount is hidden.
+   Hold_A is the hold multiplier `0.25 + 0.75·h_A`; on a Crit, A's ♠ lets it reach full power
+   with less hold. S_♣,A includes A's aim lean (*Stat value*), as do ♠ and ♦ below.
+4. ♠ Accuracy: on every hit, A's ♠ pierces B's armor. On a Crit, A's ♠ also scales the crit.
 5. Armor: B's ♦ armor at the sector hit, less A's piercing, is subtracted from the output:
-   thick on the Guard (scaled by B's hold multiplier), thin on ordinary positions, a sliver on
-   the exposure. A Block that nothing gets through is a clean block: B restores 3 Posture.
-6. B's ♥ lean cut (*Stances*) is subtracted, and the rest is Posture damage to B.
+   thick on the Guard (scaled by B's hold multiplier, which B's ♦ lets reach full armor with less
+   hold), thin on ordinary positions, a sliver on the exposure. A Block that nothing gets through
+   is a clean block: B restores 3 Posture.
+6. If B is Battered, what gets through is raised by x%. B's ♥ buffer (*Stances*) absorbs it first,
+   and the rest is Posture damage to B.
+7. After contact: B heals a share of the Posture damage this contact dealt, by B's ♥ (capped at
+   max Posture). If A's hit dealt damage and A was leaning into ♣, B is now Battered.
 
 ### Tracks and showdown
 
-- **Posture:** starts at 80 plus the ♥ bonus. Reaches 0 on Passes 1–3 = unhorsed. On Pass 4 it
-  can fall below 0, and the showdown counts it. Heals only from clean blocks, queen effects and
-  ♥ gains on a reveal, capped at max Posture.
+- **Posture:** starts at 80 for every rider; max Posture is 80 plus the ♥ bonus. Reaches 0 on
+  Passes 1–3 = unhorsed. On Pass 4 it can fall below 0, and the showdown counts it. Heals from
+  the ♥ heal after contact and from clean blocks, capped at max Posture.
 - **Showdown:** after Pass 4's contact, a knockdown is always forced. Each rider's hand bonus is
   added to their Posture, below 0 included: 20 Posture per step of hand category above high card
   (pair +20, two pair +40, trips +60, and so on up the categories). Riders in the same category
@@ -404,38 +413,13 @@ These leave out the aim lean, armor and piercing.
 
 ## 5. Broadway cards
 
-J, Q, K and A carry an effect just for being in your hand, on top of their rank and suit. Only
-hole cards grant the full effect. A face card on the board applies a half-strength version to
-both riders and appears in the arena.
+J, Q, K and A have no effects in v1 (0071). They are the top of the rank curve and add their rank
+value to their suit's stat like any card (§4 *Card values*). Pairs and trips of faces are the
+numeric multipliers like any rank. A face card on the board shows its emblem in the arena (§8);
+it has no rule.
 
-### Single effects
-
-| Card | In your hole cards | On the board (both riders) |
-| --- | --- | --- |
-| J | That card's displayed color is randomized each hand | All lance and shield colors show gray this hand |
-| Q | Restore 6 Posture at the start of Passes 2, 3 and 4 | Restore 3 |
-| K | Opponent's aim locks 0.15 s earlier (felt, not shown) | Both riders lock 0.08 s earlier |
-| A | Your Crit base rises from 30 to 35 | Both riders' Crit base +2 |
-
-### Pocket pairs of face cards (bespoke, replace the doubled single effect)
-
-| Pair | Name | Effect |
-| --- | --- | --- |
-| JJ | Masquerade | Both colors randomized, and your public hold meter displays with a 0.5 s lag |
-| QQ | Twin Favor | Restore 10 per pass; once per hand, the first time your Posture would fall to 0 or below, it is 20 instead, a trick's hit included |
-| KK | High Court | Opponent's aim locks 0.3 s earlier, and what gets through your Guard armor from them is halved |
-| AA | Champion | Crit base 40, and your Normal hits on the exposure's edge notch (the half step just past its far edge) also count as Crit |
-
-### Rules
-
-- Mixed face cards (AK, KQ, etc.) get both single effects. No suited bonus in v1.
-- A face card that pairs with the board (you hold K, board shows K) gets only the
-  numeric pair or trips. No extra effect.
-- Multiple board face cards stack linearly.
-- Board queen, king and ace effects apply from the pass their card is revealed on.
-
-Sim note: J effects are information effects. A sim with no reading model values them at
-zero. Expect jacks to look like dead cards until the sim has readers.
+A visible face effect would be a tell with one cause, against §7's rule. Hole faces granting
+private information is a v2 idea.
 
 ## 6. Tricks
 
@@ -527,7 +511,8 @@ A starting draft, to be tuned in the sim.
 
 ### The straight's meter
 
-A straight makes its money by holding still. On the unleash pass, a meter steps through the
+A straight makes its money by holding still: its power comes from charging straight without
+changing aim (0073), and an unheld straight hits weakly. On the unleash pass, a meter steps through the
 straight's five cards, low to high, as the rider holds one aim: one card per fifth of the
 run-up (hold fraction h ≥ 1/5, 2/5, … 5/5, §3). The meter measures hold against the earliest
 possible commit out of Neutral, so a rider who commits at once and holds to aim lock unlocks all
@@ -554,9 +539,9 @@ rule below. The suit is announced on declaration
 
 | Suit | Name | Home | Effect |
 | --- | --- | --- | --- |
-| ♣ | Shattering Blow | Up | Your hit's raw damage lands in full, even into a Block |
-| ♠ | Needle | Out | Every hit you land is a Crit that pierces all armor, and it spends your charge |
-| ♥ | Unbroken | Down | Your Posture can't fall below 1 this pass |
+| ♣ | Shattering Blow | Up | Your hit's raw damage lands in full, even into a Block, and the target stays Battered for the rest of the hand |
+| ♠ | Needle | Out | Every hit you land is a Crit that pierces all armor |
+| ♥ | Unbroken | Down | Your Posture can't fall below 1 this pass, and after contact you heal back everything the pass took |
 | ♦ | Gilded Mirror | In | Your armor covers your whole dial, exposure included, and what it stops reflects back at the striker |
 
 ### Trick vs trick
@@ -605,8 +590,6 @@ Design rule: each tell must have at least two plausible causes.
   lean, never which suit.
 - Colors sharpen as the board develops. Red-red with a three-red flop is a visible flush
   threat.
-- A jack in the hole shows a random color, not a blank. A hidden or neutral color would
-  itself reveal the jack.
 
 ### What each read targets
 
@@ -614,7 +597,7 @@ Design rule: each tell must have at least two plausible causes.
 | --- | --- | --- | --- |
 | Stance (aim lean) | Aim position | Which stats the rider's cards load | Could be a bluff stance or a pure sector read |
 | Hold meter | Hold fraction | Confidence in the current aim | Late switches cost power but are legal |
-| Lance/shield color | Hole card colors | Offense vs defense lean | Suit hidden; jack randomizes |
+| Lance/shield color | Hole card colors | Offense vs defense lean | Suit hidden |
 | Clean blocks | Block outcome | Thick Guard armor (♦) | Could be hold, not cards |
 | First exit from Neutral | Timing | Eagerness or confidence | Could be habit |
 
@@ -718,6 +701,8 @@ they hold that rank.
 Class is public. The dial shape is visible, like character select in a fighting game. This gives
 matchup charts and a readable meta. Hidden information stays in the cards.
 
+Also for v2: hole face cards granting private information about the opponent (0071).
+
 ### Favorite-card buff (hole cards only)
 
 - Holding your favorite rank as a hole card happens about 15% of hands, so opponents
@@ -787,7 +772,7 @@ whether a trick above the opponent wins overwhelmingly.
 | Card value by rank r | 1 + (r − 2) / 6 points: 2 = 1, 8 = 2, A = 3 |
 | Board card weight | ½ of a hole card; the sim tries lower |
 | Hand multipliers on made cards: pair / two pair / trips | ×2 / ×2 / ×3 |
-| Stat rates per point | ♣ +5% on a hit (S_♣ / 20); ♥ Posture, ♥ lean damage cut, ♦ armor, ♠ piercing and charge set by the sim |
+| Stat rates per point | ♣ +5% on a hit (S_♣ / 20); ♥ max Posture, ♥ heal share, ♥ buffer per leaned point, ♦ armor, ♦ Guard hold relief, ♠ piercing, ♠ crit scale and crit hold relief set by the sim |
 | Hold multiplier | 0.25 + 0.75 × h |
 | Street multipliers (Passes 1–4) | 1.0 / 1.0 / 1.0 / 1.25 |
 | Clean block restore | 3 Posture |
@@ -795,12 +780,10 @@ whether a trick above the opponent wins overwhelmingly.
 | Pass length | 8 s |
 | Standard dial layout (half steps from aim) | Exposure 0–4, ordinary 5–7, Guard 8, ordinary 9, Guard 10–12, ordinary 13–15 |
 | ♦ armor: Guard / ordinary / exposure | Thick / thin / sliver; values set by the sim |
-| ♠ charge per non-crit hit, and piercing | Set by the sim |
+| Battered: extra damage taken | +x%, set by the sim |
+| Extra time past the lock when leaning into ♠ or ♦ | Set by the sim |
 | Aim lean: multiplier on card points, and the half-step share | Set by the sim |
 | Showdown hand bonus | 20 Posture per step of hand category |
-| Queen restore (hole / board) | 6 / 3 per pass |
-| King lock penalty (hole / board) | 0.15 / 0.08 s |
-| Ace crit base (hole / board bonus) | 35 / +2 |
 | Trick hit, per rung | Set by the sim: unhorses from full Posture when played to its design |
 | Trick ward, per rung | Set by the sim |
 | Straight meter: base x, and how y maps to hit size | Set by the sim |
@@ -818,4 +801,4 @@ whether a trick above the opponent wins overwhelmingly.
    aggression (raise and unleash timing).
 3. Metrics: win rate by hand-category gap; knockout rate by pass; how often skill flips a
    numeric matchup; unleashed-trick win rate by trick; unhorse vs showdown finish ratio.
-4. v2 of the sim: a reading model, so jack, color and held-trick tells get a value.
+4. v2 of the sim: a reading model, so color and held-trick tells get a value.

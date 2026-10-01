@@ -90,5 +90,12 @@ Add a row below in the same commit. Check the latest `main` for the next free id
 | [0064](0064-trick-above-wins-95.md) | "Overwhelmingly" is 95% | 2026-09-30 |
 | [0065](0065-unhorse-is-a-hard-zero.md) | The unhorse stays a hard 0; no teeter roll | 2026-09-30 |
 | [0066](0066-pass-length-is-a-playtest-question.md) | The pass stays 8 s; a playtest decides whether it's long enough | 2026-09-30 |
+| [0067](0067-the-four-stats-redefined.md) | The four stats are Strength, Accuracy, Armor and Posture; each acts always and more when aimed | 2026-09-30 |
+| [0068](0068-aimed-strength-batters.md) | An aimed ♣ hit leaves the target Battered, taking more damage through their next contact | 2026-09-30 |
+| [0069](0069-easier-crits-and-blocks.md) | Accuracy and Armor make crits and blocks easier, through hold and extra time | 2026-09-30 |
+| [0070](0070-posture-health-buffer-heal.md) | ♥ Posture is health: a buffer when aimed, a heal after every contact, and everyone starts at 80 | 2026-09-30 |
+| [0071](0071-broadway-effects-removed.md) | Broadway cards have no effects; they are the top of the rank curve | 2026-10-01 |
+| [0072](0072-flushes-are-the-stat-at-its-limit.md) | Each flush is its suit's stat at its limit | 2026-10-01 |
+| [0073](0073-the-straight-charges-straight.md) | The straight's power comes from charging straight without changing aim | 2026-10-01 |
 
-Next free id: **0067**.
+Next free id: **0074**.
