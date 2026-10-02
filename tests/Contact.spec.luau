@@ -1,5 +1,5 @@
 --!strict
--- Contact.spec.luau — contact resolution (GAME_SPEC §4), with the §5 and §6 rules that act at contact.
+-- Contact.spec.luau — contact resolution (GAME_SPEC §4), with the §6 rules that act at contact.
 
 local kit = require("./lib/testkit")
 local Config = require("../sim/Config")
@@ -10,11 +10,8 @@ local function fighter(o: any): Contact.Fighter
 		aim = o.aim,
 		h = o.h or 1,
 		S = o.S or { 20, 20, 20, 20 },
-		heartCut = o.cut or 0,
-		critBase = o.critBase or 30,
-		aa = o.aa or false,
-		kk = o.kk or false,
-		charge = o.charge or 0,
+		buffer = o.buffer or 0,
+		battered = o.battered or 0,
 		trick = o.trick,
 		ward = o.ward or 0,
 	}
@@ -58,34 +55,45 @@ kit.describe("Contact: steps 4–6", function()
 		local flicked = Contact.strike(fighter({ aim = 8 }), fighter({ aim = 0, h = 0 }), arena(1), cfg)
 		kit.expectTrue(flicked.dmg > held.dmg)
 	end)
-	kit.it("Normal and Block build ♠ charge; a Crit spends it at this pass's street", function()
-		local n = Contact.strike(fighter({ aim = 9 }), fighter({ aim = 0 }), arena(0.5), cfg)
-		kit.expectNear(n.chargeGain, cfg.sim.chargeRate)
-		kit.expectFalse(n.chargeSpent)
-		local plain = Contact.strike(fighter({ aim = 1 }), fighter({ aim = 0 }), arena(1.25), cfg)
-		local charged = Contact.strike(fighter({ aim = 1, charge = 6 }), fighter({ aim = 0 }), arena(1.25), cfg)
-		kit.expectTrue(charged.chargeSpent)
-		kit.expectNear(charged.dmg - plain.dmg, 6 * 1.25)
+	kit.it("♠ lets a late crit keep more power (0069); a Normal gets no relief", function()
+		local plain = Contact.strike(fighter({ aim = 1, h = 0 }), fighter({ aim = 0 }), arena(1), cfg)
+		local sharp = Contact.strike(fighter({ aim = 1, h = 0, S = { 20, 40, 20, 20 } }), fighter({ aim = 0 }), arena(1), cfg)
+		-- Crit at h = 0: hold 0.25, relieved by critRelief per ♠ point of the shortfall (none when
+		-- cardless); ♠ also scales the crit.
+		local function crit(sp: number): number
+			local hold = 0.25 + 0.75 * math.clamp(cfg.sim.critRelief * (sp - 20), 0, 1)
+			return 30 * hold * sp / 20
+		end
+		local armorOf = cfg.sim.armorRate * 20 * cfg.sim.armorZone.exposure
+		kit.expectNear(plain.dmg, crit(20) - math.max(0, armorOf - cfg.sim.pierceRate * 20))
+		kit.expectNear(sharp.dmg, crit(40) - math.max(0, armorOf - cfg.sim.pierceRate * 40))
+		local n = Contact.strike(fighter({ aim = 9, h = 0, S = { 20, 60, 20, 20 } }), fighter({ aim = 0 }), arena(1), cfg)
+		local n0 = Contact.strike(fighter({ aim = 9, h = 0 }), fighter({ aim = 0 }), arena(1), cfg)
+		kit.expectTrue(n.dmg >= n0.dmg) -- only piercing differs on a Normal
+	end)
+	kit.it("♦ lets a late Guard block harder (0069)", function()
+		local plain = Contact.strike(fighter({ aim = 8, S = { 60, 20, 20, 20 } }), fighter({ aim = 0, h = 0 }), arena(1), cfg)
+		local armored = Contact.strike(fighter({ aim = 8, S = { 60, 20, 20, 20 } }), fighter({ aim = 0, h = 0, S = { 20, 20, 20, 21 } }), arena(1), cfg)
+		local relief = Contact.strike(fighter({ aim = 8, S = { 60, 20, 20, 20 } }), fighter({ aim = 0, h = 1, S = { 20, 20, 20, 21 } }), arena(1), cfg)
+		kit.expectTrue(armored.dmg < plain.dmg)
+		kit.expectTrue(relief.dmg < armored.dmg)
+	end)
+	kit.it("Battered raises what gets through by its share (0068)", function()
+		local a = Contact.strike(fighter({ aim = 7 }), fighter({ aim = 0 }), arena(1), cfg)
+		local b = Contact.strike(fighter({ aim = 7 }), fighter({ aim = 0, battered = 0.25 }), arena(1), cfg)
+		kit.expectNear(b.dmg, a.dmg * 1.25)
+		kit.expectNear(b.through, a.through)
 	end)
 	kit.it("♠ pierces armor on every hit, crits included", function()
-		local lo = Contact.strike(fighter({ aim = 7 }), fighter({ aim = 0, S = { 20, 20, 20, 60 } }), arena(1), cfg)
-		local hi = Contact.strike(fighter({ aim = 7, S = { 20, 40, 20, 20 } }), fighter({ aim = 0, S = { 20, 20, 20, 60 } }), arena(1), cfg)
+		local lo = Contact.strike(fighter({ aim = 7, S = { 60, 20, 20, 20 } }), fighter({ aim = 0, S = { 20, 20, 20, 30 } }), arena(1), cfg)
+		local hi = Contact.strike(fighter({ aim = 7, S = { 60, 40, 20, 20 } }), fighter({ aim = 0, S = { 20, 20, 20, 30 } }), arena(1), cfg)
+		kit.expectTrue(lo.dmg > 0)
 		kit.expectTrue(hi.dmg > lo.dmg)
 	end)
-	kit.it("a ♥ lean cuts the Posture damage taken", function()
+	kit.it("the ♥ buffer absorbs the Posture damage first (0070)", function()
 		local a = Contact.strike(fighter({ aim = 7 }), fighter({ aim = 0 }), arena(1), cfg)
-		local b = Contact.strike(fighter({ aim = 7 }), fighter({ aim = 0, cut = 2 }), arena(1), cfg)
+		local b = Contact.strike(fighter({ aim = 7 }), fighter({ aim = 0, buffer = 2 }), arena(1), cfg)
 		kit.expectNear(a.dmg - b.dmg, 2)
-	end)
-	kit.it("KK halves what gets through the Guard", function()
-		local a = Contact.strike(fighter({ aim = 8, S = { 60, 20, 20, 20 } }), fighter({ aim = 0 }), arena(1), cfg)
-		local b = Contact.strike(fighter({ aim = 8, S = { 60, 20, 20, 20 } }), fighter({ aim = 0, kk = true }), arena(1), cfg)
-		kit.expectTrue(a.dmg > 0)
-		kit.expectNear(b.dmg, a.dmg / 2)
-	end)
-	kit.it("AA's edge notch turns a Normal one half step past the exposure into a Crit (C2 = one)", function()
-		kit.expectEqual(Contact.strike(fighter({ aim = 5, aa = true }), fighter({ aim = 0 }), arena(1), cfg).tier, "crit")
-		kit.expectEqual(Contact.strike(fighter({ aim = 6, aa = true }), fighter({ aim = 0 }), arena(1), cfg).tier, "normal")
 	end)
 end)
 

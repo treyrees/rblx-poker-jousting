@@ -46,7 +46,7 @@ kit.describe("Showdown prototypes (switches.showdown)", function()
 				else
 					kit.expectEqual(r.winner, 0)
 				end
-				-- afterFinal is the Posture the rule saw, unless Twin Favor or Unbroken lifted a rider
+				-- afterFinal is the Posture the rule saw, unless Unbroken or a heal lifted a rider
 				-- off 0 after the exchange (then it isn't recorded).
 				if r.afterFinal then
 					kit.expectDeepEqual(r.afterFinal, r.posture)
@@ -140,7 +140,7 @@ kit.describe("Showdown prototypes (switches.showdown)", function()
 		Config.set(cfg, "switches.showdown", "charge")
 		Config.set(cfg, "proto.chargeBonus", "none")
 		for _, r in play(cfg, 9, 300) do
-			-- afterFinal is nil when Twin Favor or Unbroken kept a rider up through the exchange.
+			-- afterFinal is nil when Unbroken kept a rider up through the exchange.
 			if r.pass == 5 and r.afterFinal then
 				local af = r.afterFinal :: { number }
 				local ahead = if af[1] > af[2] then 1 elseif af[2] > af[1] then 2 else 0

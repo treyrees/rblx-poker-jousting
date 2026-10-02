@@ -87,14 +87,17 @@ end)
 kit.describe("Tricks: the §6 targets hold at the starting values", function()
 	local cfg = Config.defaults()
 	local sim = cfg.sim
-	-- The most one hit must clear: max Posture, Guard armor at full hold and the ♥ cut, on a
+	-- The most one hit must clear: max Posture, Guard armor at full hold and the ♥ buffer, on a
 	-- generous 16 points of ♥ and ♦ with the lean applied.
 	local heart = 16
-	local posture = cfg.spec.postureStart + sim.heartPosture * heart
+	local posture = cfg.spec.postureStart
 	local S = cfg.spec.statBase + heart * (1 + sim.lean)
-	local cut = sim.heartCut * heart * sim.lean
-	local Pnum = posture + sim.armorRate * S + cut
-	local Pmirror = posture + sim.armorRate * S * sim.flushExplode + cut -- a Gilded Mirror defender
+	local cut = sim.heartBuffer * heart * sim.lean
+	local function guardArmor(Sd: number): number
+		return sim.armorRate * Sd + sim.armorPerPoint * (Sd - cfg.spec.statBase)
+	end
+	local Pnum = posture + guardArmor(S) + cut
+	local Pmirror = posture + guardArmor(S * sim.flushExplode) + cut -- a Gilded Mirror defender
 	local maxHit = { Tricks.straightHit(14, 5, cfg), sim.hit.flush, sim.hit.fullHouse, sim.hit.quads, sim.hit.straightFlush }
 	local minHit = { Tricks.straightHit(5, 5, cfg), sim.hit.flush, sim.hit.fullHouse, sim.hit.quads, sim.hit.straightFlush }
 	local ward = { sim.ward.straight, sim.ward.flush, sim.ward.fullHouse, sim.ward.quads, sim.ward.straightFlush }

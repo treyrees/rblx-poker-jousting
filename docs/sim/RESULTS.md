@@ -1,18 +1,22 @@
 # Sim results: one hand
 
-Sep 30, 2026. GAME_SPEC through decision 0054:
+Oct 2, 2026. GAME_SPEC through decision 0074. Since the last run:
 
-- the river flips on the final pass (0049);
-- Pass 4's contact unhorses no one: each rider's hand bonus (20 Posture per category step) is added
-  to their Posture, even below 0, and the lower rider falls (0050, 0053);
-- Posture starts at 80, and the street multipliers are 1.0 / 1.0 / 1.0 / 1.25, with no last-pass
-  bonus (0054);
-- the hold multiplier is 0.25 + 0.75 × h (0052).
+- slow motion doesn't count toward hold (0061);
+- the stats are redefined (0067–0070):
+  - ♣ Strength: aimed hits Batter the target, who takes +x% damage through their next contact.
+  - ♠ Accuracy and ♦ Armor: crits and blocks need less hold, and a lean into either locks later.
+  - ♥ Posture: an aimed buffer and a heal after every contact; everyone has 80 Posture.
+  - The ♠ charge is gone.
+- broadway cards have no effects (0071);
+- each flush is its stat at its limit (0072): Shattering Blow Batters for the hand, Unbroken heals
+  back the pass;
+- the straight's power comes from holding (0073);
+- defense isn't weaker than offense, and the sim values are tuned to it (0074).
 
 Runs use seed 20260930 and 100k hands per run; a sweep row is 200k hands (a mirror run plus a
-skilled-vs-novice run). The sim is `tools/sim.luau` over `sim/`, and every value it uses is in
-`sim/Config.luau`. [SANITY_CHECK.md](SANITY_CHECK.md) says which values are §11's, which the sim
-set, and which open questions are modelled as switches.
+skilled-vs-novice run on seed 20260931). The sim is `tools/sim.luau` over `sim/`, and every value it
+uses is in `sim/Config.luau`. The earlier report, through 0054, is in this file's git history.
 
 **Everything here is a proposal.** The numbers come from a model of the aim war, not the game.
 Riders are scripted with the four §11 parameters:
@@ -22,10 +26,7 @@ Riders are scripted with the four §11 parameters:
 - **stance honesty:** leaning toward your loaded stats, or a random aim;
 - **aggression:** raise and unleash timing.
 
-The riders never Yield, so every hand is ridden out (pillar 2). The J and JJ effects and the
-colors have no reading model, so jacks are worth their rank points only (§5 sim note).
-
-The rider profiles used below:
+The riders never Yield, so every hand is ridden out (pillar 2).
 
 | Profile | read | hold | honesty |
 | --- | --- | --- | --- |
@@ -33,56 +34,75 @@ The rider profiles used below:
 | skilled | 0.7 | 0.9 | 0.9 |
 | novice | 0.05 | 0.3 | 0.4 |
 
+## The new mechanics' starting values
+
+All are "set by the sim" (§11), so they are starting values, not proposals for GAME_SPEC. They were
+tuned so that defense isn't weaker than offense (0074).
+
+| Value | Start | What it means |
+| --- | --- | --- |
+| `battered` | 0.4 | Battered: +40% damage taken, × the striker's ♣ lean weight (full at Up, half on Up-Out and Up-In) |
+| `healBase`, `healPerPoint` | 0.1, 0.02 | After contact, heal 10% + 2% per unleaned ♥ point of the damage taken: about 22% with 6 ♥ points |
+| `heartBuffer` | 1.5 | Buffer per leaned ♥ point |
+| `armorPerPoint` | 1.5 | Armor per ♦ card point, on top of 0057's value conversion (`armorRate` × S♦). A cardless rider keeps the same Guard; without this a ♦ card point was worth a tenth of a ♣ point |
+| `armorZone` | Guard 1, thin 0.5, sliver 0.2 | Thick, thin and sliver armor (were 1 / 0.2 / 0.05). With a thinner sliver, crits ignored armor and ♦ stayed under 48% at any rate |
+| `critRelief`, `guardRelief` | 0.03 | Per ♠ (♦) card point, the share of the hold multiplier's shortfall restored on a Crit (on Guard armor). A cardless rider gets none, so holding still beats a late switch (0052) |
+| `extraTime` | 0.15 s | Extra time past the lock at a full lean into ♠ or ♦. In the sim: when both riders read, the one with more moves last |
+| Straight meter | `5.5 · 2^cards · (1 + 0.1·(top − 5))` | Each card held doubles the hit. A full wheel deals 176, enough to clear full Posture with the thicker defense (§6); an ace-high deals 167 at four cards and 334 at five; one or two cards deal 11–42 |
+
+The relief was first built on the stat value (`S/20`), which gave a cardless rider 30% relief on
+every late crit. That pushed the skill flip to 77.9%; on card points at 0.03 it is in the mid 60s.
+
 ## Headline metrics against the targets
 
 Average vs average, at the defaults, unless noted.
 
 | Target (source) | Result | Met? |
 | --- | --- | --- |
-| Most hands see all five cards and end on the river; some end on the turn, fewer on the flop (§2, 0054: turn 10–15%, flop about 1.5–2%) | Hands ending on Pass 1 0.0%, Pass 2 (flop) 1.6%, Pass 3 (turn) 11.4%; the river 87.0%. Pass 4 unhorses no one (0053). | Yes |
-| Numeric hands order correctly (§11) | Better river category wins: 73.8% at a gap of 1, 87.4% at 2, 92.6% at 3 | Yes, on average |
-| Skill decides most numeric matchups; a bad hand is a handicap, not a fold (pillar 2; 0054: skill flip 55–65%) | Skilled vs novice: skilled wins 60.2% while holding the *worse* category, and 96.9% with the better (the sweeps' flip, on seed 20260931, is 60.4%). Skilled vs average: 40.1% with the worse. | Yes, mid-range |
-| Numeric gap about ×1.0–1.45 on a hit (§4) | Medians ×1.09, ×1.17 and ×1.23 at gaps 1, 2 and 3 (λ = 1). The ♣-only tail passes 1.45 above λ = 1. See *The numeric gap* below. | Yes, for λ ≤ 1 |
-| A trick above the opponent, played to design, wins overwhelmingly (pillar 3, 0044) | Unleashed above: 95.8% (n = 3,682). Answering above: 100% (n = 12). Auto-fired on Pass 4 above: 99.7% (n = 11,386). | Auto-fires yes; unleashes lower, accepted for now (0054). The threshold is Trey's; not set. |
-| A higher trick nearly always beats a lower one across rungs (0044) | 99.3% (n = 269) | Yes |
-| The flush ward stops an ace-high straight at full meter; the straight flush beats the quads ward | Pinned by `tests/Tricks.spec.luau` at the starting values: hits from Pass 2 (×1.0), wards against Pass 4 (×1.25) | Yes |
-| §4 damage checks (6.3 / 43 / 54) | Pinned by `tests/Contact.spec.luau` with the lean, armor and piercing off | Yes |
+| Defense isn't weaker; suits about even (0074) | Hole card of the suit wins: ♣ 49.9%, ♠ 48.7%, ♥ 48.5%, ♦ 48.7% | Yes |
+| Turn 10–15%, flop about 1.5–2% (0054; guides, not targets, per 0074) | Flop 1.5%, turn 9.5%, river 89.0% | About |
+| Numeric hands order correctly (§11) | Better river category wins 76.2% / 90.3% / 96.1% at gaps 1 / 2 / 3 | Yes |
+| Skill flip 55–65% (pillar 2, 0054) | Skilled beats novice with the worse category 66.1%; skilled vs average 38.5% | About; a point over |
+| Numeric gap ×1.0–1.45 after the lean, λ ≤ 1 (0062) | Unchanged by this pass (card points only): medians ×1.09 / 1.17 / 1.23 at λ = 1 | Yes |
+| A trick above, played to design, wins at least 95% on every path (0064) | Unleashed 97.6% (n 1,844), answering 100% (n 13), auto-fired 100% (n 7,117). Every trick is at 95% or more | Yes |
+| A higher trick nearly always beats a lower one (0044) | 99.6% (n 260) | Yes |
+| Holding is the straight's power (0073) | Unleashed straights: held 95.2%, not held 91.9%. Before 0073's meter it was 98.8% vs 98.2% | Yes |
 
-### Win rate by trick
+### Tricks fired while above, by path and design
 
-Fired while above the opponent, not clashed.
+From a scratch count over the baseline run (100k hands): tricks fired while above the opponent, not
+clashed.
 
-| Trick | Played to design | Not to design |
+| Path | Played to design | Not to design |
 | --- | --- | --- |
-| Straight | 98.8% (n 1,113) | 98.2% (n 5,800) |
-| Flush | 98.8% (n 3,687) | 94.2% (n 327) |
-| Full house | 100% (n 3,871) | n/a (unconditional) |
-| Quads | 100% (n 243) | n/a (unconditional) |
-| Straight flush | 100% (n 11) | 100% (n 28) |
+| Unleash | 97.6% (n 1,844): flush 95.7%, full house 99.8%, quads 100%, straight 95.2% | 92.1% (n 1,740): straight 91.9%, flush 96.2% |
+| Answer | 100% (n 13) | 100% (n 4) |
+| Auto-fire on Pass 4 | 100% (n 7,117) | 99.2% (n 4,498) |
 
 Other metrics:
 
-- **Held, then drawn out:** 7.8% of riders who held a trick while above (n = 3,373).
-- **Clashes:** 2,378 clashed tricks, so level tricks cancel in about 1.2–2.4% of hands.
-- **Unhorse vs showdown:** 13.0% : 87.0% (ratio 0.15). Every showdown is a river ending.
-- **Numeric hands** (81.8% of all) end by an unhorse 9.6% of the time, all on Passes 2–3.
-- **Showdown winner:** the rider ahead on Posture after Pass 4's contact wins 89.3% of showdowns,
-  and the better poker hand wins 73.3%.
+- **Held, then drawn out:** 8.2% (n = 3,332).
+- **Unhorse vs showdown:** 11.0% : 89.0%.
+- **Showdown:** the rider ahead on Posture after Pass 4's contact (and its heal) wins 85.4%; the
+  better poker hand wins 73.5%.
+- **Reads:** 71.5% of reads switch late rather than stay on the held aim (63.1% before the pass).
 
-What the trick numbers show:
+## What each suit and rank is worth now
 
-1. **Most tricks fire on the final pass**, by auto-fire, because most tricks first appear on the
-   river.
-2. **Auto-fired tricks now win more (99.7%) than unleashed ones (95.8%).** Before 0053 it was the
-   other way round (93.7% and 99.3%).
-   - Pass 4 no longer unhorses on contact, so a held trick that auto-fires can't be lanced down on
-     the same contact, and its bonus (80 Posture or more) lands on top.
-   - An unleash happens on the flop or the turn, where Posture 80 and the flat early multipliers
-     let the numeric rider lance the trick rider down on that same contact more often. Trey
-     accepted this for now (0054).
-3. **"Played to design" barely separates straights (98.8% vs 98.2%).** A straight that lands on
-   the river rarely reaches a full meter, and at x = 1.3 most straights unhorse from three or
-   four meter cards anyway. See question 2.
+From a scratch count: 200k hands, average riders, seat 1's hole cards. A hole card's win rate when
+it is of that suit (seat 1 wins 49.0% overall).
+
+| | ♣ | ♠ | ♥ | ♦ |
+| --- | --- | --- | --- | --- |
+| Now | 49.9% | 48.7% | 48.5% | 48.7% |
+| At the first starting values | 52.6% | 52.0% | 47.4% | 46.3% |
+| Before this pass | 51.1% | 50.1% | 53.1% | 45.7% |
+
+- **The suits are now within 1.4 points** (0074). At the first starting values, ♥ had fallen from
+  the strongest suit to the second weakest (it no longer adds Posture, and the heal's ♥ share was
+  small), and ♦ was a net loss as it had been before the pass.
+- **Ranks climb smoothly** (at the first starting values): 46% for a 2 to 51% for J through A.
+  Before 0071 the Q stood out at 62% (its restore and Twin Favor) and the J sat flat at 50.6%.
 
 ## Sensitivity
 
@@ -99,83 +119,57 @@ Each row changes one thing from the defaults. Column key:
 
 | Config | unh:sd | KO P1 / P2 / P3 / P4 (%) | gap1 | gap2 | gap3 | flip | above/design | above/off | cross | drawn |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| **defaults** | 0.15 | 0.0 / 1.6 / 11.4 / 0.0 | 73.8 | 87.4 | 92.6 | 60.4 | 99.3 | 98.0 | 99.3 | 7.8 |
-| before 0053–0054 (Posture 100, 0.5 / 0.75 / 1.0 / 1.25 × 1.3, unhorse on Pass 4) | 0.42 | 0.0 / 0.7 / 3.1 / 25.8 | 74.2 | 86.4 | 92.5 | 56.8 | 96.8 | 92.2 | 100 | 9.5 |
-| Posture start 85 (0054: 80) | 0.12 | 0.0 / 1.2 / 9.5 / 0.0 | 73.6 | 87.2 | 96.1 | 60.2 | 99.3 | 98.0 | 99.7 | 7.8 |
-| Pass 1 ×0.75 (0054: 1.0) | 0.11 | 0.0 / 0.9 / 9.3 / 0.0 | 75.3 | 87.8 | 94.5 | 58.0 | 99.5 | 98.1 | 99.3 | 7.0 |
-| Pass 3 ×1.25 (0054: 1.0) | 0.22 | 0.0 / 1.5 / 16.4 / 0.0 | 72.3 | 84.6 | 91.9 | 61.6 | 99.0 | 96.7 | 99.6 | 7.4 |
-| turn cushion ½ (not adopted) | 0.11 | 0.0 / 1.6 / 8.5 / 0.0 | 74.2 | 89.1 | 95.7 | 59.8 | 99.9 | 99.0 | 99.6 | 7.6 |
-| showdown bonus 10 (0050: 20) | 0.15 | 0.0 / 1.6 / 11.4 / 0.0 | 65.3 | 76.8 | 86.9 | 73.1 | 99.3 | 96.5 | 98.9 | 7.8 |
-| showdown bonus 25 | 0.15 | 0.0 / 1.6 / 11.4 / 0.0 | 77.3 | 90.6 | 94.6 | 54.2 | 99.4 | 98.2 | 99.6 | 7.8 |
-| showdown bonus 30 | 0.15 | 0.0 / 1.6 / 11.4 / 0.0 | 80.4 | 92.9 | 96.0 | 48.4 | 99.4 | 98.4 | 99.6 | 7.8 |
-| holdFloor 0.2 (0052: 0.25) | 0.14 | 0.0 / 1.5 / 11.2 / 0.0 | 73.8 | 87.9 | 93.9 | 58.2 | 99.3 | 98.1 | 99.6 | 7.9 |
-| holdFloor 0.4 (was §11) | 0.17 | 0.0 / 1.8 / 12.4 / 0.0 | 71.8 | 85.6 | 92.4 | 68.8 | 99.2 | 97.6 | 99.6 | 7.2 |
-| holdFloor 0.6 | 0.26 | 0.0 / 2.5 / 18.2 / 0.0 | 68.8 | 81.2 | 88.2 | 80.0 | 99.0 | 96.4 | 99.3 | 7.1 |
-| lean λ = 0 | 0.09 | 0.0 / 0.8 / 7.1 / 0.0 | 75.6 | 89.2 | 96.3 | 58.4 | 99.7 | 98.3 | 98.7 | 7.5 |
-| lean λ = 0.5 | 0.11 | 0.0 / 1.0 / 9.3 / 0.0 | 74.7 | 87.9 | 95.8 | 58.9 | 99.5 | 98.1 | 99.3 | 8.0 |
-| lean λ = 2 | 0.22 | 0.0 / 3.5 / 14.3 / 0.0 | 72.6 | 84.4 | 90.5 | 61.8 | 99.2 | 97.2 | 98.7 | 7.3 |
-| board weight 0.25 (§11: 0.5) | 0.14 | 0.0 / 1.4 / 11.1 / 0.0 | 73.3 | 86.4 | 94.5 | 60.0 | 99.5 | 98.1 | 98.9 | 8.3 |
-| armor rate 0.15 | 0.15 | 0.0 / 1.6 / 11.7 / 0.0 | 74.2 | 87.6 | 93.7 | 58.7 | 99.3 | 97.9 | 99.3 | 7.6 |
-| armor rate 0.4 | 0.14 | 0.0 / 1.5 / 10.6 / 0.0 | 72.8 | 86.1 | 92.9 | 62.9 | 99.4 | 98.2 | 99.3 | 8.5 |
-| ♥ Posture/point 2 | 0.16 | 0.0 / 1.7 / 12.2 / 0.0 | 73.3 | 86.6 | 91.8 | 61.1 | 99.4 | 98.1 | 99.3 | 7.6 |
-| ♥ Posture/point 5 | 0.13 | 0.0 / 1.5 / 10.1 / 0.0 | 74.5 | 87.7 | 94.3 | 59.0 | 99.3 | 98.3 | 99.7 | 8.4 |
-| ♠ charge 0 | 0.14 | 0.0 / 1.5 / 10.5 / 0.0 | 74.5 | 88.2 | 93.6 | 60.3 | 99.4 | 98.3 | 99.6 | 8.2 |
-| ♠ charge 6 | 0.17 | 0.0 / 1.6 / 12.6 / 0.0 | 72.5 | 86.2 | 92.8 | 60.3 | 99.3 | 97.8 | 99.7 | 7.7 |
-| straight x = 1.15 | 0.15 | 0.0 / 1.6 / 11.4 / 0.0 | 73.8 | 87.4 | 92.6 | 60.4 | 99.3 | 98.0 | 99.3 | 7.8 |
-| straight x = 2, wards not rescaled | 0.15 | 0.0 / 1.6 / 11.4 / 0.0 | 73.8 | 87.5 | 92.5 | 60.4 | 98.9 | 97.8 | **79.8** | 7.7 |
-| trick hits and wards ×0.5 | 0.15 | 0.0 / 1.6 / 11.4 / 0.0 | 73.8 | 87.5 | 92.6 | 60.5 | 99.4 | 97.9 | 99.3 | 7.6 |
-| slowmo = game (open) | 0.14 | 0.0 / 1.4 / 10.6 / 0.0 | 74.5 | 87.9 | 93.9 | 62.0 | 99.4 | 98.0 | 99.3 | 7.2 |
-| slowmo = excluded (open) | 0.13 | 0.0 / 1.4 / 9.9 / 0.0 | 75.0 | 87.7 | 95.8 | 63.1 | 99.5 | 98.2 | 100 | 7.9 |
-| statBasis = points (c1) | 0.15 | 0.0 / 1.5 / 11.8 / 0.0 | 74.7 | 87.6 | 93.3 | 57.8 | 99.4 | 97.9 | 98.6 | 7.3 |
-| flushHit = F2 (c3) | 0.14 | 0.0 / 1.5 / 10.9 / 0.0 | 74.1 | 87.0 | 93.3 | 60.3 | 99.0 | 97.7 | 98.6 | 8.3 |
-| meterThreshold = strict (c4) | 0.15 | 0.0 / 1.6 / 11.4 / 0.0 | 73.8 | 87.4 | 92.6 | 60.4 | 99.4 | 98.1 | 99.3 | 7.8 |
-| Twin Favor: trick overrides (C1) | 0.15 | 0.0 / 1.6 / 11.4 / 0.0 | 73.8 | 87.6 | 92.5 | 60.4 | 99.3 | 97.9 | 99.3 | 7.9 |
-| AA edge = both (C2) | 0.15 | 0.0 / 1.6 / 11.3 / 0.0 | 73.9 | 87.5 | 92.5 | 60.6 | 99.3 | 98.0 | 99.3 | 8.0 |
-| AA edge = direction (C2) | 0.15 | 0.0 / 1.6 / 11.4 / 0.0 | 73.8 | 87.2 | 92.9 | 60.4 | 99.3 | 98.0 | 99.3 | 7.9 |
+| **defaults** | 0.12 | 0.0 / 1.5 / 9.5 / 0.0 | 76.2 | 90.3 | 96.1 | 66.1 | 99.5 | 97.2 | 99.6 | 8.2 |
+| battered 0 (0068 off) | 0.08 | 0.0 / 0.7 / 7.0 / 0.0 | 78.1 | 91.4 | 98.1 | 64.3 | 99.5 | 97.3 | 99.6 | 8.1 |
+| battered 0.6 | 0.15 | 0.0 / 2.4 / 10.8 / 0.0 | 75.7 | 89.2 | 96.8 | 66.9 | 99.3 | 97.2 | 99.6 | 7.9 |
+| heal off (0070) | 0.16 | 0.0 / 2.1 / 12.0 / 0.0 | 73.4 | 86.4 | 94.2 | 70.9 | 99.4 | 96.4 | 100 | 7.5 |
+| heal 4% per ♥ point | 0.12 | 0.0 / 1.5 / 9.2 / 0.0 | 77.7 | 91.4 | 96.5 | 63.5 | 99.5 | 97.2 | 99.6 | 7.9 |
+| ♥ buffer 0.5 | 0.13 | 0.0 / 1.5 / 9.9 / 0.0 | 75.7 | 89.6 | 97.1 | 67.7 | 99.5 | 97.1 | 98.9 | 7.8 |
+| ♦ per-point armor 0 | 0.15 | 0.0 / 1.8 / 11.1 / 0.0 | 76.6 | 89.3 | 95.8 | 65.5 | 99.3 | 97.2 | 100 | 7.5 |
+| armor zones thin 0.2, sliver 0.05 | 0.15 | 0.0 / 1.9 / 11.2 / 0.0 | 75.7 | 89.0 | 95.1 | 66.8 | 99.4 | 96.9 | 99.2 | 8.2 |
+| crit and guard relief 0 (0069 off) | 0.11 | 0.0 / 1.2 / 8.3 / 0.0 | 77.2 | 91.3 | 96.6 | 62.2 | 99.7 | 97.5 | 100 | 7.8 |
+| crit and guard relief 0.06 | 0.16 | 0.0 / 2.2 / 11.6 / 0.0 | 75.2 | 88.4 | 95.7 | 69.9 | 99.3 | 96.4 | 100 | 7.6 |
+| extraTime 0 (0069 last move off) | 0.12 | 0.0 / 1.5 / 9.5 / 0.0 | 76.6 | 90.7 | 96.3 | 66.9 | 99.5 | 97.4 | 99.3 | 7.6 |
+| straight x = 1.5 (same full wheel) | 0.13 | 0.0 / 1.7 / 10.0 / 0.0 | 76.3 | 90.0 | 96.3 | 66.2 | 99.6 | 98.5 | 99.6 | 7.5 |
+| straight rank adds nothing | 0.12 | 0.0 / 1.4 / 9.2 / 0.0 | 76.4 | 90.1 | 97.1 | 66.1 | 99.5 | 95.9 | 98.9 | 8.1 |
+| trick hits and wards ×0.5 | 0.12 | 0.0 / 1.4 / 9.0 / 0.0 | 76.3 | 90.1 | 97.2 | 66.1 | 99.5 | 93.9 | 99.3 | 8.4 |
+| showdown bonus 10 (0050: 20) | 0.12 | 0.0 / 1.5 / 9.5 / 0.0 | 67.2 | 79.6 | 91.0 | 78.6 | 99.5 | 94.6 | 99.2 | 8.2 |
+| showdown bonus 25 | 0.12 | 0.0 / 1.5 / 9.5 / 0.0 | 79.8 | 93.2 | 96.5 | 59.0 | 99.5 | 97.6 | 99.6 | 8.2 |
+| showdown bonus 30 | 0.12 | 0.0 / 1.5 / 9.5 / 0.0 | 83.2 | 95.2 | 96.8 | 52.3 | 99.5 | 97.7 | 99.6 | 8.2 |
+| Posture start 85 (0054: 80) | 0.10 | 0.0 / 1.0 / 8.1 / 0.0 | 76.9 | 90.9 | 96.7 | 65.4 | 99.6 | 96.7 | 99.6 | 8.3 |
+| Pass 1 ×0.75 (0054: 1.0) | 0.10 | 0.0 / 0.8 / 8.3 / 0.0 | 77.4 | 91.4 | 96.0 | 63.9 | 99.6 | 97.2 | 99.7 | 8.0 |
+| Pass 3 ×1.25 (0054: 1.0) | 0.19 | 0.0 / 1.5 / 14.5 / 0.0 | 75.3 | 88.4 | 95.6 | 67.8 | 98.9 | 96.9 | 99.6 | 7.6 |
+| holdFloor 0.2 (0052: 0.25) | 0.12 | 0.0 / 1.4 / 9.1 / 0.0 | 77.2 | 91.3 | 97.5 | 63.7 | 99.6 | 97.4 | 100 | 7.8 |
+| holdFloor 0.4 | 0.16 | 0.0 / 2.0 / 12.2 / 0.0 | 73.9 | 87.6 | 95.9 | 73.6 | 99.3 | 96.4 | 100 | 7.7 |
+| holdFloor 0.6 | 0.27 | 0.0 / 3.4 / 17.8 / 0.0 | 70.4 | 83.3 | 93.1 | 81.0 | 98.7 | 95.3 | 98.8 | 7.3 |
+| lean λ = 0 | 0.07 | 0.0 / 0.6 / 6.2 / 0.0 | 77.8 | 91.3 | 98.5 | 65.7 | 99.7 | 97.9 | 99.3 | 8.6 |
+| lean λ = 0.5 | 0.09 | 0.0 / 0.8 / 7.8 / 0.0 | 77.2 | 91.5 | 97.3 | 65.6 | 99.6 | 97.2 | 98.3 | 8.1 |
+| lean λ = 2 | 0.19 | 0.0 / 4.0 / 12.3 / 0.0 | 75.6 | 88.5 | 95.6 | 65.9 | 99.2 | 96.9 | 99.6 | 7.6 |
+| board weight 0.25 (§11: 0.5) | 0.11 | 0.0 / 1.1 / 8.5 / 0.0 | 76.6 | 90.8 | 97.2 | 64.1 | 99.7 | 97.2 | 98.9 | 7.8 |
+| armor rate 0.15 | 0.13 | 0.0 / 1.7 / 10.1 / 0.0 | 76.5 | 90.0 | 96.9 | 64.8 | 99.4 | 97.1 | 99.3 | 7.9 |
+| armor rate 0.4 | 0.11 | 0.0 / 1.3 / 8.6 / 0.0 | 76.2 | 90.3 | 96.6 | 66.7 | 99.5 | 97.0 | 99.3 | 8.0 |
+| slowmo = wall (0061: excluded) | 0.14 | 0.0 / 1.8 / 10.4 / 0.0 | 75.8 | 88.8 | 95.6 | 63.9 | 99.5 | 96.6 | 100 | 7.6 |
+| slowmo = game | 0.13 | 0.0 / 1.6 / 9.9 / 0.0 | 76.1 | 90.0 | 96.1 | 65.3 | 99.4 | 96.9 | 99.3 | 8.2 |
+| statBasis = points (0057: value) | 0.14 | 0.0 / 1.6 / 10.4 / 0.0 | 76.9 | 91.1 | 96.5 | 63.2 | 99.5 | 97.2 | 99.2 | 7.8 |
+| flushHit = F2 (0059: F1) | 0.12 | 0.0 / 1.4 / 9.2 / 0.0 | 76.5 | 89.9 | 96.3 | 65.9 | 99.1 | 97.2 | 96.2 | 7.5 |
+| meterThreshold = strict (0060: reachable) | 0.12 | 0.0 / 1.5 / 9.5 / 0.0 | 76.2 | 90.3 | 96.1 | 66.1 | 99.5 | 97.6 | 99.6 | 8.2 |
+| turn cushion ½ (not adopted) | 0.09 | 0.0 / 1.5 / 7.0 / 0.0 | 76.9 | 91.1 | 97.9 | 65.3 | 100 | 97.8 | 99.4 | 7.8 |
+| before 0053–0054 (Posture 100, 0.5 / 0.75 / 1.0 / 1.625, unhorse on P4) | 0.36 | 0.0 / 0.4 / 2.4 / 23.5 | 76.8 | 89.8 | 96.2 | 63.0 | 96.7 | 91.0 | 99.7 | 8.3 |
 
 **What moves the results, most to least:**
 
-1. **The showdown bonus (20).** It lands in every river ending, 87% of hands.
-   - At 10, 20, 25 and 30 per step, "better category wins at gap 1" is 65%, 74%, 77% and 80%.
-   - The skill flip is 73%, 60%, 54% and 48%. 0054's range of 55–65% sits between about 16 and 24.
-2. **The hold floor (0052: 0.25).** At 0.4 the flip rises to 69%, and at 0.6 to 80%. See *The
-   hold floor* below.
-3. **Posture start and the street multipliers (0054)** set how often hands end before the river.
-   - Posture 85 or Pass 1 at ×0.75 drops turn endings under 10%.
-   - Pass 3 at ×1.25 raises them to 16%.
-4. **The lean multiplier λ.**
-   - λ = 2 raises early endings (turn 14%, flop 3.5%) and pushes the numeric gap's tail past ×1.45.
-   - λ ≤ 1 keeps the §4 gap.
-5. **The trick chain.** With x = 2 and the wards left at their x = 1.3 sizes, the flush ward no
-   longer stops high straights, and the higher trick wins only 79.8% across rungs, down from 92.6%
-   before 0054: the flatter Pass 2 and Pass 4 multipliers leave less room. Any change to the meter
-   must rescale the wards; `tests/Tricks.spec.luau` fails if it doesn't.
-6. **Barely moving:** slow-motion reading, stat basis (c1), the flush hit reading (c3), meter
-   threshold (c4), C1, C2, armor rate, ♥ rate, charge rate and board weight. Each moves a metric
-   by at most a few points.
-   - C1 and C2 are too rare to show (QQ and AA are each about 0.45% of riders).
-
-### The river rule and the retune (0053, 0054)
-
-From the sweep's "before" row and the defaults row above.
-
-| | Before | After |
-| --- | --- | --- |
-| Hands ending on the flop / turn / river | 0.7% / 3.1% / 96% | 1.6% / 11.4% / 87% |
-| …of which ended by a lance on Pass 4 | 25.8% | 0 (the knockdown decides every river ending) |
-| Better category wins at gap 1 | 74.2% | 73.8% |
-| Skill flip | 56.8% | 60.4% |
-| Tricks above, to design / off design | 96.8% / 92.2% | 99.3% / 98.0% |
-| Held tricks drawn out | 9.5% | 7.8% |
-
-- **The balance barely moved while the ending changed.** Gap 1 is within half a point; the flip
-  is 3.6 points more toward skill, mid-way in Trey's 55–65%.
-- **Tricks as a whole win more,** because the held trick that auto-fires on Pass 4, most of them,
-  no longer gets lanced down on the same contact. Only the unleash on an earlier pass pays more
-  (99.3% → 95.8%).
-- **At the river,** the rider who falls was already taken to 0 or below by the lance in about 35%
-  of river endings. The bonus overturns the Posture order after contact in about 11% (a scratch
-  count, not a report).
+1. **The showdown bonus (20)** still decides the most: it lands in nearly 90% of hands. The flip is
+   79%, 66%, 59% and 52% at 10, 20, 25 and 30 per step.
+2. **The hold floor and the relief** both price late switches. The floor at 0.4 puts the flip at
+   74%; relief at 0.06 per point puts it at 70%.
+3. **The heal:** off, turn endings rise to 12% and the flip to 71%. A larger heal favors the better
+   hand, because it blunts the reads that skill lands.
+4. **Battered** sets how often hands end early: turn endings are 7.0% without it and 10.8% at 0.6.
+5. **The lean λ** is unchanged in effect: λ = 2 more than doubles flop endings and pushes the gap's
+   tail past ×1.45.
+6. **Barely moving:** extra time, the meter's base, armor rate, board weight and the settled
+   switches. Extra time moves little because the sim's only use for it is who moves last when both
+   riders read.
 
 ### The hold floor (0052)
 
@@ -183,29 +177,23 @@ From `--report floor`, 100k hands per run. The holder never reads and holds from
 the flicker always reads and never holds. Steady and fidget are the average rider with hold
 discipline 1 and 0 (both read 30%).
 
-| Floor | Holder vs flicker | Steady vs fidget | Mirror reads that switch | Skill flip (sweeps) |
-| --- | --- | --- | --- | --- |
-| 0.2 | 41.1% | 72.1% | 54.4% | 58.2% |
-| **0.25** | **32.8%** | **70.4%** | **63.2%** | **60.4%** |
-| 0.3 | 26.0% | 68.7% | 69.1% | n/a |
-| 0.4 (was §11) | 15.9% | 65.1% | 73.8% | 68.8% |
-| 0.5 | 10.5% | 62.1% | 75.4% | n/a |
-| 0.6 | 7.7% | 59.3% | 75.3% | 80.0% |
+| Floor | Holder vs flicker | Steady vs fidget | Mirror reads that switch |
+| --- | --- | --- | --- |
+| 0.2 | 25.9% | 64.6% | 68.4% |
+| **0.25** | **21.5%** | **63.0%** | **71.5%** |
+| 0.3 | 17.6% | 61.8% | 73.4% |
+| 0.4 | 12.7% | 59.8% | 75.1% |
+| 0.6 | 7.0% | 56.0% | 75.4% |
 
-- **At 0.4 a late switch onto a held aim won every CN row**, since the floor was above ⅓ (§3). At
-  0.25 it only beats a hold of under two thirds of the run-up.
-- **Holding pays.** The steady rider beats the fidgety one 70% of the time at 0.25, against 65%
-  at 0.4, and fewer reads switch late (63%, down from 74%).
-- **Skill flips fewer numeric matchups at a lower floor** (60% at 0.25, 69% at 0.4), because a
-  held stance is harder to read around. The sim's only reader is a late switch at 7.4 s, which a
-  low floor taxes; a real reader who switches earlier and builds hold on the new aim is not
-  modelled, so this likely overstates the cost.
-- Caveat: the holder vs flicker pair is extreme, since the holder never reacts at all.
+- Holding still pays: the steady rider beats the fidgety one 63% of the time.
+- The pure holder does worse than before (21.5%, from 32.8%). The flicker always reads, and the
+  ♠/♦ relief and Battered both reward the hit that a read lands. The holder is extreme: it never
+  reacts at all.
 
 ### The numeric gap (§4)
 
-From `--report gap`: 100k river deals with no trick, taking each rider's most-loaded stat. Passes
-and Posture don't enter it, so 0053–0054 leave it unchanged.
+From `--report gap`: 100k river deals with no trick, taking each rider's most-loaded stat. It
+depends on card points and the lean only, so the stats pass leaves it unchanged.
 
 | λ | Mean multiplier: HC / pair / 2P / trips | Better over worse, median, gap 1 / 2 / 3 | Worse category loads more |
 | --- | --- | --- | --- |
@@ -216,33 +204,19 @@ and Posture don't enter it, so 0053–0054 leave it unchanged.
 
 ## Questions for Trey
 
-Nothing here is applied. Decisions on the showdown, the pass order and the damage shape
-(0049–0051, 0053, 0054) and on the hold floor (0052) are done. Still open:
+Nothing here is applied.
 
-1. **Set the "overwhelmingly" number (0044).** Unleashed above wins 95.8%, auto-fired above
-   99.7%. The gap is the numeric rider lancing an unleashed trick rider down on the flop or the
-   turn. 0054 accepted it for now; a fix would belong to the tricks.
-2. **The straight's meter: decide how much holding should matter.**
-   - At x = 1.3, an unheld straight wins about as often as a held one (98.2% vs 98.8%).
-   - With the river on the final pass, straights that complete there rarely reach a full meter,
-     since the rider had to be holding before they knew.
-   - Making the meter bind needs a steeper meter, or a y mapped to the card's place in the
-     straight rather than its rank.
-   - Otherwise the wards must grow by x^9 (the wheel-to-ace-high spread), and at x = 2 the chain
-     already fails (cross-rung 79.8%). See SANITY_CHECK §2.
-3. **The Phase 1 gaps c1–c7** (SANITY_CHECK §3), including C1 (Twin Favor against a trick hit).
-   C1 and C2 barely move the sim; c3 and c4 decide what "played to design" means for the flush
-   and the straight.
-4. **Lean multiplier: keep λ ≤ 1** so the §4 gap holds, if the gap is meant after the lean
-   (SANITY_CHECK c6).
-5. **Board weight ¼ vs ½:** a small effect.
+1. **Board weight ¼ vs ½:** still a small effect.
+2. **The skill flip is 66.1%,** a point over 0054's 55–65%. The ranges are guides (0074); the hold
+   relief (0.03 per point) or the floor are the levers if it should come down.
 
 ## Limits of this model
 
 - **Reads are one late switch at 7.4 s against a snapshot.** Each reading rider estimates the
   opponent's stats from the board plus an average hole card. There is no reading model of tells:
-  jacks, colors and the hold meter as a tell carry no value.
-- **The K lock is modelled as "moves last in a double read".**
+  colors and the hold meter as a tell carry no value.
+- **Extra time past the lock is modelled as "moves last in a double read".** A real rider with
+  extra time would also react to single reads.
 - **Betting never Yields.** Units won therefore track the win rate.
 - **Starting values aren't tuned.** Every "set by the sim" value is a starting value. Only the
   sweeps above were run.

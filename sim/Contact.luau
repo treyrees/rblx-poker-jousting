@@ -1,7 +1,7 @@
 --!strict
--- Contact.luau — contact resolution (GAME_SPEC §4 *Contact resolution*, steps 1–6), with the §5
--- face effects and the §6 unleash-pass rules that act at contact. Both directions resolve from the
--- same pre-contact state (simultaneous).
+-- Contact.luau — contact resolution (GAME_SPEC §4 *Contact resolution*, steps 1–6), with the §6
+-- unleash-pass rules that act at contact. Both directions resolve from the same pre-contact state
+-- (simultaneous). Step 7 (the heal and a new Battered) is after contact, in Hand.
 
 local Dial = require("./Dial")
 local Timeline = require("./Timeline")
@@ -12,12 +12,9 @@ local Contact = {}
 export type Fighter = {
 	aim: number?,
 	h: number,
-	S: { number }, -- stat values S = 20 + leaned points (♥ is unleaned; its lean is heartCut)
-	heartCut: number, -- §4 step 6: damage cut this hit
-	critBase: number,
-	aa: boolean, -- AA Champion: Normal hits on the exposure's edge notch count as Crit (C2)
-	kk: boolean, -- KK High Court: what gets through your Guard armor is halved
-	charge: number,
+	S: { number }, -- stat values S = 20 + leaned points (♥ is unleaned; its lean is the buffer)
+	buffer: number, -- §4 step 6: the ♥ buffer, absorbs this contact's damage first (0070)
+	battered: number, -- §4 step 6: extra share of damage taken (0068), 0 if not Battered
 	-- Set on the pass a trick fires (unleashed or answering) and doesn't clash:
 	trick: {
 		rung: number,
@@ -41,8 +38,7 @@ export type Strike = {
 	dmg: number, -- Posture damage to the defender
 	reflect: number, -- Gilded Mirror: damage back to the striker
 	cleanBlock: boolean,
-	chargeGain: number,
-	chargeSpent: boolean,
+	through: number, -- what got through armor and ward, before Battered and the buffer
 	trickHit: boolean,
 	parried: boolean,
 }
@@ -57,12 +53,12 @@ local function basis(S: number, cfg: any): number
 	error("unknown statBasis " .. mode)
 end
 
--- AA's edge notch (C2), in half steps from the defender's aim.
-local EDGE = {
-	one = { [5] = true },
-	both = { [5] = true, [15] = true },
-	direction = { [5] = true, [6] = true },
-}
+-- Easier crits and blocks (0069): the stat's card points (S − 20, lean included) restore part of
+-- the hold multiplier's shortfall, `rate` per point. A cardless rider gets none, so holding still
+-- beats a late switch (0052).
+local function relieved(m: number, rate: number, S: number, cfg: any): number
+	return m + (1 - m) * math.clamp(rate * (S - cfg.spec.statBase), 0, 1)
+end
 
 local ZONE = { crit = "exposure", normal = "ordinary", weak = "ordinary", block = "guard" }
 
@@ -82,11 +78,11 @@ function Contact.strike(A: Fighter, B: Fighter, arena: Arena, cfg: any): Strike
 
 	-- Four Lances: "The lances parry their strike: it deals nothing."
 	if bRuleHolds and (bTrick :: any).key == "quads" then
-		return { tier = "parried", dmg = 0, reflect = 0, cleanBlock = false, chargeGain = 0, chargeSpent = false, trickHit = aTrick ~= nil, parried = true }
+		return { tier = "parried", dmg = 0, reflect = 0, cleanBlock = false, through = 0, trickHit = aTrick ~= nil, parried = true }
 	end
 
 	-- Step 1: the tier.
-	local tier, k = Dial.tier(A.aim, B.aim, spec)
+	local tier = Dial.tier(A.aim, B.aim, spec)
 	if bRuleHolds and (bTrick :: any).key == "fullHouse" and A.aim ~= nil then
 		-- Fortress: Guard on every position but the gap direction (2 of 16 half steps); a hit there is a Crit.
 		local gap = (bTrick :: any).fortressGap
@@ -98,46 +94,45 @@ function Contact.strike(A: Fighter, B: Fighter, arena: Arena, cfg: any): Strike
 	if aTrick and aTrick.key == "quads" then
 		tier = "crit" -- any five positions of exposure hold a cardinal: one lance always crits
 	end
-	if tier == "normal" and A.aa and k ~= nil and EDGE[cfg.switches.aaEdge][k] then
-		tier = "crit"
-	end
 	local needle = aTrick ~= nil and aTrick.key == "flush" and aTrick.suit == 2
 	local shattering = aTrick ~= nil and aTrick.key == "flush" and aTrick.suit == 1
 	if needle then
 		tier = "crit" -- every hit you land is a Crit
 	end
 
-	-- Steps 2–4: output, ♠ crit scale and charge.
+	-- Steps 2–4: output and the ♠ crit scale. ♠ also lets a crit reach full power with less hold.
 	local trickHit = aTrick ~= nil
 	local out: number
-	local chargeGain, chargeSpent = 0, false
 	local Sclub, Sspade = A.S[1], A.S[2]
 	if aTrick and not aTrick.numeric then
 		out = aTrick.hit * arena.street
 	else
 		local base = if tier == "crit"
-			then A.critBase
+			then spec.base.crit
 			elseif tier == "normal" then spec.base.normal
 			elseif tier == "block" then sim.blockBase
 			else spec.base.weak
-		out = base * (Sclub * spec.clubRate) * Timeline.mult(A.h, cfg) * arena.street
+		local hold = Timeline.mult(A.h, cfg)
+		if tier == "crit" then
+			hold = relieved(hold, sim.critRelief, Sspade, cfg)
+		end
+		out = base * (Sclub * spec.clubRate) * hold * arena.street
 		if not trickHit then
 			out *= arena.siege
 		end
 		if tier == "crit" then
-			out = out * (Sspade / spec.statBase) + A.charge * arena.street
-			chargeSpent = true
-		elseif tier == "normal" or tier == "block" then
-			chargeGain = sim.chargeRate * Sspade / spec.statBase
+			out *= Sspade / spec.statBase
 		end
 	end
 
 	-- Step 5: armor, less piercing. Gilded Mirror puts Guard armor over the whole dial.
 	local mirror = bRuleHolds and (bTrick :: any).key == "flush" and (bTrick :: any).suit == 4
 	local zone = if mirror then "guard" else ZONE[tier]
-	local armor = sim.armorRate * basis(B.S[4], cfg) * sim.armorZone[zone]
+	-- 0057: armor converts the stat value; ♦ card points add armorPerPoint on top, so a cardless
+	-- rider keeps a real Guard and ♦ cards still count.
+	local armor = (sim.armorRate * basis(B.S[4], cfg) + sim.armorPerPoint * (B.S[4] - spec.statBase)) * sim.armorZone[zone]
 	if zone == "guard" then
-		armor *= Timeline.mult(B.h, cfg)
+		armor *= relieved(Timeline.mult(B.h, cfg), sim.guardRelief, B.S[4], cfg)
 	end
 	local pierce = sim.pierceRate * basis(Sspade, cfg)
 	local effArmor = math.max(0, armor - pierce)
@@ -147,15 +142,13 @@ function Contact.strike(A: Fighter, B: Fighter, arena: Arena, cfg: any): Strike
 		effArmor = 0
 	end
 	local ward = if trickHit then B.ward else 0
-	local dmg = math.max(0, out - effArmor - ward)
-	local cleanBlock = tier == "block" and dmg <= 0 and not trickHit
-	if B.kk and tier == "block" then
-		dmg *= spec.kkGuardHalve
-	end
+	local through = math.max(0, out - effArmor - ward)
+	local cleanBlock = tier == "block" and through <= 0 and not trickHit
 	local reflect = if mirror then math.min(out, effArmor) else 0
 
-	-- Step 6: ♥ lean cut, then the arena's numeric Posture multiplier.
-	dmg = math.max(0, dmg - B.heartCut)
+	-- Step 6: Battered raises what got through; the ♥ buffer absorbs first; then the arena's
+	-- numeric Posture multiplier.
+	local dmg = math.max(0, through * (1 + B.battered) - B.buffer)
 	if not trickHit then
 		dmg *= arena.openLists
 	end
@@ -164,8 +157,7 @@ function Contact.strike(A: Fighter, B: Fighter, arena: Arena, cfg: any): Strike
 		dmg = dmg,
 		reflect = reflect,
 		cleanBlock = cleanBlock,
-		chargeGain = chargeGain,
-		chargeSpent = chargeSpent,
+		through = through,
 		trickHit = trickHit,
 		parried = false,
 	}

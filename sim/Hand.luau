@@ -8,8 +8,8 @@
 --   2. after the reveal, an honest rider whose best lean moved re-stances at the decision window;
 --   3. decides unleashes (aggression) and, on an unleash pass, plays the trick to its design or not;
 --   4. with chance `read`, switches late (readTime) to the best aim against the opponent's public
---      aim and hold. Reads are simultaneous and blind to each other, except that a rider holding a
---      K in the hole moves last (§5: the opponent locks earlier).
+--      aim and hold. Reads are simultaneous and blind to each other, except that a rider whose aim
+--      leans further into ♠ or ♦ locks later (0069) and so moves last.
 -- h follows from when the final aim was set (Timeline). Contact resolves both strikes at once.
 
 local Cards = require("./Cards")
@@ -28,9 +28,9 @@ type Rider = {
 	hole: { number },
 	posture: number,
 	maxPosture: number,
-	charge: number,
+	battered: number, -- Battered through the next contact (0068): extra share of damage taken
+	batteredHand: number, -- Battered for the rest of the hand (♣ Shattering Blow, 0072)
 	spent: boolean, -- the trick's once-per-hand unleash is used (or clashed)
-	twinUsed: boolean,
 	contributed: number,
 	heldRung: number?, -- rung of a trick the rider held past a decision
 	heldAbove: boolean, -- ...while above the opponent
@@ -68,7 +68,7 @@ export type Record = {
 	drawnOut: { boolean },
 	units: { number },
 	beforeFinal: { number }?, -- Posture just before Pass 4's contact, if the hand got there
-	afterFinal: { number }?, -- Posture after Pass 4's dial exchange, before the hand's showdown effect
+	afterFinal: { number }?, -- Posture after Pass 4's exchange and its heal (§4 step 7), before the showdown effect
 	-- (bonus, mult, the hand's blows, the charge), when neither rider fell to the exchange itself
 	chargeStanding: number?, -- switches.showdown = charge: the rider ahead before the charge (0: level)
 	posture: { number }, -- Posture after the last contact (at the showdown, may be 0 or below: 0053)
@@ -76,33 +76,6 @@ export type Record = {
 	reads: number, -- reads taken
 	switches: number, -- reads that moved the aim (a late switch rather than staying on a held aim)
 }
-
--- ── face effects (§5) ──────────────────────────────────────────────────────────────────────────
-
-local function countRank(cards: { number }, r: number): number
-	local n = 0
-	for _, c in cards do
-		if Cards.rank(c) == r then
-			n += 1
-		end
-	end
-	return n
-end
-
--- A hole face card that pairs the board gets only the numeric pair or trips (§5 *Rules*).
-local function holeFace(r: Rider, board: { number }, rank: number): number
-	if countRank(board, rank) > 0 then
-		return 0
-	end
-	return countRank(r.hole, rank)
-end
-
-local function critBase(r: Rider, board: { number }, cfg: any): number
-	local spec = cfg.spec
-	local a = holeFace(r, board, 14)
-	local base = if a == 2 then spec.aaCrit elseif a == 1 then spec.aceCrit.hole else spec.base.crit
-	return base + spec.aceCrit.boardBonus * countRank(board, 14)
-end
 
 -- ── stats ──────────────────────────────────────────────────────────────────────────────────────
 
@@ -132,13 +105,12 @@ local function points(r: Rider, board: { number }, h: number, firing: boolean, c
 	return pts, sub
 end
 
--- Max Posture uses unleaned ♥ points (§4 *Stances*), with the flat held passives.
-local function maxPosture(r: Rider, board: { number }, cfg: any): number
-	local pts = points(r, board, 0, false, cfg)
-	return cfg.spec.postureStart + cfg.sim.heartPosture * pts[3]
+-- Max Posture is 80 for every rider: ♥ is a buffer and a heal, not more health (0070).
+local function maxPosture(_r: Rider, _board: { number }, cfg: any): number
+	return cfg.spec.postureStart
 end
 
--- Stat values at an aim: S = 20 + leaned points; ♥ takes its lean as a damage cut (§4).
+-- Stat values at an aim: S = 20 + leaned points; ♥ takes its lean as a buffer at contact (§4).
 -- `explode` is a firing flush: its suit's stat × (1 + (E − 1)·home factor) (§6 *Flush by suit*).
 local function statsAt(pts: { number }, aim: number?, cfg: any, explode: { suit: number, E: number }?): ({ number }, number)
 	local sim = cfg.sim
@@ -147,7 +119,7 @@ local function statsAt(pts: { number }, aim: number?, cfg: any, explode: { suit:
 	for s = 1, 4 do
 		S[s] = cfg.spec.statBase + pts[s] * (1 + sim.lean * w[s])
 	end
-	local cut = sim.heartCut * pts[3] * sim.lean * w[3]
+	local cut = sim.heartBuffer * pts[3] * sim.lean * w[3]
 	if explode then
 		local f = Dial.homeFactor(aim, explode.suit, sim.halfStepShare)
 		local m = 1 + (explode.E - 1) * f
@@ -199,9 +171,9 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 			hole = { deck[2 * i - 1], deck[2 * i] },
 			posture = 0,
 			maxPosture = 0,
-			charge = 0,
+			battered = 0,
+			batteredHand = 0,
 			spent = false,
-			twinUsed = false,
 			contributed = spec.ante,
 			heldRung = nil,
 			heldAbove = false,
@@ -214,7 +186,7 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 			status = Tricks.status({ deck[2 * i - 1], deck[2 * i] }, {}),
 		}
 		r.maxPosture = maxPosture(r, {}, cfg)
-		r.posture = r.maxPosture
+		r.posture = spec.postureStart -- everyone starts at 80, which is also the ceiling (0070)
 		riders[i] = r
 	end
 	local tricks: { TrickRecord } = {}
@@ -332,16 +304,6 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 		local hasReveal = SHOWN[pass] > SHOWN[pass - 1]
 		local street = if charge then proto.chargeStreet else spec.street[pass]
 
-		-- Start of pass: queen restores (Passes 2–4; §5), capped at max Posture.
-		if pass >= 2 and not charge then
-			for _, r in riders do
-				local q = holeFace(r, prevBoard, 12)
-				local restore = if q == 2 then spec.qqRestore elseif q == 1 then spec.queenRestore.hole else 0
-				restore += spec.queenRestore.board * countRank(prevBoard, 12)
-				r.posture = math.min(r.maxPosture, r.posture + restore)
-			end
-		end
-
 		-- Stance, from the stats known at the start of the charge.
 		for _, r in riders do
 			r.plan = false
@@ -367,16 +329,12 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 			end
 		end
 
-		-- The reveal: new stats apply now (§8). ♥ gains raise Posture by the difference (§4).
+		-- The reveal: new stats apply now (§8).
 		if hasReveal then
 			for _, r in riders do
 				local before = r.status
 				r.status = Tricks.status(r.hole, newBoard)
-				local newMax = maxPosture(r, newBoard, cfg)
-				if newMax > r.maxPosture then
-					r.posture += newMax - r.maxPosture
-				end
-				r.maxPosture = newMax
+				r.maxPosture = maxPosture(r, newBoard, cfg)
 				-- A trick that lands on this reveal: unleash now, or hold (aggression).
 				if r.status.owns and not r.spent and not before.owns then
 					r.plan = pass == 4 or rng() < r.p.aggression -- Pass 4: unused tricks auto-fire
@@ -478,8 +436,8 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 			local arena = { street = street, openLists = 1, siege = 1 }
 			local oS, oCut = statsAt(oPts, oAim, cfg)
 			local oF: Contact.Fighter = {
-				aim = oAim, h = hOf(o, oT), S = oS, heartCut = oCut, critBase = spec.base.crit,
-				aa = false, kk = false, charge = 0, trick = nil, ward = 0,
+				aim = oAim, h = hOf(o, oT), S = oS, buffer = oCut,
+				battered = math.max(o.battered, o.batteredHand), trick = nil, ward = 0,
 			}
 			local facingUnleash = fires[o.id] == "unleash" and not clashed
 			local hSwitch = hOf(r, sim.readTime)
@@ -488,8 +446,8 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 				local h = if a == r.aim then hOf(r, r.tAim) else hSwitch
 				local S, cut = statsAt(myPts, a, cfg)
 				local F: Contact.Fighter = {
-					aim = a, h = h, S = S, heartCut = cut, critBase = critBase(r, newBoard, cfg),
-					aa = false, kk = false, charge = r.charge, trick = nil, ward = 0,
+					aim = a, h = h, S = S, buffer = cut,
+					battered = math.max(r.battered, r.batteredHand), trick = nil, ward = 0,
 				}
 				local dealt = Contact.strike(F, oF, arena, cfg).dmg
 				local v = dealt
@@ -521,11 +479,16 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 				r.aim, r.tAim = a, sim.readTime
 			end
 		end
-		-- A hole K moves last: re-read against the opponent's final aim (§5 K, KK).
+		-- Leaning into ♠ or ♦ locks later (0069): when both read, the rider with more extra time
+		-- moves last and re-reads against the opponent's final aim.
+		local function extraTime(r: Rider): number
+			local w = Dial.lean(r.aim, sim.halfStepShare)
+			return sim.extraTime * math.min(1, w[2] + w[4])
+		end
 		if #readers == 2 then
 			for _, r in riders do
 				local o = riders[3 - r.id]
-				if holeFace(r, newBoard, 13) > 0 and holeFace(o, newBoard, 13) == 0 then
+				if extraTime(r) > extraTime(o) + 1e-9 then
 					local a = bestResponse(r, o, o.aim, o.tAim)
 					if a ~= r.aim then
 						r.aim, r.tAim = a, sim.readTime
@@ -578,11 +541,8 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 				aim = r.aim,
 				h = h,
 				S = S,
-				heartCut = cut,
-				critBase = critBase(r, newBoard, cfg),
-				aa = holeFace(r, newBoard, 14) == 2,
-				kk = holeFace(r, newBoard, 13) == 2,
-				charge = r.charge,
+				buffer = cut,
+				battered = math.max(r.battered, r.batteredHand),
 				trick = trick,
 				ward = ward,
 			}
@@ -617,47 +577,64 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 		-- the same on the charge.
 		local blows = (pass == 4 and mode == "riverHit") or (charge and proto.chargeBonus == "hit")
 		local afterDial = { 0, 0 }
-		for _, r in riders do
-			local taken, made = byStrike[r.id], own[r.id]
-			local p = r.posture - taken.dmg - made.reflect
-			afterDial[r.id] = p
-			-- riverVsTrick = warded: a rider firing a trick (unclashed) takes no hand blow.
-			if blows and not (proto.riverVsTrick == "warded" and F[r.id].trick ~= nil) then
-				local o = riders[3 - r.id]
-				p -= handBlow(o.status.eval.category, own[o.id])
-			end
-			if taken.cleanBlock then
-				p = math.min(r.maxPosture, p + spec.cleanBlockRestore)
-			end
-			-- ♥ Unbroken: can't be unhorsed this pass (a higher trick's rule wins).
-			local myTrick = F[r.id].trick
-			local oRung = if F[3 - r.id].trick then (F[3 - r.id].trick :: any).rung else 0
-			if myTrick and myTrick.key == "flush" and myTrick.suit == 3 and oRung < myTrick.rung then
-				p = math.max(p, 1)
-			end
-			-- QQ Twin Favor: the first unhorse this hand is negated, Posture set to 20 (C1).
-			if p <= 0 and holeFace(r, newBoard, 12) == 2 and not r.twinUsed then
-				local byTrick = taken.trickHit and taken.dmg > 0
-				if not (byTrick and cfg.switches.twinFavorVsTrick == "trickOverrides") then
-					p = spec.qqFloor
-					r.twinUsed = true
-				end
-			end
-			r.posture = p
-			if made.chargeSpent then
-				r.charge = 0
-			end
-			r.charge += made.chargeGain
-		end
-		if pass == 4 and afterDial[1] > 0 and afterDial[2] > 0 then
-			rec.afterFinal = afterDial
-		end
 		-- The turn cushion (proto.turnCushion): the turn's hand holds a rider in below 0 on Pass 3.
 		local function floorOf(r: Rider): number
 			if pass ~= 3 then
 				return 0
 			end
 			return -proto.turnCushion * spec.showdownBonus * r.status.eval.category
+		end
+		local knockdownPass = pass == 4 and cfg.switches.riverRule == "knockdown"
+		for _, r in riders do
+			local o = riders[3 - r.id]
+			local taken, made = byStrike[r.id], own[r.id]
+			local before = r.posture
+			local p = r.posture - taken.dmg - made.reflect
+			if taken.cleanBlock then
+				p = math.min(r.maxPosture, p + spec.cleanBlockRestore)
+			end
+			-- ♥ Unbroken: Posture can't fall below 1 this pass, and after contact it heals back
+			-- everything the pass took (0053, 0072; a higher trick's rule wins).
+			local myTrick = F[r.id].trick
+			local oRung = if F[3 - r.id].trick then (F[3 - r.id].trick :: any).rung else 0
+			local unbroken = myTrick ~= nil and myTrick.key == "flush" and myTrick.suit == 3 and oRung < myTrick.rung
+			if unbroken then
+				p = math.max(p, 1)
+			end
+			-- Step 7, after contact (§4): a rider unhorsed on Passes 1–3 is down before any heal.
+			if knockdownPass or p > floorOf(r) then
+				if unbroken then
+					p = math.max(p, math.min(r.maxPosture, before))
+				else
+					local lost = before - p
+					if lost > 0 then
+						local share = sim.healBase + sim.healPerPoint * points(r, newBoard, 0, false, cfg)[3]
+						p = math.min(r.maxPosture, p + lost * math.min(1, share))
+					end
+				end
+			end
+			afterDial[r.id] = p
+			-- riverVsTrick = warded: a rider firing a trick (unclashed) takes no hand blow.
+			if blows and not (proto.riverVsTrick == "warded" and F[r.id].trick ~= nil) then
+				p -= handBlow(o.status.eval.category, own[o.id])
+			end
+			r.posture = p
+			-- Battered (0068): this contact used it up; an aimed ♣ hit that got through applies it anew.
+			r.battered = 0
+			local theirs = byStrike[r.id]
+			if theirs.through > 0 then
+				local wClub = Dial.lean(o.aim, sim.halfStepShare)[1]
+				if wClub > 0 then
+					r.battered = sim.battered * wClub
+				end
+				local oTrick = F[o.id].trick
+				if oTrick and oTrick.key == "flush" and oTrick.suit == 1 then
+					r.batteredHand = sim.battered -- Shattering Blow: Battered for the rest of the hand
+				end
+			end
+		end
+		if pass == 4 and afterDial[1] > 0 and afterDial[2] > 0 then
+			rec.afterFinal = afterDial
 		end
 		local down1, down2 = riders[1].posture <= floorOf(riders[1]), riders[2].posture <= floorOf(riders[2])
 		-- Pass 4's contact unhorses no one; the knockdown after it decides (0053).

@@ -50,8 +50,6 @@ kit.describe("Hand", function()
 			statBasis = { "value", "points" },
 			flushHit = { "F1", "F2" },
 			meterThreshold = { "reachable", "strict" },
-			twinFavorVsTrick = { "negates", "trickOverrides" },
-			aaEdge = { "one", "both", "direction" },
 		} do
 			for _, v in values do
 				local c = Config.defaults()
