@@ -608,8 +608,8 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 				else
 					local lost = before - p
 					if lost > 0 then
-						local heartS = spec.statBase + points(r, newBoard, 0, false, cfg)[3]
-						p = math.min(r.maxPosture, p + lost * sim.healShare * heartS / spec.statBase)
+						local share = sim.healBase + sim.healPerPoint * points(r, newBoard, 0, false, cfg)[3]
+						p = math.min(r.maxPosture, p + lost * math.min(1, share))
 					end
 				end
 			end

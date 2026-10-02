@@ -97,5 +97,6 @@ Add a row below in the same commit. Check the latest `main` for the next free id
 | [0071](0071-broadway-effects-removed.md) | Broadway cards have no effects; they are the top of the rank curve | 2026-10-01 |
 | [0072](0072-flushes-are-the-stat-at-its-limit.md) | Each flush is its suit's stat at its limit | 2026-10-01 |
 | [0073](0073-the-straight-charges-straight.md) | The straight's power comes from charging straight without changing aim | 2026-10-01 |
+| [0074](0074-defense-is-not-weaker.md) | Defense isn't weaker than offense; the four suits are roughly even in value | 2026-10-02 |
 
-Next free id: **0074**.
+Next free id: **0075**.

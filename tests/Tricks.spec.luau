@@ -93,8 +93,11 @@ kit.describe("Tricks: the §6 targets hold at the starting values", function()
 	local posture = cfg.spec.postureStart
 	local S = cfg.spec.statBase + heart * (1 + sim.lean)
 	local cut = sim.heartBuffer * heart * sim.lean
-	local Pnum = posture + sim.armorRate * S + cut
-	local Pmirror = posture + sim.armorRate * S * sim.flushExplode + cut -- a Gilded Mirror defender
+	local function guardArmor(Sd: number): number
+		return sim.armorRate * Sd + sim.armorPerPoint * (Sd - cfg.spec.statBase)
+	end
+	local Pnum = posture + guardArmor(S) + cut
+	local Pmirror = posture + guardArmor(S * sim.flushExplode) + cut -- a Gilded Mirror defender
 	local maxHit = { Tricks.straightHit(14, 5, cfg), sim.hit.flush, sim.hit.fullHouse, sim.hit.quads, sim.hit.straightFlush }
 	local minHit = { Tricks.straightHit(5, 5, cfg), sim.hit.flush, sim.hit.fullHouse, sim.hit.quads, sim.hit.straightFlush }
 	local ward = { sim.ward.straight, sim.ward.flush, sim.ward.fullHouse, sim.ward.quads, sim.ward.straightFlush }

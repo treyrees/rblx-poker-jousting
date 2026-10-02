@@ -48,14 +48,16 @@ function Config.defaults()
 		sim = {
 			lean = 1.0, -- λ: a stat leaned into at weight w counts points × (1 + λw)
 			halfStepShare = 0.75, -- a half step's share to the nearer cardinal
-			heartBuffer = 0.5, -- buffer per leaned ♥ point (the lean's extra points): absorbs damage first
-			healShare = 0.15, -- after contact, heal this share × S♥ / 20 of the damage taken (0070)
-			battered = 0.25, -- Battered: +x damage taken, × the striker's ♣ lean weight (0068)
+			heartBuffer = 1.5, -- buffer per leaned ♥ point (the lean's extra points): absorbs damage first
+			healBase = 0.1, -- after contact, heal this share of the damage taken (0070)...
+			healPerPoint = 0.02, -- ...plus this much per unleaned ♥ point
+			battered = 0.4, -- Battered: +x damage taken, × the striker's ♣ lean weight (0068)
 			critRelief = 0.03, -- on a Crit, this share per ♠ point of the hold multiplier's shortfall is restored (0069)
 			guardRelief = 0.03, -- the same for Guard armor, per ♦ point (0069)
 			extraTime = 0.15, -- s past the aim lock at a full lean into ♠ or ♦ (0069)
 			armorRate = 0.25, -- armor per ♦ stat unit (see switches.statBasis)
-			armorZone = { guard = 1.0, ordinary = 0.2, exposure = 0.05 },
+			armorPerPoint = 1.5, -- extra armor per ♦ card point, on top (so ♦ cards pull their weight)
+			armorZone = { guard = 1.0, ordinary = 0.5, exposure = 0.2 },
 			pierceRate = 0.05, -- piercing per ♠ stat unit
 			blockBase = 10, -- a Block is a Normal hit into thick armor (c2, 0058)
 			earliestCommit = 0.3, -- the earliest a rider leaves Neutral (s)
@@ -66,7 +68,7 @@ function Config.defaults()
 			-- today's (×1.0 and ×1.25) with room.
 			-- The straight's hit is the meter (0073: the power is in the hold):
 			-- straightK · straightX ^ (cards unlocked) · (1 + straightRank · (top card − 5)).
-			straightK = 3.5,
+			straightK = 5.5,
 			straightX = 2,
 			straightRank = 0.1,
 			hit = { flush = 600, fullHouse = 13000, quads = 20000, straightFlush = 60000 },

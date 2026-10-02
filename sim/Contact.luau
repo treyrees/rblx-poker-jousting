@@ -128,7 +128,9 @@ function Contact.strike(A: Fighter, B: Fighter, arena: Arena, cfg: any): Strike
 	-- Step 5: armor, less piercing. Gilded Mirror puts Guard armor over the whole dial.
 	local mirror = bRuleHolds and (bTrick :: any).key == "flush" and (bTrick :: any).suit == 4
 	local zone = if mirror then "guard" else ZONE[tier]
-	local armor = sim.armorRate * basis(B.S[4], cfg) * sim.armorZone[zone]
+	-- 0057: armor converts the stat value; ♦ card points add armorPerPoint on top, so a cardless
+	-- rider keeps a real Guard and ♦ cards still count.
+	local armor = (sim.armorRate * basis(B.S[4], cfg) + sim.armorPerPoint * (B.S[4] - spec.statBase)) * sim.armorZone[zone]
 	if zone == "guard" then
 		armor *= relieved(Timeline.mult(B.h, cfg), sim.guardRelief, B.S[4], cfg)
 	end
