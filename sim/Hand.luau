@@ -105,10 +105,9 @@ local function points(r: Rider, board: { number }, h: number, firing: boolean, c
 	return pts, sub
 end
 
--- Max Posture uses unleaned ♥ points (§4 *Stances*), with the flat held passives.
-local function maxPosture(r: Rider, board: { number }, cfg: any): number
-	local pts = points(r, board, 0, false, cfg)
-	return cfg.spec.postureStart + cfg.sim.heartPosture * pts[3]
+-- Max Posture is 80 for every rider: ♥ is a buffer and a heal, not more health (0070).
+local function maxPosture(_r: Rider, _board: { number }, cfg: any): number
+	return cfg.spec.postureStart
 end
 
 -- Stat values at an aim: S = 20 + leaned points; ♥ takes its lean as a buffer at contact (§4).
@@ -187,7 +186,7 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 			status = Tricks.status({ deck[2 * i - 1], deck[2 * i] }, {}),
 		}
 		r.maxPosture = maxPosture(r, {}, cfg)
-		r.posture = spec.postureStart -- everyone starts at 80; ♥ raises only the max (0070)
+		r.posture = spec.postureStart -- everyone starts at 80, which is also the ceiling (0070)
 		riders[i] = r
 	end
 	local tricks: { TrickRecord } = {}
@@ -330,7 +329,7 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 			end
 		end
 
-		-- The reveal: new stats apply now (§8). ♥ changes move max Posture only (0070).
+		-- The reveal: new stats apply now (§8).
 		if hasReveal then
 			for _, r in riders do
 				local before = r.status

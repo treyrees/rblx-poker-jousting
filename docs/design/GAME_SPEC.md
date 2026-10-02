@@ -276,7 +276,7 @@ time and does more when you aim at it (*Stances*).
 | ♣ Strength | Raw damage: it scales your hits linearly | More damage, and a hit that deals damage leaves the target **Battered** |
 | ♠ Accuracy | Pierces armor on every hit. Crits need less hold to reach full power, and hit bigger | More of both, and your aim locks a little later |
 | ♦ Armor | A flat reduction per hit, thick on your Guard, thin on your ordinary positions, a sliver on your exposure. Your Guard needs less hold to reach full armor | More of both, and your aim locks a little later |
-| ♥ Posture | Health: max Posture grows with ♥. After every contact you heal a share of the damage that contact dealt you | Health before contact: a buffer that absorbs that contact's damage first |
+| ♥ Posture | Recovery: after every contact you heal a share of the damage that contact dealt you | Posture before contact: a buffer that absorbs that contact's damage first |
 
 - **Battered:** the target takes +x% damage through their next contact. A new aimed ♣ hit
   refreshes it; it doesn't stack. A clean Block (nothing gets through) doesn't apply it.
@@ -285,9 +285,8 @@ time and does more when you aim at it (*Stances*).
   (§3); when both riders lean into ♠ or ♦, their extra times offset.
 - **Armor** erases a grind of small hits and barely dents the crit that finds your exposure. A
   Block is a hit into thick armor, and Guard armor scales with hold.
-- **Posture.** Everyone starts at 80. ♥ raises max Posture, so you can heal above 80, but it
-  doesn't raise the start: your ♥ shows only once you heal. When a reveal lowers ♥, your max drops
-  but your current Posture isn't taken away.
+- **Posture.** Every rider starts at 80, which is also the ceiling. ♥ doesn't raise it: ♥ is the
+  buffer you aim for and the heal after contact.
 
 ### Stances
 
@@ -317,8 +316,8 @@ into no stat.
 
 A lean multiplies the card points (*Card values*) of the stats it points at. It amplifies what
 your cards give: a lean into a stat with no points adds nothing, and high cards of a suit reward
-aiming at its home. ♥ takes its lean at contact: max Posture uses your ♥ points without the
-lean, and a lean into ♥ is the buffer that absorbs that contact's damage first. How much a lean
+aiming at its home. ♥ takes its lean at contact: a lean into ♥ is the buffer that absorbs that
+contact's damage first. How much a lean
 multiplies, how much buffer a leaned ♥ point gives, and the half-step share are sim values (§11).
 
 **The stat meter.** The rider sees a meter of their four stats with the current lean applied,
@@ -363,7 +362,7 @@ takes its lean at contact instead). Base
 20 is the "cardless jouster" floor. Each stat turns its value into its effect at its own rate:
 ♣ scales your hits by `S_♣ / 20` (contact resolution, step 3), so each ♣ point is +5% on a hit.
 ♦ armor and ♠ piercing also convert the stat value, so a cardless rider has a real Guard. The ♥
-rates (max Posture per point, heal share), ♦ rates (armor per unit of S♦, Guard hold relief) and
+rates (heal share, buffer per leaned point), ♦ rates (armor per unit of S♦, Guard hold relief) and
 ♠ rates (piercing per unit of S♠, crit scale, crit hold relief) are sim values (§11).
 
 ### Contact resolution (A strikes B; both directions resolve simultaneously)
@@ -385,14 +384,13 @@ rates (max Posture per point, heal share), ♦ rates (armor per unit of S♦, Gu
 6. If B is Battered, what gets through is raised by x%. B's ♥ buffer (*Stances*) absorbs it first,
    and the rest is Posture damage to B.
 7. After contact: on Passes 1–3 a rider at 0 is unhorsed first, so the heal can't save them.
-   Otherwise B heals a share of the Posture damage this contact dealt, by B's ♥ (capped at max
-   Posture). If A's hit dealt damage and A was leaning into ♣, B is now Battered.
+   Otherwise B heals a share of the Posture damage this contact dealt, by B's ♥ (capped at 80). If A's hit dealt damage and A was leaning into ♣, B is now Battered.
 
 ### Tracks and showdown
 
-- **Posture:** starts at 80 for every rider; max Posture is 80 plus the ♥ bonus. Reaches 0 on
-  Passes 1–3 = unhorsed. On Pass 4 it can fall below 0, and the showdown counts it. Heals from
-  the ♥ heal after contact and from clean blocks, capped at max Posture.
+- **Posture:** starts at 80 for every rider, and 80 is the ceiling. Reaches 0 on Passes 1–3 =
+  unhorsed. On Pass 4 it can fall below 0, and the showdown counts it. Heals from the ♥ heal after
+  contact and from clean blocks, capped at 80.
 - **Showdown:** after Pass 4's contact, a knockdown is always forced. Each rider's hand bonus is
   added to their Posture, below 0 included: 20 Posture per step of hand category above high card
   (pair +20, two pair +40, trips +60, and so on up the categories). Riders in the same category
@@ -773,7 +771,7 @@ whether a trick above the opponent wins overwhelmingly.
 | Card value by rank r | 1 + (r − 2) / 6 points: 2 = 1, 8 = 2, A = 3 |
 | Board card weight | ½ of a hole card; the sim tries lower |
 | Hand multipliers on made cards: pair / two pair / trips | ×2 / ×2 / ×3 |
-| Stat rates per point | ♣ +5% on a hit (S_♣ / 20); ♥ max Posture, ♥ heal share, ♥ buffer per leaned point, ♦ armor, ♦ Guard hold relief, ♠ piercing, ♠ crit scale and crit hold relief set by the sim |
+| Stat rates per point | ♣ +5% on a hit (S_♣ / 20); ♥ heal share, ♥ buffer per leaned point, ♦ armor, ♦ Guard hold relief, ♠ piercing, ♠ crit scale and crit hold relief set by the sim |
 | Hold multiplier | 0.25 + 0.75 × h |
 | Street multipliers (Passes 1–4) | 1.0 / 1.0 / 1.0 / 1.25 |
 | Clean block restore | 3 Posture |

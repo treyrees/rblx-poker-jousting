@@ -30,7 +30,7 @@ Each offense stat mirrors a defense stat: Strength ↔ Posture (damage vs health
 | ♣ Strength | More damage | More damage, and the hit leaves the target taking +x% damage (below) |
 | ♠ Accuracy | Armor penetration; crits need less hold to reach full power, and hit bigger | More of both, and extra time past the aim lock |
 | ♦ Armor | Armor reduction; the Guard needs less hold to reach full armor, and blocks harder | More of both, and extra time past the aim lock |
-| ♥ Posture | Health: max Posture grows with ♥. After every contact you heal a share of the damage that contact dealt you, growing with ♥ | Health before contact: a buffer that absorbs this contact's damage first |
+| ♥ Posture | After every contact you heal a share of the damage that contact dealt you, growing with ♥ | Posture before contact: a buffer that absorbs this contact's damage first |
 
 Details Trey chose:
 
@@ -44,9 +44,12 @@ Details Trey chose:
   Guard).
 - **♠ charge dropped.** 0015's pay-later charge goes; ♣ owns "later" through its condition.
 - **♥ heal** is a share of the damage taken on that contact, not a flat amount.
-- **Everyone starts at 80 Posture.** ♥ raises max Posture, so you can heal above 80, but it
-  doesn't raise the start. Your ♥ shows only once you heal, and a heal has more than one cause
-  (pillar 4).
+- **Everyone has 80 Posture**, start and ceiling. As first chosen, ♥ also raised max Posture. The
+  sim showed a share-of-damage heal can never climb above where you were, so that did nothing.
+  Trey (Oct 2): "i imagined the 'active' component (aim at heart) of heart being pre-contact
+  posture and the passive component being posture heal after contact … with posture going back up
+  or being bigger than it should otherwise be - that should be easy to hide." ♥ has no
+  max-health part.
 
 Stat names in Trey's words: Strength (♣), Accuracy (♠), Armor (♦), Posture (♥; also the name of
 the health track).

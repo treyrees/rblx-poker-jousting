@@ -58,9 +58,10 @@ kit.describe("Contact: steps 4–6", function()
 	kit.it("♠ lets a late crit keep more power (0069); a Normal gets no relief", function()
 		local plain = Contact.strike(fighter({ aim = 1, h = 0 }), fighter({ aim = 0 }), arena(1), cfg)
 		local sharp = Contact.strike(fighter({ aim = 1, h = 0, S = { 20, 40, 20, 20 } }), fighter({ aim = 0 }), arena(1), cfg)
-		-- Crit at h = 0: hold 0.25, relieved by 0.3 × S♠/20 of the shortfall; ♠ also scales the crit.
+		-- Crit at h = 0: hold 0.25, relieved by critRelief per ♠ point of the shortfall (none when
+		-- cardless); ♠ also scales the crit.
 		local function crit(sp: number): number
-			local hold = 0.25 + 0.75 * math.min(1, cfg.sim.critRelief * sp / 20)
+			local hold = 0.25 + 0.75 * math.clamp(cfg.sim.critRelief * (sp - 20), 0, 1)
 			return 30 * hold * sp / 20
 		end
 		local armorOf = cfg.sim.armorRate * 20 * cfg.sim.armorZone.exposure

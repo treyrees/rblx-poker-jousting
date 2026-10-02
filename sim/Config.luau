@@ -48,12 +48,11 @@ function Config.defaults()
 		sim = {
 			lean = 1.0, -- λ: a stat leaned into at weight w counts points × (1 + λw)
 			halfStepShare = 0.75, -- a half step's share to the nearer cardinal
-			heartPosture = 3, -- max Posture per unleaned ♥ point (everyone starts at postureStart, 0070)
 			heartBuffer = 0.5, -- buffer per leaned ♥ point (the lean's extra points): absorbs damage first
 			healShare = 0.15, -- after contact, heal this share × S♥ / 20 of the damage taken (0070)
 			battered = 0.25, -- Battered: +x damage taken, × the striker's ♣ lean weight (0068)
-			critRelief = 0.3, -- on a Crit, × S♠ / 20 of the hold multiplier's shortfall is restored (0069)
-			guardRelief = 0.3, -- the same for Guard armor, by S♦ (0069)
+			critRelief = 0.03, -- on a Crit, this share per ♠ point of the hold multiplier's shortfall is restored (0069)
+			guardRelief = 0.03, -- the same for Guard armor, per ♦ point (0069)
 			extraTime = 0.15, -- s past the aim lock at a full lean into ♠ or ♦ (0069)
 			armorRate = 0.25, -- armor per ♦ stat unit (see switches.statBasis)
 			armorZone = { guard = 1.0, ordinary = 0.2, exposure = 0.05 },

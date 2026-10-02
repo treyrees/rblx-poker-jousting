@@ -90,7 +90,7 @@ kit.describe("Tricks: the §6 targets hold at the starting values", function()
 	-- The most one hit must clear: max Posture, Guard armor at full hold and the ♥ buffer, on a
 	-- generous 16 points of ♥ and ♦ with the lean applied.
 	local heart = 16
-	local posture = cfg.spec.postureStart + sim.heartPosture * heart
+	local posture = cfg.spec.postureStart
 	local S = cfg.spec.statBase + heart * (1 + sim.lean)
 	local cut = sim.heartBuffer * heart * sim.lean
 	local Pnum = posture + sim.armorRate * S + cut

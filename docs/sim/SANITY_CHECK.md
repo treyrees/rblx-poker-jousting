@@ -7,6 +7,13 @@ Then 0053–0054: Pass 4 always goes to the knockdown, Posture starts at 80, the
 are 1.0 / 1.0 / 1.0 / 1.25, and the last-pass bonus is gone. §2's trick sizing and the §4
 damage checks below use the new values.
 
+> **Status, Oct 1, 2026.** Trey has answered this report's calls: c1 value (0057), c2 the Normal
+> base (0058), c3 F1 (0059), c4 reachable (0060), c5 and the slow-motion switch: excluded (0061),
+> c6 after the lean (0062), c7 AGENTS.md points to §1 (0063). C1 and C2 were answered (0055, 0056)
+> and then made moot: broadway cards have no effects (0071). The stats were then redefined
+> (0067–0070): the ♠ charge, the ♥ cut and the face-effect rows below describe the sim before
+> that. The current sim values are in `sim/Config.luau`; the current results are in RESULTS.md.
+
 This report proposes; it decides nothing. Every value below marked **sim config** lives in the
 sim's config file and nowhere else. It is never written into GAME_SPEC. Every open question stays
 open: the sim models each one as a switch over two or three readings and reports how much the

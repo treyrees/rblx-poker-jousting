@@ -53,9 +53,11 @@ local function basis(S: number, cfg: any): number
 	error("unknown statBasis " .. mode)
 end
 
--- Easier crits and blocks (0069): the stat restores part of the hold multiplier's shortfall.
+-- Easier crits and blocks (0069): the stat's card points (S − 20, lean included) restore part of
+-- the hold multiplier's shortfall, `rate` per point. A cardless rider gets none, so holding still
+-- beats a late switch (0052).
 local function relieved(m: number, rate: number, S: number, cfg: any): number
-	return m + (1 - m) * math.min(1, rate * S / cfg.spec.statBase)
+	return m + (1 - m) * math.clamp(rate * (S - cfg.spec.statBase), 0, 1)
 end
 
 local ZONE = { crit = "exposure", normal = "ordinary", weak = "ordinary", block = "guard" }
