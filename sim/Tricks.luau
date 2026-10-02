@@ -87,10 +87,13 @@ function Tricks.meterY(top: number, cards: number): number
 end
 
 function Tricks.straightHit(top: number, cards: number, cfg: any): number
-	if cards == 0 then
+	-- 0073: the power is in the hold. Each card unlocked multiplies the hit by x; the straight's rank
+	-- adds a little on top (a higher straight unhorses a card sooner, §6).
+	local sim = cfg.sim
+	if cards <= 0 then
 		return 0
 	end
-	return cfg.sim.straightK * cfg.sim.straightX ^ Tricks.meterY(top, cards)
+	return sim.straightK * sim.straightX ^ cards * (1 + sim.straightRank * (top - 5))
 end
 
 export type Shot = { hit: number, designed: boolean, suit: number? }

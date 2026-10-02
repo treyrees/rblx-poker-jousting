@@ -64,9 +64,11 @@ function Config.defaults()
 			-- unhorse from the earliest pass a trick can fire on (Pass 2); a ward must stop lower hits
 			-- on Pass 4. Sized under the multipliers before 0054 (×0.75 and ×1.625), so they clear
 			-- today's (×1.0 and ×1.25) with room.
-			-- The straight's hit is the meter: straightK · straightX ^ y.
-			straightK = 100,
-			straightX = 1.3,
+			-- The straight's hit is the meter (0073: the power is in the hold):
+			-- straightK · straightX ^ (cards unlocked) · (1 + straightRank · (top card − 5)).
+			straightK = 3.5,
+			straightX = 2,
+			straightRank = 0.1,
 			hit = { flush = 600, fullHouse = 13000, quads = 20000, straightFlush = 60000 },
 			ward = { straight = 0, flush = 6500, fullHouse = 9000, quads = 22000, straightFlush = 33000 },
 			flushExplode = 4, -- flush suit's S × this at home (× half on the diagonals beside it)
