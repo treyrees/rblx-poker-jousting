@@ -241,7 +241,7 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 	-- Betting strength: what a rider knows of their own hand and the public Posture race.
 	local function strength(r: Rider, o: Rider, known: { number }): number
 		local _, sub = Cards.points(r.hole, known, spec)
-		local s = 0.12 * sub + (r.posture - o.posture) / 200
+		local s = 0.12 * sub + 0.4 * (r.posture - o.posture) / spec.postureStart -- a full bar's lead is +0.4
 		if r.status.owns and not r.spent then
 			s += 0.5
 		end
