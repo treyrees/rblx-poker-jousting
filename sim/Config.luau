@@ -29,6 +29,7 @@ function Config.defaults()
 			street = { 1.0, 1.0, 1.0, 1.25 }, -- 0054; 0051's last-pass bonus is removed
 			showdownBonus = 20, -- showdown: Posture per step of hand category (0050)
 			cleanBlockRestore = 3,
+			pip = 5, -- Posture per pip when switches.posture = "pips"
 			aimLock = 0.3,
 			passLength = 8.0,
 			-- Standard dial, half steps from aim: E exposure, O ordinary, G Guard.
@@ -112,6 +113,10 @@ function Config.defaults()
 			-- hand's showdown effect lands on Posture, even below 0, and the lower rider falls. "unhorse" is
 			-- the rule before 0053 (a rider at 0 falls on contact), kept for the SHOWDOWN.md prototypes.
 			riverRule = "knockdown", -- knockdown | unhorse
+			-- Posture units: exact Posture, or whole pips of spec.pip (every hit, heal and restore rounds to
+			-- the nearest pip; the showdown compares pips, and kickers break a level result).
+			posture = "exact", -- exact | pips
+			healRound = "nearest", -- nearest | up: how the ♥ heal rounds to pips
 		},
 
 		-- ── PROTO: values the showdown prototypes use (SHOWDOWN.md). None is a §11 value. ─────

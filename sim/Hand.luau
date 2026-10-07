@@ -585,13 +585,28 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 			return -proto.turnCushion * spec.showdownBonus * r.status.eval.category
 		end
 		local knockdownPass = pass == 4 and cfg.switches.riverRule == "knockdown"
+		-- Posture in pips (switches.posture): every change lands as whole pips, to the nearest.
+		local pipSize = if cfg.switches.posture == "pips" then spec.pip else nil
+		local function pips(x: number): number
+			if pipSize then
+				return pipSize * math.floor(x / pipSize + 0.5)
+			end
+			return x
+		end
+		-- The heal rounds up when switches.healRound = "up", so every heal shows (♥, 0070).
+		local function healPips(x: number): number
+			if pipSize and cfg.switches.healRound == "up" then
+				return pipSize * math.ceil(x / pipSize - 1e-9)
+			end
+			return pips(x)
+		end
 		for _, r in riders do
 			local o = riders[3 - r.id]
 			local taken, made = byStrike[r.id], own[r.id]
 			local before = r.posture
-			local p = r.posture - taken.dmg - made.reflect
+			local p = r.posture - pips(taken.dmg) - pips(made.reflect)
 			if taken.cleanBlock then
-				p = math.min(r.maxPosture, p + spec.cleanBlockRestore)
+				p = math.min(r.maxPosture, p + pips(spec.cleanBlockRestore))
 			end
 			-- ♥ Unbroken: Posture can't fall below 1 this pass, and after contact it heals back
 			-- everything the pass took (0053, 0072; a higher trick's rule wins).
@@ -599,7 +614,7 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 			local oRung = if F[3 - r.id].trick then (F[3 - r.id].trick :: any).rung else 0
 			local unbroken = myTrick ~= nil and myTrick.key == "flush" and myTrick.suit == 3 and oRung < myTrick.rung
 			if unbroken then
-				p = math.max(p, 1)
+				p = math.max(p, pipSize or 1)
 			end
 			-- Step 7, after contact (§4): a rider unhorsed on Passes 1–3 is down before any heal.
 			if knockdownPass or p > floorOf(r) then
@@ -609,14 +624,14 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 					local lost = before - p
 					if lost > 0 then
 						local share = sim.healBase + sim.healPerPoint * points(r, newBoard, 0, false, cfg)[3]
-						p = math.min(r.maxPosture, p + lost * math.min(1, share))
+						p = math.min(r.maxPosture, p + healPips(lost * math.min(1, share)))
 					end
 				end
 			end
 			afterDial[r.id] = p
 			-- riverVsTrick = warded: a rider firing a trick (unclashed) takes no hand blow.
 			if blows and not (proto.riverVsTrick == "warded" and F[r.id].trick ~= nil) then
-				p -= handBlow(o.status.eval.category, own[o.id])
+				p -= pips(handBlow(o.status.eval.category, own[o.id]))
 			end
 			r.posture = p
 			-- Battered (0068): this contact used it up; an aimed ♣ hit that got through applies it anew.
