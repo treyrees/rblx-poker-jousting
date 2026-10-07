@@ -30,8 +30,53 @@ local function protoDefaults(): any
 	return cfg
 end
 
+kit.describe("Posture in half hearts (0075)", function()
+	kit.it("the defaults: Posture 32, bonus 8, clean block 1, Normal 4 and Crit 12", function()
+		local cfg = Config.defaults()
+		kit.expectEqual(cfg.spec.postureStart, 32)
+		kit.expectEqual(cfg.spec.showdownBonus, 8)
+		kit.expectEqual(cfg.spec.cleanBlockRestore, 1)
+		kit.expectEqual(cfg.spec.base.normal, 4)
+		kit.expectEqual(cfg.spec.base.crit, 12)
+		kit.expectEqual(cfg.switches.posture, "pips")
+		kit.expectEqual(cfg.switches.healRound, "up")
+	end)
+	kit.it("Posture is always a whole number of half hearts; exact Posture isn't", function()
+		local function fractions(cfg: any): number
+			local n = 0
+			for _, r in play(cfg, 7, 300) do
+				for i = 1, 2 do
+					if r.posture[i] ~= math.floor(r.posture[i]) then
+						n += 1
+					end
+				end
+			end
+			return n
+		end
+		kit.expectEqual(fractions(Config.defaults()), 0)
+		local exact = Config.defaults()
+		Config.set(exact, "switches.posture", "exact")
+		kit.expectTrue(fractions(exact) > 0)
+	end)
+	kit.it("a showdown level on half hearts goes to the kickers", function()
+		local cfg = Config.defaults()
+		local level = 0
+		for _, r in play(cfg, 3, 3000) do
+			if r.finish == "showdown" then
+				local s1 = r.posture[1] + cfg.spec.showdownBonus * r.category[1]
+				local s2 = r.posture[2] + cfg.spec.showdownBonus * r.category[2]
+				if s1 == s2 and r.value[1] ~= r.value[2] then
+					level += 1
+					kit.expectEqual(r.winner, if r.value[1] > r.value[2] then 1 else 2)
+				end
+			end
+		end
+		kit.expectTrue(level > 0)
+	end)
+end)
+
 kit.describe("Showdown prototypes (switches.showdown)", function()
-	kit.it("bonus is 0050: Posture + 20 per step decides, kickers break an exact tie", function()
+	kit.it("bonus is 0050: Posture + 8 per step (4 hearts) decides, kickers break a level result", function()
 		local cfg = protoDefaults()
 		kit.expectEqual(cfg.switches.showdown, "bonus")
 		for _, r in play(cfg, 11, 400) do

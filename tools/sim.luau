@@ -146,7 +146,7 @@ local function run(cfg: any, prof1: any, prof2: any, n: number, s: number): Tall
 			local s1 = standing(cfg, bf[1], r.category[1])
 			local s2 = standing(cfg, bf[2], r.category[2])
 			if s1 ~= s2 then
-				local band = if math.abs(s1 - s2) < 20 then "close" else "clear"
+				local band = if math.abs(s1 - s2) < 8 then "close" else "clear" -- 4 hearts, one category step
 				inc(t, "proj." .. band)
 				if r.winner == (if s1 > s2 then 1 else 2) then
 					inc(t, "proj." .. band .. ".held")
@@ -171,7 +171,7 @@ local function run(cfg: any, prof1: any, prof2: any, n: number, s: number): Tall
 		-- The last pass: does the rider ahead going into Pass 4 hold on, and by what lead?
 		if bf and bf[1] ~= bf[2] then
 			local lead = math.abs(bf[1] - bf[2])
-			local band = if lead < 20 then "close" else "clear"
+			local band = if lead < 8 then "close" else "clear"
 			inc(t, "final." .. band)
 			if r.winner == (if bf[1] > bf[2] then 1 else 2) then
 				inc(t, "final." .. band .. ".held")
@@ -187,7 +187,7 @@ local function run(cfg: any, prof1: any, prof2: any, n: number, s: number): Tall
 			inc(t, "sd.postureSum", p1 + p2)
 			inc(t, "sd.lowerPosture", math.min(p1, p2))
 			local pg = math.abs(p1 - p2)
-			inc(t, "sd.pgap." .. (if pg < 10 then "0" elseif pg < 20 then "10" elseif pg < 40 then "20" else "40"))
+			inc(t, "sd.pgap." .. (if pg < 4 then "0" elseif pg < 8 then "4" elseif pg < 16 then "8" else "16"))
 			inc(t, "sd.cgap." .. math.min(3, math.abs(r.category[1] - r.category[2])))
 			if p1 ~= p2 and r.category[1] ~= r.category[2] then
 				local leader = if p1 > p2 then 1 else 2
@@ -390,34 +390,35 @@ local SWEEPS: { { any } } = {
 	{ "spec.holdFloor=0.2 (0052: 0.25)", { { "spec.holdFloor", "0.2" } } },
 	{ "spec.holdFloor=0.4 (was §11)", { { "spec.holdFloor", "0.4" } } },
 	{ "spec.holdFloor=0.6", { { "spec.holdFloor", "0.6" } } },
-	{ "sim.armorRate=0.15", { { "sim.armorRate", "0.15" } } },
-	{ "sim.armorRate=0.4", { { "sim.armorRate", "0.4" } } },
+	{ "sim.armorRate=0.06", { { "sim.armorRate", "0.06" } } },
+	{ "sim.armorRate=0.16", { { "sim.armorRate", "0.16" } } },
 	{ "sim.battered=0 (0068 off)", { { "sim.battered", "0" } } },
 	{ "sim.battered=0.6", { { "sim.battered", "0.6" } } },
 	{ "heal off (0070)", { { "sim.healBase", "0" }, { "sim.healPerPoint", "0" } } },
 	{ "sim.healPerPoint=0.04", { { "sim.healPerPoint", "0.04" } } },
-	{ "sim.heartBuffer=0.5", { { "sim.heartBuffer", "0.5" } } },
+	{ "sim.heartBuffer=0.2", { { "sim.heartBuffer", "0.2" } } },
 	{ "sim.armorPerPoint=0", { { "sim.armorPerPoint", "0" } } },
 	{ "armor zones thin 0.2, sliver 0.05", { { "sim.armorZone.ordinary", "0.2" }, { "sim.armorZone.exposure", "0.05" } } },
 	{ "sim.critRelief=0 and guardRelief=0 (0069 off)", { { "sim.critRelief", "0" }, { "sim.guardRelief", "0" } } },
 	{ "sim.critRelief=0.06 and guardRelief=0.06", { { "sim.critRelief", "0.06" }, { "sim.guardRelief", "0.06" } } },
 	{ "sim.extraTime=0 (0069 last move off)", { { "sim.extraTime", "0" } } },
-	{ "sim.straightX=1.5 (flatter meter, same full wheel)", { { "sim.straightX", "1.5" }, { "sim.straightK", "23.2" } } },
+	{ "sim.straightX=1.5 (flatter meter, same full wheel)", { { "sim.straightX", "1.5" }, { "sim.straightK", "9.28" } } },
 	{ "sim.straightRank=0 (rank adds nothing)", { { "sim.straightRank", "0" } } },
-	{ "trick hits and wards ×0.5", { { "sim.straightK", "2.75" }, { "sim.hit.flush", "300" }, { "sim.hit.fullHouse", "6500" }, { "sim.hit.quads", "10000" }, { "sim.hit.straightFlush", "30000" }, { "sim.ward.flush", "3250" }, { "sim.ward.fullHouse", "4500" }, { "sim.ward.quads", "11000" }, { "sim.ward.straightFlush", "16500" } } },
-	{ "spec.showdownBonus=10 (0050: 20)", { { "spec.showdownBonus", "10" } } },
-	{ "spec.showdownBonus=30", { { "spec.showdownBonus", "30" } } },
-	{ "spec.showdownBonus=25", { { "spec.showdownBonus", "25" } } },
-	{ "spec.postureStart=85 (0054: 80)", { { "spec.postureStart", "85" } } },
+	{ "trick hits and wards ×0.5", { { "sim.straightK", "1.1" }, { "sim.hit.flush", "120" }, { "sim.hit.fullHouse", "2600" }, { "sim.hit.quads", "4000" }, { "sim.hit.straightFlush", "12000" }, { "sim.ward.flush", "1300" }, { "sim.ward.fullHouse", "1800" }, { "sim.ward.quads", "4400" }, { "sim.ward.straightFlush", "6600" } } },
+	{ "spec.showdownBonus=4 (0050, 0075: 8)", { { "spec.showdownBonus", "4" } } },
+	{ "spec.showdownBonus=12", { { "spec.showdownBonus", "12" } } },
+	{ "spec.showdownBonus=10", { { "spec.showdownBonus", "10" } } },
+	{ "spec.postureStart=34 (0075: 32)", { { "spec.postureStart", "34" } } },
 	{ "spec.street.1=0.75 (0054: 1.0)", { { "spec.street.1", "0.75" } } },
 	{ "spec.street.3=1.25 (0054: 1.0)", { { "spec.street.3", "1.25" } } },
 	{ "proto.turnCushion=0.5 (not adopted)", { { "proto.turnCushion", "0.5" } } },
-	{ "before 0053-0054 (Posture 100, 0.5/0.75/1.0/1.25, ×1.3, unhorse on P4)", { { "switches.riverRule", "unhorse" }, { "spec.postureStart", "100" }, { "spec.street.1", "0.5" }, { "spec.street.2", "0.75" }, { "spec.street.4", "1.625" } } },
+	{ "before 0053-0054 (Posture 40, 0.5/0.75/1.0/1.25, ×1.3, unhorse on P4)", { { "switches.riverRule", "unhorse" }, { "spec.postureStart", "40" }, { "spec.street.1", "0.5" }, { "spec.street.2", "0.75" }, { "spec.street.4", "1.625" } } },
 	{ "switches.slowmo=game", { { "switches.slowmo", "game" } } },
 	{ "switches.slowmo=wall (0061: excluded)", { { "switches.slowmo", "wall" } } },
 	{ "switches.statBasis=points", { { "switches.statBasis", "points" } } },
 	{ "switches.flushHit=F2", { { "switches.flushHit", "F2" } } },
 	{ "switches.meterThreshold=strict", { { "switches.meterThreshold", "strict" } } },
+	{ "switches.posture=exact (0075: half hearts)", { { "switches.posture", "exact" } } },
 }
 
 -- The rows of a sweep this process runs: --only filters by label, then --shard picks every n-th.
@@ -486,7 +487,7 @@ elseif report == "showdown" then
 	-- §4 *Tracks and showdown* (0050): how close the riders are when the knockdown is forced, and
 	-- how much of the result the hand bonus decides. Bonus 0 is a reference point, not a proposal.
 	print("mirror = average vs average; flip = skilled wins a numeric hand with the worse category vs novice")
-	for _, b in { "0", "10", "20", "30" } do
+	for _, b in { "0", "4", "8", "12" } do
 		local cfg = baseConfig()
 		Config.set(cfg, "spec.showdownBonus", b)
 		local t = run(cfg, cfg.riders.average, cfg.riders.average, hands, seed)
@@ -494,13 +495,13 @@ elseif report == "showdown" then
 		local sd = t["finish.showdown"] or 0
 		print(string.format("bonus %s: showdown %s of hands | Posture there: mean %.0f, lower rider %.0f", b,
 			pct(sd, t.hands), (t["sd.postureSum"] or 0) / math.max(1, sd) / 2, (t["sd.lowerPosture"] or 0) / math.max(1, sd)))
-		print(string.format("  Posture gap <10 %s  10-20 %s  20-40 %s  40+ %s | category gap 0 %s  1 %s  2 %s  3+ %s",
-			pct(t["sd.pgap.0"], sd), pct(t["sd.pgap.10"], sd), pct(t["sd.pgap.20"], sd), pct(t["sd.pgap.40"], sd),
+		print(string.format("  Posture gap <4 %s  4-8 %s  8-16 %s  16+ %s | category gap 0 %s  1 %s  2 %s  3+ %s",
+			pct(t["sd.pgap.0"], sd), pct(t["sd.pgap.4"], sd), pct(t["sd.pgap.8"], sd), pct(t["sd.pgap.16"], sd),
 			pct(t["sd.cgap.0"], sd), pct(t["sd.cgap.1"], sd), pct(t["sd.cgap.2"], sd), pct(t["sd.cgap.3"], sd)))
 		print(string.format("  Posture leader wins %s | leader holds the worse hand in %s of showdowns; cards win %s of those | gap1 better wins %s | flip %s",
 			pct(t["sd.postureLeaderWins"], t["sd.postureDiff"]), pct(t["sd.leaderWorse"], sd),
 			pct(t["sd.leaderWorse.cardsWin"], t["sd.leaderWorse"]), pct(t["gap1.better"], t.gap1), pct(m["p1worse.win"], m.p1worse)))
-		print(string.format("  projected at the river (Posture + bonus before Pass 4's contact) holds: margin <20 %s (n=%d), 20+ %s (n=%d)",
+		print(string.format("  projected at the river (Posture + bonus before Pass 4's contact) holds: margin <8 %s (n=%d), 8+ %s (n=%d)",
 			pct(t["proj.close.held"], t["proj.close"]), t["proj.close"] or 0, pct(t["proj.clear.held"], t["proj.clear"]), t["proj.clear"] or 0))
 	end
 elseif report == "proto" then
@@ -509,36 +510,36 @@ elseif report == "proto" then
 	-- Posture after Pass 4's dial exchange (1 − after-P4 leader wins); "proj" = the rider ahead on the projected standing at the river reveal wins, close (<20)
 	-- and clear (20+) margins; "flip" here is the pillar 2 skill flip as in the sweeps.
 	local PROTO: { { any } } = {
-		{ "bonus 20 (0050)", {} },
-		{ "bonus 20, Posture start 70", { { "spec.postureStart", "70" } } },
-		{ "bonus 20, Pass 4 ×2.5", { { "spec.street.4", "2.5" } } },
-		{ "bonus 10, Pass 4 ×2.5", { { "spec.showdownBonus", "10" }, { "spec.street.4", "2.5" } } },
+		{ "bonus 8 (0050)", {} },
+		{ "bonus 8, Posture start 28", { { "spec.postureStart", "28" } } },
+		{ "bonus 8, Pass 4 ×2.5", { { "spec.street.4", "2.5" } } },
+		{ "bonus 4, Pass 4 ×2.5", { { "spec.showdownBonus", "4" }, { "spec.street.4", "2.5" } } },
 		{ "mult 0.2", { { "switches.showdown", "mult" } } },
 		{ "mult 0.35", { { "switches.showdown", "mult" }, { "proto.mult", "0.35" } } },
 		{ "mult 0.5", { { "switches.showdown", "mult" }, { "proto.mult", "0.5" } } },
-		{ "riverHit 10, tier 1.5/1/0.25", { { "switches.showdown", "riverHit" }, { "proto.riverPerStep", "10" } } },
-		{ "riverHit 15, tier 1.5/1/0.25", { { "switches.showdown", "riverHit" }, { "proto.riverPerStep", "15" } } },
-		{ "riverHit 20, tier 1.5/1/0.25", { { "switches.showdown", "riverHit" } } },
-		{ "riverHit 30, tier 1.5/1/0.25", { { "switches.showdown", "riverHit" }, { "proto.riverPerStep", "30" } } },
-		{ "riverHit 20, flat tier (the reveal blow)", { { "switches.showdown", "riverHit" }, { "proto.riverTier.crit", "1" }, { "proto.riverTier.block", "1" }, { "proto.riverTier.weak", "1" } } },
-		{ "riverHit 20, tier 2/1/0", { { "switches.showdown", "riverHit" }, { "proto.riverTier.crit", "2" }, { "proto.riverTier.block", "0" }, { "proto.riverTier.weak", "0" } } },
-		{ "riverHit 20 + bonus 10 knockdown", { { "switches.showdown", "riverHit" }, { "proto.riverKnockdown", "bonus" }, { "spec.showdownBonus", "10" } } },
-		{ "riverHit 10 + bonus 10 knockdown", { { "switches.showdown", "riverHit" }, { "proto.riverPerStep", "10" }, { "proto.riverKnockdown", "bonus" }, { "spec.showdownBonus", "10" } } },
-		{ "riverHit 20, Posture start 70", { { "switches.showdown", "riverHit" }, { "spec.postureStart", "70" } } },
-		{ "riverHit 10, warded", { { "switches.showdown", "riverHit" }, { "proto.riverPerStep", "10" }, { "proto.riverVsTrick", "warded" } } },
-		{ "riverHit 15, warded", { { "switches.showdown", "riverHit" }, { "proto.riverPerStep", "15" }, { "proto.riverVsTrick", "warded" } } },
-		{ "riverHit 20, warded", { { "switches.showdown", "riverHit" }, { "proto.riverVsTrick", "warded" } } },
-		{ "riverHit 15, warded + bonus 10 knockdown", { { "switches.showdown", "riverHit" }, { "proto.riverPerStep", "15" }, { "proto.riverVsTrick", "warded" }, { "proto.riverKnockdown", "bonus" }, { "spec.showdownBonus", "10" } } },
-		{ "riverHit 20, warded + bonus 10 knockdown", { { "switches.showdown", "riverHit" }, { "proto.riverVsTrick", "warded" }, { "proto.riverKnockdown", "bonus" }, { "spec.showdownBonus", "10" } } },
-		{ "riverHit 10, warded + bonus 10 knockdown", { { "switches.showdown", "riverHit" }, { "proto.riverPerStep", "10" }, { "proto.riverVsTrick", "warded" }, { "proto.riverKnockdown", "bonus" }, { "spec.showdownBonus", "10" } } },
-		{ "riverHit 15, warded + bonus 15 knockdown", { { "switches.showdown", "riverHit" }, { "proto.riverPerStep", "15" }, { "proto.riverVsTrick", "warded" }, { "proto.riverKnockdown", "bonus" }, { "spec.showdownBonus", "15" } } },
-		{ "riverHit 15, warded + bonus 20 knockdown", { { "switches.showdown", "riverHit" }, { "proto.riverPerStep", "15" }, { "proto.riverVsTrick", "warded" }, { "proto.riverKnockdown", "bonus" }, { "spec.showdownBonus", "20" } } },
-		{ "riverHit 20 warded, flat tier + bonus 10", { { "switches.showdown", "riverHit" }, { "proto.riverVsTrick", "warded" }, { "proto.riverTier.crit", "1" }, { "proto.riverTier.block", "1" }, { "proto.riverTier.weak", "1" }, { "proto.riverKnockdown", "bonus" }, { "spec.showdownBonus", "10" } } },
+		{ "riverHit 4, tier 1.5/1/0.25", { { "switches.showdown", "riverHit" }, { "proto.riverPerStep", "4" } } },
+		{ "riverHit 6, tier 1.5/1/0.25", { { "switches.showdown", "riverHit" }, { "proto.riverPerStep", "6" } } },
+		{ "riverHit 8, tier 1.5/1/0.25", { { "switches.showdown", "riverHit" } } },
+		{ "riverHit 12, tier 1.5/1/0.25", { { "switches.showdown", "riverHit" }, { "proto.riverPerStep", "12" } } },
+		{ "riverHit 8, flat tier (the reveal blow)", { { "switches.showdown", "riverHit" }, { "proto.riverTier.crit", "1" }, { "proto.riverTier.block", "1" }, { "proto.riverTier.weak", "1" } } },
+		{ "riverHit 8, tier 2/1/0", { { "switches.showdown", "riverHit" }, { "proto.riverTier.crit", "2" }, { "proto.riverTier.block", "0" }, { "proto.riverTier.weak", "0" } } },
+		{ "riverHit 8 + bonus 4 knockdown", { { "switches.showdown", "riverHit" }, { "proto.riverKnockdown", "bonus" }, { "spec.showdownBonus", "4" } } },
+		{ "riverHit 4 + bonus 4 knockdown", { { "switches.showdown", "riverHit" }, { "proto.riverPerStep", "4" }, { "proto.riverKnockdown", "bonus" }, { "spec.showdownBonus", "4" } } },
+		{ "riverHit 8, Posture start 28", { { "switches.showdown", "riverHit" }, { "spec.postureStart", "28" } } },
+		{ "riverHit 4, warded", { { "switches.showdown", "riverHit" }, { "proto.riverPerStep", "4" }, { "proto.riverVsTrick", "warded" } } },
+		{ "riverHit 6, warded", { { "switches.showdown", "riverHit" }, { "proto.riverPerStep", "6" }, { "proto.riverVsTrick", "warded" } } },
+		{ "riverHit 8, warded", { { "switches.showdown", "riverHit" }, { "proto.riverVsTrick", "warded" } } },
+		{ "riverHit 6, warded + bonus 4 knockdown", { { "switches.showdown", "riverHit" }, { "proto.riverPerStep", "6" }, { "proto.riverVsTrick", "warded" }, { "proto.riverKnockdown", "bonus" }, { "spec.showdownBonus", "4" } } },
+		{ "riverHit 8, warded + bonus 4 knockdown", { { "switches.showdown", "riverHit" }, { "proto.riverVsTrick", "warded" }, { "proto.riverKnockdown", "bonus" }, { "spec.showdownBonus", "4" } } },
+		{ "riverHit 4, warded + bonus 4 knockdown", { { "switches.showdown", "riverHit" }, { "proto.riverPerStep", "4" }, { "proto.riverVsTrick", "warded" }, { "proto.riverKnockdown", "bonus" }, { "spec.showdownBonus", "4" } } },
+		{ "riverHit 6, warded + bonus 6 knockdown", { { "switches.showdown", "riverHit" }, { "proto.riverPerStep", "6" }, { "proto.riverVsTrick", "warded" }, { "proto.riverKnockdown", "bonus" }, { "spec.showdownBonus", "6" } } },
+		{ "riverHit 6, warded + bonus 8 knockdown", { { "switches.showdown", "riverHit" }, { "proto.riverPerStep", "6" }, { "proto.riverVsTrick", "warded" }, { "proto.riverKnockdown", "bonus" }, { "spec.showdownBonus", "8" } } },
+		{ "riverHit 8 warded, flat tier + bonus 4", { { "switches.showdown", "riverHit" }, { "proto.riverVsTrick", "warded" }, { "proto.riverTier.crit", "1" }, { "proto.riverTier.block", "1" }, { "proto.riverTier.weak", "1" }, { "proto.riverKnockdown", "bonus" }, { "spec.showdownBonus", "4" } } },
 		{ "charge: bonus up, cards up, ×1.625", { { "switches.showdown", "charge" } } },
 		{ "charge: bonus up, cards down", { { "switches.showdown", "charge" }, { "proto.chargeCardsUp", "no" } } },
 		{ "charge: no bonus, cards up", { { "switches.showdown", "charge" }, { "proto.chargeBonus", "none" } } },
-		{ "charge: hand blows on the charge (20)", { { "switches.showdown", "charge" }, { "proto.chargeBonus", "hit" } } },
-		{ "charge: hand blows on the charge (10)", { { "switches.showdown", "charge" }, { "proto.chargeBonus", "hit" }, { "proto.riverPerStep", "10" } } },
+		{ "charge: hand blows on the charge (8)", { { "switches.showdown", "charge" }, { "proto.chargeBonus", "hit" } } },
+		{ "charge: hand blows on the charge (4)", { { "switches.showdown", "charge" }, { "proto.chargeBonus", "hit" }, { "proto.riverPerStep", "4" } } },
 		{ "charge: bonus up, ×2.5", { { "switches.showdown", "charge" }, { "proto.chargeStreet", "2.5" } } },
 		{ "charge: bonus up, Posture start 70", { { "switches.showdown", "charge" }, { "spec.postureStart", "70" } } },
 	}

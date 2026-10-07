@@ -105,7 +105,7 @@ local function points(r: Rider, board: { number }, h: number, firing: boolean, c
 	return pts, sub
 end
 
--- Max Posture is 80 for every rider: ♥ is a buffer and a heal, not more health (0070).
+-- Max Posture is 32 (16 hearts) for every rider: ♥ is a buffer and a heal, not more health (0070).
 local function maxPosture(_r: Rider, _board: { number }, cfg: any): number
 	return cfg.spec.postureStart
 end
@@ -186,7 +186,7 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 			status = Tricks.status({ deck[2 * i - 1], deck[2 * i] }, {}),
 		}
 		r.maxPosture = maxPosture(r, {}, cfg)
-		r.posture = spec.postureStart -- everyone starts at 80, which is also the ceiling (0070)
+		r.posture = spec.postureStart -- everyone starts at 32, which is also the ceiling (0070, 0075)
 		riders[i] = r
 	end
 	local tricks: { TrickRecord } = {}
@@ -585,18 +585,15 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 			return -proto.turnCushion * spec.showdownBonus * r.status.eval.category
 		end
 		local knockdownPass = pass == 4 and cfg.switches.riverRule == "knockdown"
-		-- Posture in pips (switches.posture): every change lands as whole pips, to the nearest.
-		local pipSize = if cfg.switches.posture == "pips" then spec.pip else nil
+		-- Posture in half hearts (0075): damage lands as whole half hearts, to the nearest; the heal
+		-- rounds up, so every heal shows (♥, 0070). switches.posture = "exact" turns rounding off.
+		local whole = cfg.switches.posture == "pips"
 		local function pips(x: number): number
-			if pipSize then
-				return pipSize * math.floor(x / pipSize + 0.5)
-			end
-			return x
+			return if whole then math.floor(x + 0.5) else x
 		end
-		-- The heal rounds up when switches.healRound = "up", so every heal shows (♥, 0070).
 		local function healPips(x: number): number
-			if pipSize and cfg.switches.healRound == "up" then
-				return pipSize * math.ceil(x / pipSize - 1e-9)
+			if whole and cfg.switches.healRound == "up" then
+				return math.ceil(x - 1e-9)
 			end
 			return pips(x)
 		end
@@ -614,7 +611,7 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 			local oRung = if F[3 - r.id].trick then (F[3 - r.id].trick :: any).rung else 0
 			local unbroken = myTrick ~= nil and myTrick.key == "flush" and myTrick.suit == 3 and oRung < myTrick.rung
 			if unbroken then
-				p = math.max(p, pipSize or 1)
+				p = math.max(p, 1)
 			end
 			-- Step 7, after contact (§4): a rider unhorsed on Passes 1–3 is down before any heal.
 			if knockdownPass or p > floorOf(r) then
