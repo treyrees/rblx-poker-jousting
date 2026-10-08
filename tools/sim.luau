@@ -523,15 +523,13 @@ local BANDS = { { "switches.betting", "bands" } }
 -- most); read the report by label, not by order.
 local INFO: { { any } } = {
 	-- label, config sets, seat 1 profile, seat 2 profile, seat 1 readSkill, seat 2 readSkill, seed offset
-	{ "ridden out, mirror, aim reads, skill 1 both", AIM, "average", "average", 1, 1, 0 },
-	{ "ridden out, skilled v novice, aim reads, profile skills .9 v .1", AIM, "skilled", "novice", nil, nil, 1 },
 	{ "bands, skilled v novice, aim + betting reads, profile skills .9 v .1", BOTH, "skilled", "novice", nil, nil, 1 },
 	{ "bands, mirror, aim + betting reads, skill 1 both", BOTH, "average", "average", 1, 1, 0 },
 	{ "ridden out, reader v non-reader, aim reads, 1 v 0", AIM, "average", "average", 1, 0, 0 },
 	{ "bands, reader v non-reader, aim + betting reads, 1 v 0", BOTH, "average", "average", 1, 0, 0 },
-	{ "bands, reader v non-reader, aim + betting reads, .5 v 0", BOTH, "average", "average", 0.5, 0, 0 },
 	{ "ridden out, mirror, reading off (0087's baseline)", {}, "average", "average", nil, nil, 0 },
 	{ "ridden out, skilled v novice, reading off", {}, "skilled", "novice", nil, nil, 1 },
+	{ "bands, reader v non-reader, aim + betting reads, .5 v 0", BOTH, "average", "average", 0.5, 0, 0 },
 	{ "bands, mirror, reading off", BANDS, "average", "average", nil, nil, 0 },
 	{ "bands, skilled v novice, reading off", BANDS, "skilled", "novice", nil, nil, 1 },
 }
