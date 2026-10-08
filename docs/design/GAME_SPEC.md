@@ -42,6 +42,7 @@ Also important: **learnability** (for example, betting is beginner-ignorable, §
 | The yard: deal, prefold, matchmaking | §2 | Settled in shape |
 | Preflop redraw for a price | §11 | Open |
 | Betting | §2 | Settled |
+| Wager limits: the fixed limit is the limit, no pot cap | §2 | Settled for v1 |
 | Standard dial: layout, outcome table, sectors, Neutral, held aim, aim lock | §3 | Settled for v1, numbers tunable |
 | Suits as stats; all four act, aim leans into the stats it points at | §4 | Settled |
 | Aim lean: the stat compass; a lean multiplies card points | §4 | Settled for v1, numbers tunable |
@@ -60,7 +61,7 @@ Also important: **learnability** (for example, betting is beginner-ignorable, §
 | What we take from rblx-joust-tourney | §9 | Settled |
 | Classes and alternate dials | §10 | Deferred to v2 |
 | Spur and momentum (a second run-up currency) | §9 | Deferred to v2 |
-| Economy: currency, wager limits, monetization | §11 | Open |
+| Economy: currency, currency-side stakes, monetization | §11 | Open |
 | Tuning parameters | §11 | Proposed, needs sim |
 
 ## 2. Hand structure and betting
@@ -128,6 +129,8 @@ the river; some end on the turn, and fewer still on the flop.
 - The rider on the button acts first in every betting round. The button passes each hand.
 - Actions: Stay (check when there is no raise to face, call when there is), Raise, Yield.
 - One re-raise cap per betting round.
+- The fixed limit is the wager limit in v1; there is no pot cap on top of it. A hand costs between
+  1 unit (the Ante) and 13 (every raise and re-raise called), and every unit past the Ante is a call.
 - Each action has a 5 s timer. Timeout defaults to Stay. This keeps the game
   beginner-ignorable: a player who never touches betting still plays every hand.
 - Players can only Yield between passes. Every revealed card is ridden into.
@@ -707,7 +710,7 @@ we take mechanics and code that fit the poker spirit.
 | Breaking and the mortal ladder | Deferred; not needed for v1 |
 | Spur and momentum | Deferred to v2; hold is the only run-up currency in v1 |
 | One duel to unhorse | A hand is 4 passes; an unhorse on Passes 1–3 ends it, and otherwise the forced knockdown after the river decides |
-| "Never a wager" (ADR 0015) | Betting is core here, within limits (see Open questions) |
+| "Never a wager" (ADR 0015) | Betting is core here, within the fixed limit (§2 *Betting rules*, 0077) |
 | Reads always beat rarity | Replaced by the trick vs read arms race |
 
 ## 10. v2: classes and dials
@@ -773,9 +776,9 @@ whether a trick above the opponent wins overwhelmingly.
 - Prefold cost: what does prefolding in the yard cost (units, time, or both)?
 - Preflop redraw for a price: a second hand-selection tool alongside the prefold. What can be
   redrawn, and what does it cost?
-- Wager limits: cap the pot (for example 3× ante) so a loss stays cheap?
-- Roblox policy on simulated gambling and maturity labels. Stake only earned currency,
-  never purchasable currency, until checked.
+- Roblox policy on simulated gambling and maturity labels, and the currency side of stakes:
+  what a unit is worth, and session or daily limits. Stake only earned currency,
+  never purchasable currency, until checked. (The in-game wager limit is §2's fixed limit, 0077.)
 - Ghost betting: which public and private inputs a ghost's betting habits condition on.
 
 ### Tuning parameters (sim config)

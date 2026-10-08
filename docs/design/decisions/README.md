@@ -100,5 +100,6 @@ Add a row below in the same commit. Check the latest `main` for the next free id
 | [0074](0074-defense-is-not-weaker.md) | Defense isn't weaker than offense; the four suits are roughly even in value | 2026-10-02 |
 | [0075](0075-posture-counts-in-half-hearts.md) | Posture counts in half hearts; a trips-sized hit may say "trips" | 2026-10-07 |
 | [0076](0076-spur-and-momentum-deferred-to-v2.md) | Spur and momentum are deferred to v2 | 2026-10-07 |
+| [0077](0077-the-fixed-limit-is-the-wager-limit.md) | The fixed limit is the wager limit; no pot cap in v1 | 2026-10-08 |
 
-Next free id: **0077**.
+Next free id: **0078**.
