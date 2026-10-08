@@ -126,4 +126,15 @@ Add a row below in the same commit. Check the latest `main` for the next free id
 
 | [0097](0097-first-playable-slice.md) | The first playable slice is one numeric hand against a scripted bot, with betting and cue logging | 2026-10-08 |
 
-Next free id: **0098**.
+| [0098](0098-the-game-and-the-sim-share-sim.md) | The game and the sim share one copy of the rules; Rojo maps sim/ into the place as-is | 2026-10-08 |
+| [0099](0099-the-slice-deals-numeric-hands-only.md) | The slice deals numeric hands only | 2026-10-08 |
+| [0100](0100-the-bot-is-the-average-betting-rider.md) | The slice's bot is the average rider, betting as the betting rider, with its profile shown | 2026-10-08 |
+| [0101](0101-the-cue-log-is-json-to-output-and-a-datastore.md) | The cue log is one JSON record per hand, to Output and, in a live server, a DataStore | 2026-10-08 |
+| [0102](0102-the-seat-check-comes-before-the-port.md) | The sim's seat asymmetry is checked, and fixed if it is a sim bug, before the hand is ported | 2026-10-08 |
+| [0103](0103-the-slice-is-ui-only.md) | The slice is UI only, with no 3D scene | 2026-10-08 |
+| [0104](0104-sixteen-spring-notches-eight-labels.md) | The slice's wheel has 16 spring notches, one per aim position, with the 8 directions labeled | 2026-10-08 |
+| [0105](0105-the-slice-s-screen-layout.md) | The slice's screen puts the bars at the top, the cards in the middle and the wheel at the bottom | 2026-10-08 |
+| [0106](0106-hit-then-heal-then-reveal.md) | After contact the hit lands, then the heal, then the post-pass reveal | 2026-10-08 |
+| [0107](0107-the-bot-acts-in-real-time.md) | The bot bets after a short think and aims at its scripted times | 2026-10-08 |
+
+Next free id: **0108**.
