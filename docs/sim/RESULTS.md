@@ -1,15 +1,15 @@
 # Sim results: one hand
 
-Oct 7, 2026. GAME_SPEC through decision 0076. Since the last run:
+Oct 8, 2026. GAME_SPEC through decision 0083. Since the last run (Oct 7, through 0076):
 
-- **Posture counts in half hearts (0075).**
-  - 1 Posture is a half heart, and every rider has 32 (16 hearts).
-  - Every value measured in Posture is ÷2.5: Weak / Normal / Crit 2 / 4 / 12, the hand bonus 8 per
-    step, the clean block restore 1. The same goes for the sim values: armor, piercing, the ♥
-    buffer, the straight meter, and trick hits and wards.
-  - A hit's damage rounds to the nearest half heart as it lands, and the ♥ heal rounds up.
-  - A showdown level on half hearts goes to the kickers.
-- Spur and momentum are deferred to v2 (0076); nothing in the sim changes for it.
+- **The prefold cost and the yard (0078–0083).** Prefold money rides as carry into the rider's next
+  pot (0078), the yard keeps 75% of dealt hands (0079), a prefold costs units and a short delay
+  (0080), Yield is offered only facing a raise (0081), v1 has one stake (0082), and the matchmaker
+  pairs on wait time alone (0083). The sim gains a betting rider (*Betting*) and a yard report (*The
+  yard*).
+- **No default moved.** Today's scripted betting stays the default, so the hand plays exactly as on
+  Oct 7. Every section from *The mechanics' starting values* through *The numeric gap* stands as run
+  then, at half hearts (0075).
 
 Runs use seed 20260930 and 100k hands per run; a sweep row is 200k hands (a mirror run plus a
 skilled-vs-novice run on seed 20260931). The sim is `tools/sim.luau` over `sim/`, and every value it
@@ -24,7 +24,8 @@ Riders are scripted with the four §11 parameters:
 - **stance honesty:** leaning toward your loaded stats, or a random aim;
 - **aggression:** raise and unleash timing.
 
-The riders never Yield, so every hand is ridden out (pillar 2).
+Under the default script the riders never Yield, so every hand is ridden out (pillar 2). *Betting*
+below adds a betting rider that raises and Yields on its odds.
 
 | Profile | read | hold | honesty |
 | --- | --- | --- | --- |
@@ -238,11 +239,200 @@ depends on card points and the lean only, so half hearts leave it unchanged.
 | 1 | 1.43 / 1.54 / 1.65 / 1.71 | 1.09 / 1.17 / 1.23 | 22% / 11% / 6% |
 | 2 | 1.64 / 1.81 / 1.97 / 2.07 | 1.12 / 1.22 / 1.31 | 22% / 11% / 6% |
 
+## Betting
+
+### The betting rider (`switches.betting = "bands"`)
+
+Today's script (the default) raises on an owned trick, or on trips with a Posture lead, and never
+Yields. So 96.4% of lost hands cost only the Ante, and its pots are artifacts.
+
+The betting rider bets on its odds of winning. It knows the game's odds from experience: a
+calibration run of 50k average-vs-average hands under the script (its own seed, `sim.oddsSeed`)
+records how often a rider in each spot went on to win the hand ridden out. A spot is:
+
+- **Bets 1–2** (hole cards only): the starting-hand class, one of 169.
+- **Bets 3–4** (the flop or the turn known): the rider's best category so far, the board's own
+  pairs, and whether the rider is drawing (four to a flush or a straight, with a hole card).
+- **The Posture lead**, in seven bands, which shifts the odds on every hand alike.
+
+At each bet the rider raises (or re-raises) when its odds are at least `raiseAt`. Facing a raise,
+it Yields below `yieldAt`; with no raise to face it never Yields (0081). Both are per bet and per
+rider profile; every profile starts at raise .60, Yield .25. The odds never read the opponent: not
+their bets, and not who kept their hand in the yard.
+
+### Bands
+
+From `--report bets`, 100k hands per run. Mirror = average vs average; flip = the skilled rider
+wins with the worse category against a novice (100k hands, seed 20260931), and the last column is
+the skilled rider's units a hand there. The same bands for every bet unless noted.
+
+| Betting | Yield: all (Bet 1 / 2 / 3 / 4) | Hands raised | Loser loses 1 / 2–3 / 4–7 / 8–13 | Mean loss | gap1 | flip | Skilled units/hand |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| **script (default)** | 0% | 3.6% | 96.4 / 3.2 / 0.4 / 0.0% | 1.08 | 77.3 | 64.7 | +0.71 |
+| raise .55, never Yield | 0% | 95.7% | 4.3 / 14.7 / 75.2 / 5.8% | 5.20 | 77.6 | 65.0 | +3.27 |
+| raise .60, never Yield | 0% | 89.6% | 10.3 / 20.7 / 66.8 / 2.2% | 4.48 | 77.6 | 65.0 | +2.91 |
+| raise .60, Yield .20 | 38.8% (0.0 / 0.5 / 10.1 / 28.2) | 90.1% | 17.3 / 35.1 / 45.7 / 2.0% | 3.57 | 75.3 | 67.5 | +1.96 |
+| **raise .60, Yield .25 (profile bands)** | 55.2% (0.0 / 5.0 / 31.8 / 18.3) | 89.6% | 34.0 / 37.5 / 26.7 / 1.9% | 2.81 | 73.0 | 68.9 | +1.45 |
+| raise .65, Yield .25 | 48.3% (0.0 / 4.4 / 22.9 / 21.0) | 80.6% | 44.0 / 35.6 / 19.7 / 0.7% | 2.38 | 74.4 | 67.1 | +1.24 |
+| raise .55, Yield .30 | 64.9% (0.0 / 20.7 / 27.4 / 16.8) | 95.7% | 35.7 / 34.4 / 26.3 / 3.6% | 2.97 | 69.9 | 68.9 | +1.56 |
+| raise .60, Yield .35 | 74.5% (0.0 / 31.9 / 26.4 / 16.2) | 89.5% | 68.3 / 19.5 / 11.1 / 1.1% | 1.90 | 67.4 | 69.2 | +1.02 |
+| raise .60, Yield .40 | 82.1% (0.0 / 35.7 / 33.1 / 13.2) | 89.7% | 78.5 / 15.0 / 5.7 / 0.8% | 1.56 | 64.3 | 72.6 | +0.86 |
+| raise .65, Yield .40 | 73.2% (0.0 / 30.6 / 24.6 / 18.0) | 80.5% | 83.5 / 11.6 / 4.5 / 0.4% | 1.42 | 68.2 | 69.3 | +0.78 |
+| raise .70, Yield .45 | 63.2% (0.5 / 17.9 / 27.7 / 17.1) | 67.4% | 92.7 / 5.8 / 1.4 / 0.1% | 1.16 | 71.4 | 68.4 | +0.70 |
+| Bets 1–2 calm: raise —/—/.60/.60, Yield —/—/.35/.35 | 67.4% (0.0 / 0.0 / 46.9 / 20.5) | 85.7% | 70.6 / 17.9 / 11.0 / 0.5% | 1.88 | 72.0 | 69.3 | +0.98 |
+
+- **The Yield band sets the pots.** A rider that never Yields rides every raise to the end: two
+  lost hands in three cost 4–7 units, and the mean loss is about 4.5. A Yield near pot odds (.25;
+  a call usually needs 17–33%) brings it to 2.8, and a timid one (.40) to 1.6.
+- **A rider that Yields on its odds Yields away most hands.** At .25, 55% of hands end in a Yield;
+  at .35, three in four. Almost none come on Bet 1: before the flop the odds run from about 41%
+  (32o) to 74% (AA) (scratch count, 1M hands), so no hand is hopeless. They come once the joust has spoken: after Pass 1 (Bet 2), and
+  above all after the flop (Bet 3), when one rider is behind on Posture and the other raises.
+- **Yields cost the cards' order and add to the flip.** A hand that ends in a Yield never reaches
+  the showdown bonus, so the better category wins less often at gap 1 (77.3% → 73.0% at .25) and the
+  skill flip rises (64.7% → 68.9%). Skill pays more in units: the skilled rider takes 1.45 units a
+  hand from a novice, against 0.71 under the script.
+
+## The yard
+
+### The model (`--report yard`)
+
+A rider in the yard is dealt a starting-hand class; they keep it and ride, or pay the prefold price
+c and are dealt again. Every rider keeps by class alone, the same way, so the riders they meet are
+the deal restricted to the kept classes (the matchmaker never sees cards, 0083). The report plays
+2M average-vs-average hands under a betting reading, tallies units and wins by class pair, and
+finds the equilibrium:
+
+- each class's EV against the kept field;
+- a fold's value, which pays c on every redeal until a hand is kept;
+- the kept set: the top classes by keep value, the last one partly kept, re-measured against the
+  field it makes until it settles;
+- the price at which the marginal class is indifferent. At share k, the yard keeps the largest k
+  whose price is at most c.
+
+Where the price goes (`switches.prefold`; the formulas are in `sim/Yard.luau`):
+
+- **sink:** the house takes it. A fold costs c/k in the long run (the redeals pay again).
+- **purse** (pooled, at its average): every match's winner takes 2c(1 − k)/k. A fold costs c.
+- **carry** (0078): a rider's payments ride into their own next pot. A fold costs about c/2,
+  because a rider wins their own carry back when they win, which is half the time on average. Only
+  the opponent's carry, c(1 − k)/k on average, is dead money a keeper can win. The price is for a
+  rider carrying nothing; one carrying one fold's price values the marginal hand about 0.02 units
+  lower.
+
+### The price for 75% (0079)
+
+2M hands per betting reading, seed 20260930.
+
+| Betting | Mean loss, everyone keeps | Sink | Pooled purse | **Carry** |
+| --- | --- | --- | --- | --- |
+| script (default) | 1.08 | 0.09 | 0.09 | 0.18 |
+| raise .60, Yield .35 | 1.91 | 0.15 | 0.15 | 0.30 |
+| **raise .60, Yield .25 (profile bands)** | 2.81 | 0.19 | 0.20 | **0.40** |
+| raise .60, never Yield | 4.48 | 0.35 | 0.36 | 0.73 |
+
+- **Free folding unravels the yard.** At a price of 0, every reading keeps under 5% of hands: each
+  fold tightens the field, and the next-worst hand falls below even against it. This is the
+  adverse selection 0079 is about, measured.
+- **The price scales with what a weak hand loses by playing**, so it scales with the pots. The
+  marginal hands at 75% (T6o, T5o, 96o, 64o and the like) lose about 0.25 units a match against the
+  kept field at the profile bands, and 0.12 under the script.
+- **Sink and pooled purse need the same price; carry needs twice it**, as the model says.
+- **Noise:** a second 2M-hand run (seed 20261001) gives the same carry prices (0.40 and 0.18) and
+  sink and purse within 0.01. Per-class EVs carry about ±0.03 units, so which hands sit exactly at
+  the margin, and the single holes in the chart below, change with the seed.
+
+The starting value is **0.40 units** (`sim.prefoldPrice`): carry at 75% under the profile bands.
+
+### Price and share under carry
+
+| Betting | Price for 100 / 90 / 80 / 75 / 70 / 60 / 50% kept | Kept at price 0 / 0.1 / 0.2 / 0.3 / 0.5 / 0.75 |
+| --- | --- | --- |
+| script (default) | 0.41 / 0.27 / 0.20 / 0.18 / 0.16 / 0.13 / 0.11 | <5 / 41.5 / 79.0 / 93.5 / 100 / 100% |
+| raise .60, Yield .35 | 0.55 / 0.38 / 0.31 / 0.30 / 0.27 / 0.23 / 0.22 | <5 / 8.0 / 43.0 / 74.5 / 99.0 / 100% |
+| raise .60, Yield .25 | 0.71 / 0.51 / 0.43 / 0.40 / 0.39 / 0.34 / 0.30 | <5 / 7.0 / 27.5 / 50.5 / 88.5 / 100% |
+| raise .60, never Yield | 1.60 / 1.04 / 0.78 / 0.73 / 0.63 / 0.55 / 0.45 | <5 / <5 / 14.0 / 31.5 / 56.5 / 77.5% |
+
+The curve is steep near the price: under the profile bands, 0.30 keeps half the hands and 0.50
+keeps 88.5%. A price set for one betting style holds a different share for another: at 0.40,
+today's script keeps over 95% of hands, and a rider who never Yields keeps under half.
+
+### The yard at 75%, carry, profile bands
+
+The kept range (`#` kept, `+` partly kept, `.` folded; suited above the diagonal, offsuit below):
+
+```
+     A K Q J T 9 8 7 6 5 4 3 2
+  A  # # # # # # # # # # # # #
+  K  # # # # # # # # # # # # #
+  Q  # # # # # # # # # # # # #
+  J  # # # # # # # # # # # # #
+  T  # # # # # # # # # # # # #
+  9  # # # # # # # # # # # # #
+  8  # # # # # # # # # # # # .
+  7  # # # # # # # # # # # # #
+  6  # # # # # + # # # # # # .
+  5  # # # # # . # # . # # # .
+  4  # # # . . . . . . . # # .
+  3  # # . . # # . . . . . # .
+  2  # # . . # . . . . . . . #
+```
+
+Every pair, every ace, every king and nearly every suited hand is kept. What folds:
+
+- most offsuit hands whose low card is a 5 or lower and whose high card is a 9 or lower (65o, 54o,
+  43o, 32o and the like);
+- some of the weakest offsuit queens, jacks, tens and nines (Q3o, Q2o, J4o, J3o, J2o, T4o, 95o,
+  92o);
+- five weak suited hands: 82s, 62s, 52s, 42s and 32s.
+
+Single keeps among them (T3o, T2o, 93o, 85o and 75o kept, 96o partly) are within the noise.
+
+| | Everyone keeps | 75% kept |
+| --- | --- | --- |
+| Kept deals: pairs / suited / offsuit | 5.9 / 23.5 / 70.6% | 7.8 / 29.4 / 62.8% |
+| Kept deals holding an ace | 14.9% | 19.9% |
+| Classes kept, at least in part | 169 | 139 |
+| Both river hands modest (high card or a pair) | 43.1% | 42.3% |
+| Matches between numeric hands, no trick fired | 81.7% | 81.1% |
+| The worse river category wins | 14.6% | 14.3% |
+| ...holding a modest hand | 12.7% | 12.4% |
+| The class with the lower EV wins | 44.0% | 44.7% |
+| Loser loses 1 / 2–3 / 4–7 / 8–13 | 33.9 / 37.3 / 26.8 / 1.8% | 29.4 / 39.3 / 28.9 / 2.2% |
+| Mean loss | 2.81 | 2.97 |
+| Carry in an average pot | — | 0.27 |
+
+- **Diversity holds at 75%.** The kept field gains pairs, suited hands and aces, but the matches
+  look the same: modest river hands meet in 42% of them, four in five are between numeric hands,
+  and the starting hand with the lower EV still wins 45%. The board makes most river hands, so
+  folding a quarter of the deck barely moves what reaches the river.
+- **Pots grow a little.** The kept field is stronger, so more hands are raised and called.
+
+### What the sim can't say
+
+- Whether folding at 0.40 units feels fair, or how long a delay (0080) players will sit through.
+  The sim has no model of time.
+- Whether carry reads as gambling under Roblox's policy (§11).
+- How real players bet. The price follows the betting style (the curve above), and the betting
+  rider is a model: it bets on its own odds and never reads the opponent.
+- Players who don't fold by EV. The equilibrium assumes riders learn which hands lose; a player who
+  keeps everything pays nothing and meets a slightly stronger field.
+
+### For ghost betting (§11, next in the chain)
+
+Ghosts (§9) need a prefold habit as well as betting habits. A ghost that keeps every hand it is
+dealt would play the whole deck against a field that keeps 75%, and lose at the rate the folded
+hands lose. One that keeps only strong hands would tighten the field. Either way the ghosts would
+reshape the yard. Not built; noted for issue 6.
+
 ## Questions for Trey
 
 Nothing here is applied.
 
 1. **Board weight ¼ vs ½:** still a small effect.
+
+Answered: Yields under the betting rider led to 0087 (the Posture bar is mostly information). No
+rule changes; the reading model is the step that prices the information half.
 
 ## Limits of this model
 
@@ -252,6 +442,7 @@ Nothing here is applied.
   separate scratch count with a perfect observer.
 - **Extra time past the lock is modelled as "moves last in a double read".** A real rider with
   extra time would also react to single reads.
-- **Betting never Yields.** Units won therefore track the win rate.
+- **The default betting never Yields,** so under it units won track the win rate. The betting rider
+  (*Betting*) Yields and raises on its odds of winning; it doesn't read the opponent's bets.
 - **Starting values aren't tuned.** Every "set by the sim" value is a starting value. Only the
   sweeps above were run.

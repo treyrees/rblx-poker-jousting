@@ -17,10 +17,23 @@ local Dial = require("./Dial")
 local Timeline = require("./Timeline")
 local Tricks = require("./Tricks")
 local Contact = require("./Contact")
+local Odds = require("./Odds")
 
 local Hand = {}
 
-type Profile = { read: number, hold: number, honesty: number, aggression: number, design: number, yieldBelow: number }
+type Profile = {
+	read: number,
+	hold: number,
+	honesty: number,
+	aggression: number,
+	design: number,
+	yieldBelow: number,
+	raiseAt: { number },
+	yieldAt: { number },
+}
+
+-- Hand.play options: `spots` records each rider's betting spot at every bet reached (Odds).
+export type Options = { spots: boolean? }
 
 type Rider = {
 	id: number,
@@ -67,6 +80,8 @@ export type Record = {
 	heldAbove: { boolean }, -- held a trick past a decision while above the opponent
 	drawnOut: { boolean },
 	units: { number },
+	contributed: { number }, -- what each rider put in: Ante plus calls and raises (1–13, §2)
+	hole: { { number } }, -- each rider's hole cards (for per-class tallies: --report yard)
 	beforeFinal: { number }?, -- Posture just before Pass 4's contact, if the hand got there
 	afterFinal: { number }?, -- Posture after Pass 4's exchange and its heal (§4 step 7), before the showdown effect
 	-- (bonus, mult, the hand's blows, the charge), when neither rider fell to the exchange itself
@@ -75,6 +90,7 @@ export type Record = {
 	lanced: { boolean }, -- taken to 0 or below on Pass 4's contact (0053)
 	reads: number, -- reads taken
 	switches: number, -- reads that moved the aim (a late switch rather than staying on a held aim)
+	spots: { { number } }?, -- opts.spots: {bet, rider, hand key, lead bucket} at every bet reached
 }
 
 -- ── stats ──────────────────────────────────────────────────────────────────────────────────────
@@ -159,8 +175,13 @@ end
 
 -- ── the hand ───────────────────────────────────────────────────────────────────────────────────
 
-function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button: number): Record
+function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button: number, opts: Options?): Record
 	local spec, sim = cfg.spec, cfg.sim
+	local bands = cfg.switches.betting == "bands"
+	if bands and cfg._odds == nil then
+		cfg._odds = Hand.calibrate(cfg)
+	end
+	local wantSpots = opts ~= nil and opts.spots == true
 	local deck = Cards.shuffled(rng)
 	local board = { deck[5], deck[6], deck[7], deck[8], deck[9] }
 	local riders: { Rider } = {}
@@ -201,12 +222,15 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 		heldAbove = { false, false },
 		drawnOut = { false, false },
 		units = { 0, 0 },
+		contributed = { spec.ante, spec.ante },
+		hole = { riders[1].hole, riders[2].hole },
 		afterFinal = nil,
 		chargeStanding = nil,
 		posture = { 0, 0 },
 		lanced = { false, false },
 		reads = 0,
 		switches = 0,
+		spots = if wantSpots then {} else nil,
 	}
 
 	-- Community cards known once each pass's reveal has landed (§2 *Sequence*): Pass 1 rides on
@@ -248,19 +272,46 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 		return s + (rng() - 0.5) * 0.3
 	end
 
-	-- One fixed-limit round (§2 *Betting rules*): the button acts first, one re-raise cap.
-	-- Returns the id of a rider who Yields, if any.
+	-- One fixed-limit round (§2 *Betting rules*): the button acts first, one re-raise cap. A rider
+	-- Yields only facing a raise (0081). Returns the id of a rider who Yields, if any.
+	--   script (default): raise on strength() above 1 − 0.9·aggression; Yield below yieldBelow.
+	--   bands: the betting rider. Raise (or re-raise) when the rider's odds (Odds) are at least
+	--          raiseAt[bet]; facing a raise, Yield when they are below yieldAt[bet].
 	local function bet(round: number, known: { number }): number?
 		local size = spec.raise[round]
 		local raises, acted, i = 0, 0, button
+		local est = { 0, 0 }
+		if bands or wantSpots then
+			for _, r in riders do
+				local o = riders[3 - r.id]
+				local key = Odds.key(round, r.hole, known)
+				local bucket = Odds.bucket(r.posture - o.posture)
+				if bands then
+					est[r.id] = Odds.estimate(cfg._odds, round, key, bucket)
+				end
+				if rec.spots then
+					table.insert(rec.spots, { round, r.id, key, bucket })
+				end
+			end
+		end
 		while true do
 			local r, o = riders[i], riders[3 - i]
 			local facing = r.contributed < o.contributed
-			local s = strength(r, o, known)
-			if facing and s < r.p.yieldBelow then
-				return r.id
+			local raise: boolean
+			if bands then
+				local s = est[r.id]
+				if facing and s < r.p.yieldAt[round] then
+					return r.id
+				end
+				raise = s >= r.p.raiseAt[round]
+			else
+				local s = strength(r, o, known)
+				if facing and s < r.p.yieldBelow then
+					return r.id
+				end
+				raise = s > 1 - r.p.aggression * 0.9
 			end
-			if raises < 2 and s > 1 - r.p.aggression * 0.9 then
+			if raises < 2 and raise then
 				r.contributed = o.contributed + size
 				raises += 1
 				acted = 1
@@ -707,6 +758,7 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 	for _, t in tricks do
 		t.won = rec.winner == t.rider
 	end
+	rec.contributed = { riders[1].contributed, riders[2].contributed }
 	-- Units: the winner takes the loser's contribution (Ante included); a split returns both.
 	if rec.winner ~= 0 then
 		local loser = riders[3 - rec.winner]
@@ -714,6 +766,33 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 		rec.units[3 - rec.winner] = -loser.contributed
 	end
 	return rec
+end
+
+-- The betting rider's odds (Odds): a calibration run of sim.oddsHands average-vs-average hands under
+-- the default script, which never Yields, so every spot is scored on the hand ridden to its end.
+-- Its own RNG (sim.oddsSeed) leaves the main run's stream alone. Hand.play builds it on first use
+-- and keeps it on the config table as cfg._odds.
+function Hand.calibrate(cfg: any): Odds.Table
+	local c = table.clone(cfg)
+	c.switches = table.clone(cfg.switches)
+	c.switches.betting = "script"
+	c._odds = nil
+	local st = cfg.sim.oddsSeed % 2147483647
+	local function rng(): number
+		st = (st * 16807) % 2147483647
+		return (st - 1) / 2147483646
+	end
+	local spots = {}
+	local avg = cfg.riders.average
+	for i = 1, cfg.sim.oddsHands do
+		local r = Hand.play(c, rng, avg, avg, (i % 2) + 1, { spots = true })
+		for _, s in r.spots :: { { number } } do
+			local who = s[2]
+			local won = if r.winner == who then 1 elseif r.winner == 0 then 0.5 else 0
+			table.insert(spots, { s[1], s[3], s[4], won })
+		end
+	end
+	return Odds.build(spots)
 end
 
 -- Exposed for tests.

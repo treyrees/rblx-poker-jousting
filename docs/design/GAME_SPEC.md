@@ -39,7 +39,9 @@ Also important: **learnability** (for example, betting is beginner-ignorable, §
 | Area | Section | State |
 | --- | --- | --- |
 | Hand structure: deck, deal, streets, win conditions | §2 | Settled |
-| The yard: deal, prefold, matchmaking | §2 | Settled in shape |
+| The yard: deal, prefold, matchmaking on wait time | §2 | Settled in shape |
+| Prefold cost: units that ride as carry, plus a short delay; priced to keep 75% of hands | §2 | Settled in shape |
+| Stakes: one stake in v1, tiers deferred | §2 | Settled for v1 |
 | Preflop redraw for a price | §11 | Open |
 | Betting | §2 | Settled |
 | Wager limits: the fixed limit is the limit, no pot cap | §2 | Settled for v1 |
@@ -76,9 +78,17 @@ then see the card, and the river lands on the final charge.
 Riders wait in the yard, circling. Each rider is dealt hole cards in the yard, before being
 matched.
 
-- A rider who doesn't want their hand prefolds it, for a cost, and is dealt a new one.
+- A rider who doesn't want their hand prefolds it and is dealt a new one after a short delay
+  (0080).
+- A prefold costs units. They ride with the rider as their **carry**: the carry goes into the pot
+  of the rider's next match, and that match's winner takes both riders' carry (0078). A rider who
+  leaves the yard keeps their carry for their next match, whenever that is (0085). In a split, each
+  rider's carry rides on to their next match (0086).
+- The prefold price is set so that riders keep about 75% of the hands they are dealt (§11, 0079).
 - A rider who keeps their hand steps forward and meets their match. Matchmaking happens behind
-  the scenes, among riders who kept their hands. Then the Ante and Bet 1.
+  the scenes, among riders who kept their hands, and pairs them by how long they have waited, on
+  nothing else; it never sees hole cards (0083). Then the Ante and Bet 1.
+- One stake in v1: every match is played for the same unit (0082).
 - Prefolding is the preflop fold. Hand selection happens in the yard, so a match stays one hand.
 
 ### Deck and deal
@@ -128,10 +138,12 @@ the river; some end on the turn, and fewer still on the flop.
   joust is simultaneous.
 - The rider on the button acts first in every betting round. In a first match the button is a
   coin flip, shown to both riders; in a rematch it passes each hand (0084).
-- Actions: Stay (check when there is no raise to face, call when there is), Raise, Yield.
+- Actions: Stay (check when there is no raise to face, call when there is), Raise, Yield. Yield is
+  offered only when there is a raise to face (0081).
 - One re-raise cap per betting round.
 - The fixed limit is the wager limit in v1; there is no pot cap on top of it. A hand costs between
   1 unit (the Ante) and 13 (every raise and re-raise called), and every unit past the Ante is a call.
+  Both riders' carry (*The yard*) sits in the pot on top; it was paid in the yard.
 - Each action has a 5 s timer. Timeout defaults to Stay. This keeps the game
   beginner-ignorable: a player who never touches betting still plays every hand.
 - Players can only Yield between passes. Every revealed card is ridden into.
@@ -597,6 +609,10 @@ are placeholders; their numbers come later.
 Every visible cue should narrow the opponent's range without identifying the hand.
 Design rule: each tell must have at least two plausible causes.
 
+The Posture bar's main value is information. Its health lead is meaningful, never pointless, but
+not decisive: the cards still decide hands after the flop, and a rider behind can win back through
+better aim (0087).
+
 One exception, by design: a hit big enough that only trips can deal it says "trips". It never
 names the exact trips. It's the trips rider's moment: an early, overwhelming hit on the Posture
 bar. Trey: "you know i have trips, but i just hit you with a huge strike early on, thats the
@@ -774,12 +790,12 @@ whether a trick above the opponent wins overwhelmingly.
   trick win rates by whether the trick was played to its design.
 - Playtest: is an 8 s pass long enough to read the reveal, decide, and react to a hold? The sim
   can't answer this; the first playable build does.
-- Prefold cost: what does prefolding in the yard cost (units, time, or both)?
 - Preflop redraw for a price: a second hand-selection tool alongside the prefold. What can be
   redrawn, and what does it cost?
 - Roblox policy on simulated gambling and maturity labels, and the currency side of stakes:
   what a unit is worth, and session or daily limits. Stake only earned currency,
-  never purchasable currency, until checked. (The in-game wager limit is §2's fixed limit, 0077.)
+  never purchasable currency, until checked. Check carry too: prefold money that a match's winner
+  takes (§2, 0078). (The in-game wager limit is §2's fixed limit, 0077; v1 has one stake, 0082.)
 - Ghost betting: which public and private inputs a ghost's betting habits condition on.
 
 ### Tuning parameters (sim config)
@@ -812,6 +828,9 @@ whether a trick above the opponent wins overwhelmingly.
 | Full house: Guard coverage | 7 of 8 directions |
 | Held passive sizes | +3 to +4 card points (§4); the sim checks them. The straight's grows with hold; its curve is set by the sim |
 | Raise size (Passes 1–2 / 3–4) | 1 / 2 units |
+| Kept share (the yard) | 75% of dealt hands (0079) |
+| Prefold price | Units, ridden as carry: set by the sim to hold the kept share |
+| Prefold delay | Set by a playtest |
 | Betting action timer | 5 s |
 
 ### Sim plan

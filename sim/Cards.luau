@@ -193,6 +193,43 @@ function Cards.evaluate(cards: { number }): Eval
 	return { value = encode(0, kickers({}, 5)), category = 0 }
 end
 
+-- ── starting-hand classes ──────────────────────────────────────────────────────────────────────
+
+-- The 169 starting-hand classes as a 13×13 grid (the yard's unit of choice, §2 *The yard*): pairs on
+-- the diagonal, suited hands above it (row = high rank), offsuit below it (row = low rank).
+-- Returns 1..169: (row − 2) · 13 + (col − 2) + 1.
+function Cards.class(hole: { number }): number
+	local r1, r2 = hole[1] // 4 + 2, hole[2] // 4 + 2
+	if r1 < r2 then
+		r1, r2 = r2, r1
+	end
+	local row, col = r1, r2
+	if r1 ~= r2 and hole[1] % 4 ~= hole[2] % 4 then
+		row, col = r2, r1
+	end
+	return (row - 2) * 13 + (col - 2) + 1
+end
+
+-- "AKs", "AKo", "77". The inverse of Cards.class, for reports.
+function Cards.className(idx: number): string
+	local row, col = (idx - 1) // 13 + 2, (idx - 1) % 13 + 2
+	local hi, lo = math.max(row, col), math.min(row, col)
+	local s = string.sub(RANK_CHARS, hi - 1, hi - 1) .. string.sub(RANK_CHARS, lo - 1, lo - 1)
+	if row == col then
+		return s
+	end
+	return s .. (if row > col then "s" else "o")
+end
+
+-- How many of the 1326 two-card deals fall in a class: 6 for a pair, 4 suited, 12 offsuit.
+function Cards.classCombos(idx: number): number
+	local row, col = (idx - 1) // 13 + 2, (idx - 1) % 13 + 2
+	if row == col then
+		return 6
+	end
+	return if row > col then 4 else 12
+end
+
 -- ── card points ────────────────────────────────────────────────────────────────────────────────
 
 -- The numeric sub-hand's made cards (§4 *Poker hands multiply*; §6 *Held behavior*: a held trick
