@@ -101,5 +101,6 @@ Add a row below in the same commit. Check the latest `main` for the next free id
 | [0075](0075-posture-counts-in-half-hearts.md) | Posture counts in half hearts; a trips-sized hit may say "trips" | 2026-10-07 |
 | [0076](0076-spur-and-momentum-deferred-to-v2.md) | Spur and momentum are deferred to v2 | 2026-10-07 |
 | [0077](0077-the-fixed-limit-is-the-wager-limit.md) | The fixed limit is the wager limit; no pot cap in v1 | 2026-10-08 |
+| [0084](0084-first-match-button-is-random.md) | In a first match the button is random | 2026-10-08 |
 
-Next free id: **0078**.
+Next free id: **0085** (0078–0083 are taken by the prefold decisions, in their own PR).

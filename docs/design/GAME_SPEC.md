@@ -126,7 +126,8 @@ the river; some end on the turn, and fewer still on the flop.
 - Fixed limit. Raise size is 1 unit before Passes 1 and 2, 2 units before Passes 3 and 4.
 - Betting alternates, as in hold'em, until a bet is agreed. Then the pass begins and the
   joust is simultaneous.
-- The rider on the button acts first in every betting round. The button passes each hand.
+- The rider on the button acts first in every betting round. In a first match the button is a
+  coin flip, shown to both riders; in a rematch it passes each hand (0084).
 - Actions: Stay (check when there is no raise to face, call when there is), Raise, Yield.
 - One re-raise cap per betting round.
 - The fixed limit is the wager limit in v1; there is no pot cap on top of it. A hand costs between
