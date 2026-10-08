@@ -956,7 +956,7 @@ elseif report == "info" then
 			pct(t["finish.yield"], n), pct(t["yield.bet2"], n), pct(t["yield.bet3"], n), pct(t["yield.bet4"], n)))
 		if (info.beliefs or 0) > 0 then
 			local bits = {}
-			for _, cue in { "color", "stance", "timing", "hit", "heal", "unleash" } do
+			for _, cue in { "color", "stance", "timing", "hit", "heal", "unleash", "bets" } do
 				local c = info["n." .. cue] or 0
 				table.insert(bits, string.format("%s %.2f", cue, if c > 0 then info["bits." .. cue] / c else 0))
 			end

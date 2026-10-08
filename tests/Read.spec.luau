@@ -170,6 +170,19 @@ kit.describe("Read", function()
 			kit.expectEqual(next(info), nil)
 		end
 	end)
+	kit.it("a Raise on Bet 1 from the betting rider lifts strong starting hands over weak ones (0094)", function()
+		local cfg = Config.defaults()
+		cfg.switches.betting = "bands"
+		cfg.sim.oddsHands = 3000
+		cfg._odds = Hand.calibrate(cfg)
+		local ctx = Read.newHand(cfg, L("2d 3h 4s 9d Th"))
+		local b = Read.newBelief(L("5c 6c"), 1)
+		Read.bet(b, ctx, { round = 1, n = 0, bands = true, facing = false, canRaise = true, raised = true, lead = 0, spent = false }, cfg.riders.average)
+		local aces = b.w[Read.pairIndex(Cards.parse("Ac"), Cards.parse("Ad"))]
+		local trash = b.w[Read.pairIndex(Cards.parse("7c"), Cards.parse("2h"))]
+		kit.expectTrue(aces > 5 * trash)
+		kit.expectTrue(trash > 0) -- the floor: a bettor may break the assumed script
+	end)
 	kit.it("a systematic sample draws only pairs the belief holds, and the same ones every time", function()
 		local b = Read.newBelief(L("2c 3c"), 1)
 		Read.color(b, 0)

@@ -270,6 +270,8 @@ about one ping earlier.
 | Posture | Your hand's exact suit mix |
 | Board cards and arena effects | |
 | Lance and shield colors (see Information design) | |
+| Battered (§4, 0095) | |
+| Each rider's carry in the pot (§2, 0095) | |
 
 A hit's size is public: it lands on the Posture bar in half hearts (§4), so after contact it
 shows roughly the attacker's stat on that hit. At that precision one hit almost never names the

@@ -332,14 +332,7 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 				local o = riders[3 - r.id]
 				local key = keys[r.id]
 				local bucket = Odds.bucket(r.posture - o.posture)
-				local belief = beliefs[r.id]
-				if readBets and belief then
-					-- Read skill (0091): the read's odds weighed by s, the rider's own odds by 1 − s.
-					local kw = Read.keyWeights(belief, ctx :: Read.Ctx, round, #known)
-					local s0 = belief.skill
-					est[r.id] = s0 * Odds.estimateBelief(cfg._odds, round, key, kw, bucket)
-						+ (1 - s0) * Odds.estimate(cfg._odds, round, key, bucket)
-				elseif bands then
+				if bands then
 					est[r.id] = Odds.estimate(cfg._odds, round, key, bucket)
 				end
 				if rec.spots then
@@ -352,6 +345,15 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 			local facing = r.contributed < o.contributed
 			local raise: boolean
 			if bands then
+				-- A reader weighs what this round's bets have told it so far.
+				local belief = beliefs[r.id]
+				if readBets and belief then
+					local key = Odds.key(round, r.hole, known)
+					local bucket = Odds.bucket(r.posture - o.posture)
+					local kw = Read.keyWeights(belief, ctx :: Read.Ctx, round, #known)
+					est[r.id] = belief.skill * Odds.estimateBelief(cfg._odds, round, key, kw, bucket)
+						+ (1 - belief.skill) * Odds.estimate(cfg._odds, round, key, bucket)
+				end
 				local s = est[r.id]
 				if facing and s < r.p.yieldAt[round] then
 					return r.id
@@ -363,6 +365,20 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 					return r.id
 				end
 				raise = s > 1 - r.p.aggression * 0.9
+			end
+			-- The bets cue (0094): the opponent reads this Stay or Raise.
+			local ob = beliefs[o.id]
+			if ob and reading.cues.bets == 1 then
+				Read.bet(ob, ctx :: Read.Ctx, {
+					round = round,
+					n = #known,
+					bands = bands,
+					facing = facing,
+					canRaise = raises < 2,
+					raised = raises < 2 and raise,
+					lead = r.posture - o.posture,
+					spent = r.spent,
+				}, assumed)
 			end
 			if raises < 2 and raise then
 				r.contributed = o.contributed + size

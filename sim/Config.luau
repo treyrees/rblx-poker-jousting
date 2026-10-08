@@ -96,9 +96,10 @@ function Config.defaults()
 			assume = "average", -- the rider profile a reader assumes the opponent rides as
 			samples = 8, -- aim = belief: opponents sampled from the belief for a read's best response
 			timeFloor = 0.05, -- chance a reader allows that a commit's timing breaks the assumed script
+			betFloor = 0.05, -- chance a reader allows that a bet broke the assumed script (0094)
 			prune = 1e-4, -- a pair below this share of the belief's top weight is dropped (speed)
 			-- Each cue on (1) or off (0), for the per-cue report.
-			cues = { color = 1, stance = 1, timing = 1, hit = 1, heal = 1, unleash = 1 },
+			cues = { color = 1, stance = 1, timing = 1, hit = 1, heal = 1, unleash = 1, bets = 1 },
 		},
 
 		-- ── RIDERS: scripted rider parameters (§11 *Sim plan* step 2), set by the sim ──────────

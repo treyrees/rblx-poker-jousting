@@ -13,6 +13,8 @@
 --            their ♥ buffer (0093: the buffer nets into the hit)
 --   heal     the ♥ heal after contact, as its own beat (0093)
 --   unleash  an announced unleash names the rung, and a flush its suit (§6 *Unleash rules*)
+--   bets     each Stay, Raise and Yield: the assumed rider bets on its hand and the public Posture
+--            lead, so its action narrows the hand (0094)
 --
 -- A cue's likelihood comes from replaying the sim's own rider script (sim/Hand.luau) for every
 -- candidate pair, with the opponent assumed to ride as the profile reading.assume. So a reader at
@@ -34,6 +36,7 @@ local Cards = require("./Cards")
 local Dial = require("./Dial")
 local Contact = require("./Contact")
 local Tricks = require("./Tricks")
+local Odds = require("./Odds")
 
 local Read = {}
 
@@ -198,7 +201,7 @@ Read._evaluate = evaluate
 
 -- Cards.points for hole (a, b) and the first n board cards: unleaned points per suit, made cards
 -- multiplied (hole cards take a made rank's multiplier first).
-local function points(a: number, b: number, board: { number }, n: number, spec: any): (number, number, number, number)
+local function points(a: number, b: number, board: { number }, n: number, spec: any): (number, number, number, number, number)
 	for r = 2, 14 do
 		cnt[r] = 0
 		used[r] = 0
@@ -258,7 +261,8 @@ local function points(a: number, b: number, board: { number }, n: number, spec: 
 			q4 += v
 		end
 	end
-	return q1, q2, q3, q4
+	local sub = if trip > 0 then 3 elseif p2 > 0 then 2 elseif p1 > 0 then 1 else 0
+	return q1, q2, q3, q4, sub
 end
 Read._points = points
 
@@ -279,6 +283,7 @@ export type Street = {
 	q2: { number },
 	q3: { number },
 	q4: { number },
+	sub: { number }, -- the numeric sub-hand's category (Cards.points), which the script's betting uses
 	own: { number }, -- owned rung, 0 if none (§6 *Ownership*)
 	fsuit: { number }, -- flush suit of an owned flush or straight flush
 	tsuit: { number }, -- suit of an owned straight's top card (its held passive, §6)
@@ -366,6 +371,7 @@ function Read.buildStreet(ctx: Ctx, n: number): Street
 		n = n, live = live, done = table.create(NP, false), spec = ctx.cfg.spec, board = board, known = known,
 		boardRung = boardRung, bc = boardCategory(board, n),
 		q1 = table.create(NP, 0), q2 = table.create(NP, 0), q3 = table.create(NP, 0), q4 = table.create(NP, 0),
+		sub = table.create(NP, 0),
 		own = table.create(NP, 0), fsuit = table.create(NP, 0), tsuit = table.create(NP, 0), key = table.create(NP, 0),
 		honest = {},
 	}
@@ -377,7 +383,7 @@ function fill(st: Street, k: number)
 	st.done[k] = true
 	local a, b = PA[k], PB[k]
 	local board, n = st.board, st.n
-	st.q1[k], st.q2[k], st.q3[k], st.q4[k] = points(a, b, board, n, st.spec)
+	st.q1[k], st.q2[k], st.q3[k], st.q4[k], st.sub[k] = points(a, b, board, n, st.spec)
 	if n == 0 then
 		return -- hole cards alone: no trick, and Bets 1–2 key on the class
 	end
@@ -890,6 +896,56 @@ function Read.contact(b: Belief, ctx: Ctx, obs: ContactObs)
 		table.move(healL, 1, NP, 1, L)
 		apply(b, "heal")
 	end
+end
+
+export type BetObs = {
+	round: number,
+	n: number, -- board cards known at the bet
+	bands: boolean, -- switches.betting = "bands"; else the script
+	facing: boolean,
+	canRaise: boolean, -- the round's re-raise cap not yet reached
+	raised: boolean, -- the action: a Raise, else a Stay (a Yield ends the hand)
+	lead: number, -- the bettor's Posture lead, own − opponent (half hearts)
+	spent: boolean, -- the bettor's trick is already used
+}
+
+-- bets (0094): the likelihood of a Stay or a Raise under the assumed rider's betting. Bands: it
+-- raises when its own odds (Odds, its key and the public lead) reach raiseAt, and Yields facing a
+-- raise below yieldAt. Script: strength() plus its uniform noise. reading.betFloor is the chance the
+-- reader allows that the bet broke the assumed script (a reading bettor weighs its own read too).
+function Read.bet(b: Belief, ctx: Ctx, obs: BetObs, q: any)
+	local cfg = ctx.cfg
+	local st = Read.street(ctx, obs.n)
+	local eps = cfg.reading.betFloor
+	local round = obs.round
+	local estOf: { [number]: number } = {}
+	local bucket = Odds.bucket(obs.lead)
+	local thr = 1 - q.aggression * 0.9
+	for _, k in b.live do
+		Read.entry(st, k)
+		local p: number
+		if obs.bands then
+			local key = if obs.n < 3 then PCLASS[k] else st.key[k]
+			local e = estOf[key]
+			if e == nil then
+				e = Odds.estimate(cfg._odds, round, key, bucket)
+				estOf[key] = e
+			end
+			local yields = obs.facing and e < q.yieldAt[round]
+			local raises = not yields and obs.canRaise and e >= q.raiseAt[round]
+			p = if yields then 0 elseif raises == obs.raised then 1 else 0
+		else
+			local s0 = 0.12 * st.sub[k] + 0.4 * obs.lead / cfg.spec.postureStart
+			if st.own[k] > 0 and not obs.spent then
+				s0 += 0.5
+			end
+			local pYield = if obs.facing then math.clamp((q.yieldBelow - (s0 - 0.15)) / 0.3, 0, 1) else 0
+			local pRaise = if obs.canRaise then math.clamp((s0 + 0.15 - thr) / 0.3, 0, 1 - pYield) else 0
+			p = if obs.raised then pRaise else 1 - pYield - pRaise
+		end
+		L[k] = eps + (1 - eps) * p
+	end
+	apply(b, "bets")
 end
 
 -- ── what the belief drives ───────────────────────────────────────────────────────────────────
