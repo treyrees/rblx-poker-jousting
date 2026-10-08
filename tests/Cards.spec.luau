@@ -90,3 +90,30 @@ kit.describe("Cards: card points", function()
 		kit.expectEqual(sub, 3)
 	end)
 end)
+
+kit.describe("Cards: starting-hand classes (the yard, §2)", function()
+	kit.it("the 1326 deals fall into 169 classes: 6 per pair, 4 suited, 12 offsuit", function()
+		local count = {}
+		for a = 0, 51 do
+			for b = a + 1, 51 do
+				local c = Cards.class({ a, b })
+				kit.expectEqual(Cards.class({ b, a }), c)
+				count[c] = (count[c] or 0) + 1
+			end
+		end
+		local classes, total = 0, 0
+		for c, n in count do
+			classes += 1
+			total += n
+			kit.expectEqual(n, Cards.classCombos(c), Cards.className(c))
+		end
+		kit.expectEqual(classes, 169)
+		kit.expectEqual(total, 1326)
+	end)
+	kit.it("names: AA, AKs, AKo, 72o", function()
+		kit.expectEqual(Cards.className(Cards.class(L("Ac Ad"))), "AA")
+		kit.expectEqual(Cards.className(Cards.class(L("Ks Ah"))), "AKo")
+		kit.expectEqual(Cards.className(Cards.class(L("Ah Kh"))), "AKs")
+		kit.expectEqual(Cards.className(Cards.class(L("2c 7d"))), "72o")
+	end)
+end)

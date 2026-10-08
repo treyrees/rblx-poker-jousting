@@ -37,6 +37,7 @@ function Config.defaults()
 			heldPassive = { straight = 3, flush = 4, fullHouse = 4, quads = 4 },
 			raise = { 1, 1, 2, 2 }, -- before Passes 1–4
 			ante = 1,
+			keptShare = 0.75, -- the yard keeps 75% of dealt hands; the prefold price is set for it (0079)
 			-- §6 board-made arena effects (0040: placeholders, not yet in §11)
 			openLists = 1.5,
 			siege = 0.5,
@@ -75,6 +76,14 @@ function Config.defaults()
 			ward = { straight = 0, flush = 2600, fullHouse = 3600, quads = 8800, straightFlush = 13200 },
 			flushExplode = 4, -- flush suit's S × this at home (× half on the diagonals beside it)
 			flushExplodeF2 = 60, -- the explosion when switches.flushHit = "F2"
+			-- The betting rider's odds (switches.betting = "bands", sim/Odds.luau): a calibration run
+			-- of this many average-vs-average hands under the default script, on its own seed.
+			oddsHands = 50000,
+			oddsSeed = 20261008,
+			-- The prefold's unit price (0080: units plus a short delay; the delay is a playtest's). The yard
+			-- report (--report yard) finds the price that holds spec.keptShare: 0.40 is carry's price for
+			-- 75% under the betting rider at its profile bands (docs/sim/RESULTS.md, *The yard*).
+			prefoldPrice = 0.4,
 		},
 
 		-- ── RIDERS: scripted rider parameters (§11 *Sim plan* step 2), set by the sim ──────────
@@ -84,12 +93,15 @@ function Config.defaults()
 		--   aggression  raise tendency, and chance to unleash a trick at the first chance vs hold it
 		--   design      chance to play an unleashed trick to its design (hold the straight, aim the flush home)
 		--   yieldBelow  Yield when facing a raise with betting strength below this (−1: never Yield)
+		--   raiseAt     the betting rider (switches.betting = "bands"), per bet 1–4: raise or re-raise
+		--               when the rider's odds of winning (sim/Odds.luau) are at least this
+		--   yieldAt     ...and, facing a raise, Yield when they are below this (0: never Yield)
 		riders = {
-			average = { read = 0.3, hold = 0.6, honesty = 0.7, aggression = 0.5, design = 0.8, yieldBelow = -1 },
-			skilled = { read = 0.7, hold = 0.9, honesty = 0.9, aggression = 0.5, design = 1.0, yieldBelow = -1 },
-			novice = { read = 0.05, hold = 0.3, honesty = 0.4, aggression = 0.5, design = 0.5, yieldBelow = -1 },
-			holder = { read = 0.0, hold = 1.0, honesty = 1.0, aggression = 0.5, design = 1.0, yieldBelow = -1 },
-			flicker = { read = 1.0, hold = 0.0, honesty = 0.5, aggression = 0.5, design = 0.5, yieldBelow = -1 },
+			average = { read = 0.3, hold = 0.6, honesty = 0.7, aggression = 0.5, design = 0.8, yieldBelow = -1, raiseAt = { 0.6, 0.6, 0.6, 0.6 }, yieldAt = { 0.25, 0.25, 0.25, 0.25 } },
+			skilled = { read = 0.7, hold = 0.9, honesty = 0.9, aggression = 0.5, design = 1.0, yieldBelow = -1, raiseAt = { 0.6, 0.6, 0.6, 0.6 }, yieldAt = { 0.25, 0.25, 0.25, 0.25 } },
+			novice = { read = 0.05, hold = 0.3, honesty = 0.4, aggression = 0.5, design = 0.5, yieldBelow = -1, raiseAt = { 0.6, 0.6, 0.6, 0.6 }, yieldAt = { 0.25, 0.25, 0.25, 0.25 } },
+			holder = { read = 0.0, hold = 1.0, honesty = 1.0, aggression = 0.5, design = 1.0, yieldBelow = -1, raiseAt = { 0.6, 0.6, 0.6, 0.6 }, yieldAt = { 0.25, 0.25, 0.25, 0.25 } },
+			flicker = { read = 1.0, hold = 0.0, honesty = 0.5, aggression = 0.5, design = 0.5, yieldBelow = -1, raiseAt = { 0.6, 0.6, 0.6, 0.6 }, yieldAt = { 0.25, 0.25, 0.25, 0.25 } },
 		},
 
 		-- ── SWITCHES: open questions and gaps, each with 2–3 readings ─────────────────────────
@@ -117,6 +129,15 @@ function Config.defaults()
 			-- break a level result. "exact" keeps fractional Posture, for comparison.
 			posture = "pips", -- pips | exact
 			healRound = "up", -- up | nearest: how the ♥ heal rounds
+			-- How riders bet. "script" is the betting the sim has always used: strength() raises on an
+			-- owned trick or trips with a Posture lead, and riders never Yield (yieldBelow = −1), so pots
+			-- are artifacts (docs/sim/RESULTS.md, *Betting*). "bands" is the betting rider: raise and
+			-- Yield on its odds of winning, by the raiseAt and yieldAt bands of each rider profile.
+			betting = "script", -- script | bands
+			-- Where a prefold's units go (0078): "carry" rides into the rider's next match's pot, and that
+			-- match's winner takes both riders' carry. "purse" (pooled, at its average) and "sink" (the
+			-- house) are for comparison. Used by --report yard.
+			prefold = "carry", -- carry | purse | sink
 		},
 
 		-- ── PROTO: values the showdown prototypes use (SHOWDOWN.md). None is a §11 value. ─────

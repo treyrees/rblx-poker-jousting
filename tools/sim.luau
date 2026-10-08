@@ -6,11 +6,13 @@
 --   lune run tools/sim.luau --report gap             -- numeric hit gap by category (§4)
 --   lune run tools/sim.luau --report showdown        -- how the forced knockdown is decided (0050)
 --   lune run tools/sim.luau --report proto           -- the showdown prototypes (docs/sim/SHOWDOWN.md)
+--   lune run tools/sim.luau --report bets            -- the betting rider's bands: pots and losses
+--   lune run tools/sim.luau --report yard            -- the yard: prefold price, kept share, kept range
 --   lune run tools/sim.luau --set sim.lean=2 --set spec.showdownBonus=10
 --   lune run tools/sim.luau --smoke                  -- 5k hands: checks it runs; rates not citable
 --
--- Options: --hands N, --seed S, --shard i/n (sweeps and proto: run every n-th row, for parallel runs),
--- --only text (sweeps and proto: only rows whose label contains it), --set path=value (repeatable; paths as in sim/Config.luau),
+-- Options: --hands N, --seed S, --shard i/n (sweeps, proto, bets and yard: run every n-th row, for
+-- parallel runs), --only text (the same reports: only rows whose label contains it), --set path=value (repeatable; paths as in sim/Config.luau),
 -- --p1 / --p2 rider profile for the baseline report (default average vs average).
 -- Unknown arguments are an error, so a typo never prints a confident report for the wrong run.
 --
@@ -21,6 +23,7 @@ local process = require("@lune/process")
 local Config = require("../sim/Config")
 local Hand = require("../sim/Hand")
 local Cards = require("../sim/Cards")
+local Yard = require("../sim/Yard")
 
 -- ── args ───────────────────────────────────────────────────────────────────────────────────────
 local hands, seed, report = 100000, 20260930, "baseline"
@@ -120,13 +123,27 @@ local function standing(cfg: any, posture: number, category: number): number
 end
 
 -- Plays `n` hands of p1 vs p2 and tallies every §11 metric. Seats alternate the button.
-local function run(cfg: any, prof1: any, prof2: any, n: number, s: number): Tally
+-- `yard`, if given, also tallies each hand by starting-hand class pair (--report yard).
+local function run(cfg: any, prof1: any, prof2: any, n: number, s: number, yard: Yard.Tally?): Tally
 	local rng = makeRng(s)
 	local t: Tally = {}
 	for i = 1, n do
 		local r = Hand.play(cfg, rng, prof1, prof2, (i % 2) + 1)
 		inc(t, "hands")
 		inc(t, "finish." .. r.finish)
+		-- Betting: what the loser lost, and where a Yield came.
+		local loss = if r.winner ~= 0 then r.contributed[3 - r.winner] else 0
+		if r.winner ~= 0 then
+			inc(t, "loss.n")
+			inc(t, "loss.sum", loss)
+			inc(t, "loss." .. (if loss <= 1 then "1" elseif loss <= 3 then "3" elseif loss <= 7 then "7" else "13"))
+		end
+		if r.finish == "yield" then
+			inc(t, "yield.bet" .. r.pass)
+		end
+		if r.contributed[1] > cfg.spec.ante or r.contributed[2] > cfg.spec.ante then
+			inc(t, "raised")
+		end
 		inc(t, "passes", r.pass)
 		local bf = r.beforeFinal
 		if r.finish == "unhorse" then
@@ -248,6 +265,15 @@ local function run(cfg: any, prof1: any, prof2: any, n: number, s: number): Tall
 				inc(t, "numeric.p1win")
 			end
 			inc(t, "numeric." .. r.finish)
+		end
+		if yard then
+			Yard.add(yard, Cards.class(r.hole[1]), Cards.class(r.hole[2]), {
+				units1 = r.units[1],
+				win1 = if r.winner == 1 then 1 elseif r.winner == 0 then 0.5 else 0,
+				loss = loss,
+				category = r.category,
+				numeric = numeric,
+			})
 		end
 		-- Tricks: fired above the opponent, by trick and by whether it was played to design.
 		local byPass: { [number]: { any } } = {}
@@ -446,6 +472,86 @@ local function sweepConfig(extra: { any }): any
 	return cfg
 end
 
+-- The betting rider (switches.betting = "bands"): the same bands for every profile, per bet 1–4.
+local function bands(raise: { number }, yield: { number }): { any }
+	local out: { any } = { { "switches.betting", "bands" } }
+	for _, prof in { "average", "skilled", "novice" } do
+		for b = 1, 4 do
+			table.insert(out, { string.format("riders.%s.raiseAt.%d", prof, b), tostring(raise[b]) })
+			table.insert(out, { string.format("riders.%s.yieldAt.%d", prof, b), tostring(yield[b]) })
+		end
+	end
+	return out
+end
+local function flat(x: number): { number }
+	return { x, x, x, x }
+end
+
+-- One row per betting reading: the script (today) and the betting rider at several bands.
+-- Raise at the first number, Yield to a raise below the second; "none" never Yields.
+local BETS: { { any } } = {
+	{ "script (default, today)", {} },
+	{ "bands raise .55, yield none", bands(flat(0.55), flat(0)) },
+	{ "bands raise .60, yield none", bands(flat(0.6), flat(0)) },
+	{ "bands raise .55, yield .30", bands(flat(0.55), flat(0.3)) },
+	{ "bands raise .60, yield .20", bands(flat(0.6), flat(0.2)) },
+	{ "bands raise .60, yield .25 (profile default)", bands(flat(0.6), flat(0.25)) },
+	{ "bands raise .65, yield .25", bands(flat(0.65), flat(0.25)) },
+	{ "bands raise .60, yield .35", bands(flat(0.6), flat(0.35)) },
+	{ "bands raise .60, yield .40", bands(flat(0.6), flat(0.4)) },
+	{ "bands raise .65, yield .40", bands(flat(0.65), flat(0.4)) },
+	{ "bands raise .70, yield .45", bands(flat(0.7), flat(0.45)) },
+	{ "bands preflop calm: raise 1/1/.60/.60, yield 0/0/.35/.35", bands({ 1, 1, 0.6, 0.6 }, { 0, 0, 0.35, 0.35 }) },
+}
+
+-- The yard is measured under these betting readings (a subset of BETS).
+local YARD: { { any } } = {
+	{ "script (default, today)", {} },
+	{ "bands raise .60, yield none", bands(flat(0.6), flat(0)) },
+	{ "bands raise .60, yield .25", bands(flat(0.6), flat(0.25)) },
+	{ "bands raise .60, yield .35", bands(flat(0.6), flat(0.35)) },
+}
+
+local RANKS = "AKQJT98765432"
+
+-- The kept range as a 13×13 chart: pairs on the diagonal, suited above, offsuit below.
+-- # kept, + partly kept (the margin), . folded.
+local function chart(keep: { number }): { string }
+	local lines = { "     " .. string.gsub(RANKS, ".", "%0 ") }
+	for a = 1, 13 do
+		local ra = 15 - a
+		local line = "  " .. string.sub(RANKS, a, a) .. "  "
+		for b = 1, 13 do
+			local rb = 15 - b
+			local q = keep[(ra - 2) * 13 + (rb - 2) + 1]
+			line ..= (if q >= 1 - 1e-9 then "#" elseif q > 1e-9 then "+" else ".") .. " "
+		end
+		table.insert(lines, line)
+	end
+	return lines
+end
+
+local function lossLine(m: Yard.Metrics): string
+	local l = m.loss
+	local function sum(a: number, b: number): number
+		local x = 0
+		for i = a, b do
+			x += l[i + 1]
+		end
+		return x
+	end
+	return string.format("loser loses 1: %s  2-3: %s  4-7: %s  8-13: %s  split %s  | mean loss %.2f",
+		pct(sum(1, 1), 1), pct(sum(2, 3), 1), pct(sum(4, 7), 1), pct(sum(8, 13), 1), pct(l[1], 1), m.meanLoss)
+end
+
+local function metricsLine(m: Yard.Metrics): string
+	return string.format("modest meet %s, worse category wins %s (a modest hand %s), lower-EV class wins %s, numeric %s | kept: pairs %s suited %s offsuit %s, with an ace %s, %d classes",
+		pct(m.modest, 1), pct(m.upset, 1), pct(m.modestUpset, 1), pct(m.underdog, 1), pct(m.numeric, 1),
+		pct(m.pairs, 1), pct(m.suited, 1), pct(m.offsuit, 1), pct(m.ace, 1), m.classes)
+end
+
+local DESTS = { "sink", "purse", "carry" }
+
 local t0 = os.clock()
 if report == "baseline" then
 	local cfg = baseConfig()
@@ -565,6 +671,99 @@ elseif report == "proto" then
 			pct(t["proj.close.held"], t["proj.close"]), pct(t["proj.clear.held"], t["proj.clear"]),
 			pct(t["charge.ko"], t["charge.n"]), pct(t["charge.flip"], t["charge.standing"]),
 			(t.passes or 0) / n))
+	end
+elseif report == "bets" then
+	-- The betting rider's bands (switches.betting = "bands"): what pots and losses look like.
+	print(string.format("%d hands per run; mirror = average vs average; flip = skilled (seat 1) wins with the worse category vs novice", hands))
+	print("config                                                  | yield   bet1  bet2  bet3  bet4 | raised | loser loses 1    2-3    4-7    8-13 | mean | gap1  | flip  | skilled u/hand")
+	for _, sw in selectRows(BETS) do
+		local cfg = sweepConfig(sw[2])
+		local t = run(cfg, cfg.riders.average, cfg.riders.average, hands, seed)
+		local m = run(cfg, cfg.riders.skilled, cfg.riders.novice, hands, seed + 1)
+		local n = t.hands
+		local ln = t["loss.n"] or 0
+		print(string.format("%-55s | %s %s %s %s %s | %s | %s %s %s %s | %.2f | %s | %s | %+.3f",
+			sw[1], pct(t["finish.yield"], n),
+			pct(t["yield.bet1"], n), pct(t["yield.bet2"], n), pct(t["yield.bet3"], n), pct(t["yield.bet4"], n),
+			pct(t.raised, n),
+			pct(t["loss.1"], ln), pct(t["loss.3"], ln), pct(t["loss.7"], ln), pct(t["loss.13"], ln),
+			(t["loss.sum"] or 0) / math.max(1, ln),
+			pct(t["gap1.better"], t.gap1), pct(m["p1worse.win"], m.p1worse), (m.units1 or 0) / m.hands))
+	end
+elseif report == "yard" then
+	-- The yard (§2, 0078–0080): riders keep or prefold by starting-hand class; the price holds the
+	-- kept share. Per betting reading: the price each share needs, the share each price holds, and
+	-- the yard at the target share (spec.keptShare, 0079) under each destination (0078: carry).
+	local base = baseConfig()
+	local target = base.spec.keptShare
+	print(string.format("%d hands per betting reading, average vs average, tallied by starting-hand class pair", hands))
+	print("Prices are in units. A price is what a prefold costs; 'extra' is the prefold money in an average match's pot.")
+	for _, sw in selectRows(YARD) do
+		local cfg = sweepConfig(sw[2])
+		local tally = Yard.newTally()
+		run(cfg, cfg.riders.average, cfg.riders.average, hands, seed, tally)
+		print("")
+		print("== " .. sw[1])
+		local all = Yard.atShare(tally, "sink", 1)
+		local m0 = Yard.metrics(tally, all)
+		print("everyone keeps: " .. lossLine(m0))
+		print("  " .. metricsLine(m0))
+		local SHARES = { 1.0, 0.95, 0.9, 0.85, 0.8, 0.75, 0.7, 0.6, 0.5 }
+		local PRICES = { 0, 0.1, 0.2, 0.3, 0.5, 0.75, 1.0 }
+		local caches: { [string]: { [number]: Yard.Solution } } = {}
+		for _, dest in DESTS do
+			caches[dest] = {}
+			local line = string.format("%-5s price for share:", dest)
+			for _, k in SHARES do
+				local sol = Yard.atShare(tally, dest, k)
+				line ..= string.format(" %d%% %s", math.floor(k * 100 + 0.5), if sol.price == math.huge then "none" else string.format("%.2f", sol.price))
+			end
+			print(line)
+			local fwd = string.format("%-5s share at price:", dest)
+			for _, c in PRICES do
+				local sol = Yard.atPrice(tally, dest, c, caches[dest])
+				fwd ..= string.format(" %.2f %s", c, if sol then string.format("%.1f%%", 100 * sol.share) else "<5%")
+			end
+			print(fwd)
+		end
+		local conf = Yard.atPrice(tally, base.switches.prefold, base.sim.prefoldPrice, caches[base.switches.prefold])
+		print(string.format("configured: price %.2f into %s keeps %s", base.sim.prefoldPrice, base.switches.prefold,
+			if conf then string.format("%.1f%%", 100 * conf.share) else "under 5%"))
+		for _, dest in DESTS do
+			local sol = Yard.atShare(tally, dest, target)
+			local m = Yard.metrics(tally, sol)
+			print(string.format("-- %s at %d%% kept: price %.3f, extra %.3f a match; a fold is worth %+.3f",
+				dest, math.floor(target * 100 + 0.5), sol.price, sol.extra, sol.fold))
+			-- The margin: the last classes kept and the first folded, by keep value.
+			local order = {}
+			for i = 1, 169 do
+				table.insert(order, i)
+			end
+			table.sort(order, function(a, b)
+				return sol.value[a] > sol.value[b]
+			end)
+			local at = 1
+			for idx, i in order do
+				if sol.keep[i] < 1 then
+					at = idx
+					break
+				end
+			end
+			local edge = {}
+			for idx = math.max(1, at - 3), math.min(169, at + 3) do
+				local i = order[idx]
+				table.insert(edge, string.format("%s%s %+.3f (win %.2f)", Cards.className(i),
+					if sol.keep[i] >= 1 - 1e-9 then "" elseif sol.keep[i] > 1e-9 then string.format(" %.0f%%", 100 * sol.keep[i]) else " folded", sol.ev[i], sol.win[i]))
+			end
+			print("   margin: " .. table.concat(edge, ", "))
+			print("   " .. lossLine(m))
+			print("   " .. metricsLine(m))
+			if dest == "carry" then
+				for _, line in chart(sol.keep) do
+					print(line)
+				end
+			end
+		end
 	end
 elseif report == "gap" then
 	-- §4: the gap between two riders' numeric hands on a hit, from random river deals.
