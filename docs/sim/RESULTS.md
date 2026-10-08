@@ -430,9 +430,9 @@ reshape the yard. Not built; noted for issue 6.
 Nothing here is applied.
 
 1. **Board weight ¼ vs ½:** still a small effect.
-2. **Yields under the betting rider:** a rider that Yields on its odds ends 55% of hands with a
-   Yield, mostly after the flop. If players bet the same way, most matches end in a Yield before the
-   river. Is that the betting you want, or a question for the betting rules?
+
+Answered: Yields under the betting rider led to 0087 (the Posture bar is mostly information). No
+rule changes; the reading model is the step that prices the information half.
 
 ## Limits of this model
 

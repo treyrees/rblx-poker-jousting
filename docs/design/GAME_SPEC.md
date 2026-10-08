@@ -608,6 +608,10 @@ are placeholders; their numbers come later.
 Every visible cue should narrow the opponent's range without identifying the hand.
 Design rule: each tell must have at least two plausible causes.
 
+The Posture bar's main value is information. Its health lead is meaningful, never pointless, but
+not decisive: the cards still decide hands after the flop, and a rider behind can win back through
+better aim (0087).
+
 One exception, by design: a hit big enough that only trips can deal it says "trips". It never
 names the exact trips. It's the trips rider's moment: an early, overwhelming hit on the Posture
 bar. Trey: "you know i have trips, but i just hit you with a huge strike early on, thats the
