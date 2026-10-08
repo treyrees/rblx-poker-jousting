@@ -42,7 +42,6 @@ Also important: **learnability** (for example, betting is beginner-ignorable, §
 | The yard: deal, prefold, matchmaking on wait time | §2 | Settled in shape |
 | Prefold cost: units that ride as carry, plus a short delay; priced to keep 75% of hands | §2 | Settled in shape |
 | Stakes: one stake in v1, tiers deferred | §2 | Settled for v1 |
-| Preflop redraw for a price | §11 | Open |
 | Betting | §2 | Settled |
 | Wager limits: the fixed limit is the limit, no pot cap | §2 | Settled for v1 |
 | Standard dial: layout, outcome table, sectors, Neutral, held aim, aim lock | §3 | Settled for v1, numbers tunable |
@@ -90,6 +89,7 @@ matched.
   nothing else; it never sees hole cards (0083). Then the Ante and Bet 1.
 - One stake in v1: every match is played for the same unit (0082).
 - Prefolding is the preflop fold. Hand selection happens in the yard, so a match stays one hand.
+  The prefold is the one hand-selection tool; there is no preflop redraw (0088).
 
 ### Deck and deal
 
@@ -790,8 +790,6 @@ whether a trick above the opponent wins overwhelmingly.
   trick win rates by whether the trick was played to its design.
 - Playtest: is an 8 s pass long enough to read the reveal, decide, and react to a hold? The sim
   can't answer this; the first playable build does.
-- Preflop redraw for a price: a second hand-selection tool alongside the prefold. What can be
-  redrawn, and what does it cost?
 - Roblox policy on simulated gambling and maturity labels, and the currency side of stakes:
   what a unit is worth, and session or daily limits. Stake only earned currency,
   never purchasable currency, until checked. Check carry too: prefold money that a match's winner
