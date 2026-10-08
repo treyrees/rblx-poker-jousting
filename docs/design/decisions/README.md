@@ -111,5 +111,6 @@ Add a row below in the same commit. Check the latest `main` for the next free id
 | [0085](0085-carry-waits-for-a-rider-who-leaves.md) | Carry waits for a rider who leaves the yard | 2026-10-08 |
 | [0086](0086-carry-rides-on-after-a-split.md) | In a split, each rider's carry rides on to their next match | 2026-10-08 |
 | [0087](0087-the-posture-bar-is-mostly-information.md) | The Posture bar's main value is information; its health lead is meaningful but not decisive | 2026-10-08 |
+| [0088](0088-no-preflop-redraw.md) | There is no preflop redraw; the prefold is the one hand-selection tool | 2026-10-08 |
 
-Next free id: **0088**.
+Next free id: **0089**.
