@@ -1,6 +1,8 @@
 # Sim results: one hand
 
-Oct 8, 2026. GAME_SPEC through decision 0083. Since the last run (Oct 7, through 0076):
+Oct 8, 2026. GAME_SPEC through decision 0095. The reading model (0089–0095) is new; it is off by
+default, so nothing above *What the bar's information is worth* moved. Before that, through 0083,
+and since the run of Oct 7 (through 0076):
 
 - **The prefold cost and the yard (0078–0083).** Prefold money rides as carry into the rider's next
   pot (0078), the yard keeps 75% of dealt hands (0079), a prefold costs units and a short delay
@@ -425,21 +427,161 @@ dealt would play the whole deck against a field that keeps 75%, and lose at the 
 hands lose. One that keeps only strong hands would tighten the field. Either way the ghosts would
 reshape the yard. Not built; noted for issue 6.
 
+## What the bar's information is worth
+
+0087: "The Posture bar's main value is information. Its health lead is meaningful, never pointless,
+but not decisive." Until now the sim could measure only the health half, because its riders read
+nothing. §11 *Sim plan* step 4's reading model now prices the information half.
+
+### The model (`sim/Read.luau`, `reading` in `sim/Config.luau`)
+
+- **A belief over the opponent's hole pair (0089).** It covers the 1,326 two-card deals, minus the
+  cards the reader can see. Every public cue updates it by Bayes' rule:
+  - **color:** the number of red hole cards (§7 *Color leak*);
+  - **stance:** where the rider commits, and any re-stance after the reveal;
+  - **timing:** when the rider first leaves Neutral;
+  - **hit:** both bars' change at contact, clean blocks and the ♥ buffer included (0093);
+  - **heal:** the ♥ heal, as its own beat (0093);
+  - **unleash:** an announced unleash;
+  - **bets:** each Stay and Raise (0094).
+
+  Each likelihood replays the sim's own rider script for every candidate pair, with the opponent
+  assumed to ride as the average profile. A full-skill reader never rules out the opponent's real hand
+  (`tests/Read.spec.luau`).
+- **What it drives (0090).** `reading.aim = "belief"`: a read's late switch plays against 8
+  opponents sampled from the belief instead of an average hole card. `reading.betting = "belief"`:
+  the betting rider averages paired odds (this hand against that one, from its calibration run) over
+  the belief.
+- **Read skill (0091).** `readSkill` *s* weighs the read by *s* and today's estimate by 1 − *s*.
+  At *s* = 0 the rider rides exactly as before.
+- **Battered and carry are public (0095).** The reader already treats Battered as known. The one-hand
+  sim has no carry inside a match.
+- **Run:** `lune run tools/sim.luau --report info --shard i/4`, four processes, 100k hands a row.
+  The report took 7 min 51 s on 4 cores (longest shard 471 s). A row takes 1–7 minutes, and the 9
+  rows are ordered so the shards come out even.
+
+Mirror rows use seed 20260930 and skilled-vs-novice rows 20260931. Win rates are in %.
+
+### What the cues carry
+
+From a full-skill reader. Bits are what each observation takes off the belief, in update order. A
+reader starts with 10.3 bits of uncertainty: about 1,200 equally likely pairs.
+
+| Cue | Bits per observation | Notes |
+| --- | --- | --- |
+| Color | 1.49 | Once, before Pass 1 |
+| Hit (both bars at contact) | 1.07–1.08 | Per contact, Passes 1–3 |
+| Stance (commit and re-stance) | 0.52–0.60 | Per pass |
+| Bets | 0.12–0.13 per action | Betting rider; 0.00 under the script, which raises only on tricks and trips |
+| Heal (its own beat) | 0.06 | Per contact; it rounds up to a half heart, so it is coarse |
+| Timing (first exit, hold) | 0.00 | The script ties hold to the rider, not the hand; only a trick played to its design commits at once, and that is rare |
+| Unleash | about 2 | Rare: it usually ends the hand |
+
+- After Pass 1 a full-skill reader has 6.5 bits left and puts 2.3–2.6% on the true pair. After
+  Pass 3 it has 3.2–3.4 bits left and puts 19–20% on it.
+- So the bar and the dial carry a lot. Most of it comes from color and the first hit, and a hit tells
+  about twice what a stance does.
+
+### Against the health baseline
+
+0087's baseline came from a scratch count whose cuts weren't recorded. The rows here use stated cuts:
+
+- **P1 pooled:** the win rate by Posture lead after Pass 1, pooled over behind 1–11, level and ahead
+  1–11 half hearts.
+- **Cards swing:** after two passes, within a lead group, the win rate ahead on the flop's category
+  minus behind on it.
+- **Lead swing:** within a card standing, the win rate ahead 1–11 on Posture minus behind 1–11.
+
+The Pass 1 split reproduces 0087's 40/60. The card cut is coarser than the scratch count's, so it
+swings more (43–52 points against 0087's 30–37). Compare readers with the "off" rows here, not with
+0087's numbers.
+
+A reader row puts the reader in seat 1. Seat 1 wins 48.9% (ridden out) and 49.3% (betting rider) in
+the mirror with reading off, so those are the controls.
+
+| Row (100k hands) | Seat 1 wins | Units/hand | Yield | P1 pooled behind / ahead | Cards swing | Lead swing | 12+ lead, worse cards |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Ridden out, mirror, reading off | 48.9 | −0.024 | 0% | 39.3 / 60.7 | 43–52 | 23–31 | 70.9 |
+| Ridden out, reader v non-reader (aim reads, 1 v 0) | 49.2 | −0.017 | 0% | 38.8 / 60.3 | 43–51 | 23–31 | 72.1 |
+| Betting rider, mirror, reading off | 49.3 | −0.021 | 55.2% | 33.7 / 66.3 | 48–57 | 29–50 | 92.2 |
+| Betting rider, reader v non-reader (aim + bets, .5 v 0) | 49.5 | +0.023 | 56.4% | 33.9 / 66.0 | 48–55 | 29–48 | 92.6 |
+| Betting rider, reader v non-reader (aim + bets, 1 v 0) | 49.3 | +0.110 | 58.2% | 34.0 / 65.9 | 50–57 | 29–46 | 91.9 |
+| Betting rider, mirror, both read (aim + bets, 1 v 1) | 48.9 | −0.050 | 63.5% | 34.9 / 65.1 | 59–64 | 33–43 | 77.5 |
+| Ridden out, skilled v novice, reading off | 81.9 | +0.705 | 0% | 68.1 / 83.4 | 28–49 | 9–29 | 86.0 |
+| Betting rider, skilled v novice, reading off | 84.3 | +1.446 | 66.1% | 59.3 / 87.3 | 30–59 | 13–42 | 94.8 |
+| Betting rider, skilled v novice, profile skills .9 v .1 | 83.9 | +1.466 | 70.2% | 58.5 / 86.9 | 32–74 | 13–54 | 93.5 |
+
+**On the dial, information is worth almost nothing in the sim.** A perfect reader against a
+non-reader wins 49.2% to the control's 48.9%. That's +0.3 points, while a Pass 1 lead of 1–11 half
+hearts is worth about ±11. The late switch picks its row from the opponent's public aim and hold;
+the opponent's stats only scale the hit, and they almost never change which row is best. So in this
+model "revenge by aiming better next pass" comes from read and hold skill, not from what the bar
+said. (A ridden-out skilled-vs-novice run with aim reads, cut from the report for runtime, moved the
+skilled rider's win rate by under 0.3 points.)
+
+**At the bet, information is worth money, not wins.** A perfect reader wins no more hands than a
+non-reader, but takes +0.13 units a hand more (+0.110 against −0.021). At skill .5 it takes +0.04.
+It Yields where it's beaten and calls where the bar misled, so the pots it wins are bigger and the
+ones it loses smaller. For scale, a skilled rider takes +1.45 units a hand from a novice.
+
+**When both riders read, the cards matter more after the flop and a big lead less.** Two
+full-skill readers:
+
+- Yield more (63.5% against 55.2%, mostly on Bets 3–4).
+- The cards' swing after two passes grows from 48–57 to 59–64 points.
+- The lead's swing narrows from 29–50 to 33–43.
+- A 12+ half-heart lead held with worse cards on the flop wins 77.5%, not 92.2%: the rider behind
+  knows when to stay in.
+
+That is 0087's direction: "the cards still decide hands after the flop". But it comes from both
+riders reading perfectly. At the profile skills (.9 v .1) the skilled rider's edge barely moves.
+
+**The bets cue adds to that.** The same mirror without it (`--set reading.cues.bets=0`) Yields
+58.4%, with the cards' swing at 56–58.
+
+### What the model can't say
+
+- **What a reader does with the opponent's aim habits.** "Revenge by aiming better next pass" needs
+  a reader who predicts where the opponent will aim. The sim's riders aim honestly or at random and
+  react only at 7.4 s, so there is no habit to learn. Information about the cards doesn't change
+  which row is best.
+- **Hold and first exit as card tells.** They carry 0 bits here because the script sets hold by the
+  rider. If players commit early with good hands, these cues would leak, and the sim can't price
+  that until the script ties hold to the hand. That would be a design question for Trey, not a
+  tuning value.
+- **Bluffing against readers.** Stance honesty is fixed. Riders don't change their stance to
+  mislead a reader, so there is no equilibrium between reading and bluffing. The 55–64% Yield rates
+  are for riders who never bluff in response.
+- **Coarse odds.** The betting rider's odds key on about 72 flop hands (category, board pairs, a
+  draw flag), so a sharp belief is squeezed to that grain. Finer odds might make information worth
+  more at the bet.
+- **One hand at a time.** No memory across hands or rematches, no shown cards, and no carry (0095)
+  inside the match.
+- **People.** Readers are exact Bayesians about a known script, with no clock. Real players read far
+  less, and the 8 s pass (§11's playtest question) limits how much of this anyone can use.
+- **Pruning.** A pair below 1/10,000 of the top weight is dropped, for speed. When a bet the floor
+  allowed has pushed the true pair out, a later update can find no pair left and is skipped: 12 times
+  in the both-read mirror's 200k beliefs.
+
 ## Questions for Trey
 
 Nothing here is applied.
 
 1. **Board weight ¼ vs ½:** still a small effect.
+2. **Should the sim's riders commit earlier with better hands?** Today hold and the first exit from
+   Neutral come from the rider's profile alone, so they carry no card information (*What the bar's
+   information is worth*). Tying them to the hand is a model choice that would give §7's hold and
+   timing tells a value. Options: leave it; commit time shifts with the rider's own odds; or both,
+   as a switch.
 
 Answered: Yields under the betting rider led to 0087 (the Posture bar is mostly information). No
 rule changes; the reading model is the step that prices the information half.
 
 ## Limits of this model
 
-- **Reads are one late switch at 7.4 s against a snapshot.** Each reading rider estimates the
-  opponent's stats from the board plus an average hole card. There is no reading model of tells:
-  colors, the hold meter and hit sizes carry no value in play. The hit-size count above is a
-  separate scratch count with a perfect observer.
+- **Reads are one late switch at 7.4 s against a snapshot.** By default each reading rider
+  estimates the opponent's stats from the board plus an average hole card. The reading model
+  (*What the bar's information is worth*) is off by default; its own limits are listed there.
 - **Extra time past the lock is modelled as "moves last in a double read".** A real rider with
   extra time would also react to single reads.
 - **The default betting never Yields,** so under it units won track the win rate. The betting rider

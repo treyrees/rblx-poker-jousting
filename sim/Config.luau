@@ -86,6 +86,22 @@ function Config.defaults()
 			prefoldPrice = 0.4,
 		},
 
+		-- ── READING: the reading model (§11 *Sim plan* step 4, sim/Read.luau; 0089–0093) ─────────
+		-- Off by default, so the sim plays exactly as before. A reader keeps a belief over the
+		-- opponent's hole pair, updated by every public cue of §7 (0089).
+		reading = {
+			aim = "off", -- off | belief: a read plays against the believed opponent, not an average card (0090)
+			betting = "off", -- off | belief: the betting rider's odds average over the belief (0090)
+			heal = "beat", -- beat | net: the ♥ heal shows as its own beat after contact, or only in the net change (0093)
+			assume = "average", -- the rider profile a reader assumes the opponent rides as
+			samples = 8, -- aim = belief: opponents sampled from the belief for a read's best response
+			timeFloor = 0.05, -- chance a reader allows that a commit's timing breaks the assumed script
+			betFloor = 0.05, -- chance a reader allows that a bet broke the assumed script (0094)
+			prune = 1e-4, -- a pair below this share of the belief's top weight is dropped (speed)
+			-- Each cue on (1) or off (0), for the per-cue report.
+			cues = { color = 1, stance = 1, timing = 1, hit = 1, heal = 1, unleash = 1, bets = 1 },
+		},
+
 		-- ── RIDERS: scripted rider parameters (§11 *Sim plan* step 2), set by the sim ──────────
 		--   read        chance to read on a pass: switch late to the best aim against the opponent's
 		--   hold        hold discipline: 1 commits a stance at the first moment, 0 at the decision window
@@ -96,12 +112,15 @@ function Config.defaults()
 		--   raiseAt     the betting rider (switches.betting = "bands"), per bet 1–4: raise or re-raise
 		--               when the rider's odds of winning (sim/Odds.luau) are at least this
 		--   yieldAt     ...and, facing a raise, Yield when they are below this (0: never Yield)
+		--   readSkill   how much each cue moves the reader's belief: 1 exact Bayes, 0 keeps no belief and
+		--               rides as today (0091). Used only when the reading model is on (reading.aim or
+		--               reading.betting)
 		riders = {
-			average = { read = 0.3, hold = 0.6, honesty = 0.7, aggression = 0.5, design = 0.8, yieldBelow = -1, raiseAt = { 0.6, 0.6, 0.6, 0.6 }, yieldAt = { 0.25, 0.25, 0.25, 0.25 } },
-			skilled = { read = 0.7, hold = 0.9, honesty = 0.9, aggression = 0.5, design = 1.0, yieldBelow = -1, raiseAt = { 0.6, 0.6, 0.6, 0.6 }, yieldAt = { 0.25, 0.25, 0.25, 0.25 } },
-			novice = { read = 0.05, hold = 0.3, honesty = 0.4, aggression = 0.5, design = 0.5, yieldBelow = -1, raiseAt = { 0.6, 0.6, 0.6, 0.6 }, yieldAt = { 0.25, 0.25, 0.25, 0.25 } },
-			holder = { read = 0.0, hold = 1.0, honesty = 1.0, aggression = 0.5, design = 1.0, yieldBelow = -1, raiseAt = { 0.6, 0.6, 0.6, 0.6 }, yieldAt = { 0.25, 0.25, 0.25, 0.25 } },
-			flicker = { read = 1.0, hold = 0.0, honesty = 0.5, aggression = 0.5, design = 0.5, yieldBelow = -1, raiseAt = { 0.6, 0.6, 0.6, 0.6 }, yieldAt = { 0.25, 0.25, 0.25, 0.25 } },
+			average = { read = 0.3, hold = 0.6, honesty = 0.7, aggression = 0.5, design = 0.8, yieldBelow = -1, raiseAt = { 0.6, 0.6, 0.6, 0.6 }, yieldAt = { 0.25, 0.25, 0.25, 0.25 }, readSkill = 0.5 },
+			skilled = { read = 0.7, hold = 0.9, honesty = 0.9, aggression = 0.5, design = 1.0, yieldBelow = -1, raiseAt = { 0.6, 0.6, 0.6, 0.6 }, yieldAt = { 0.25, 0.25, 0.25, 0.25 }, readSkill = 0.9 },
+			novice = { read = 0.05, hold = 0.3, honesty = 0.4, aggression = 0.5, design = 0.5, yieldBelow = -1, raiseAt = { 0.6, 0.6, 0.6, 0.6 }, yieldAt = { 0.25, 0.25, 0.25, 0.25 }, readSkill = 0.1 },
+			holder = { read = 0.0, hold = 1.0, honesty = 1.0, aggression = 0.5, design = 1.0, yieldBelow = -1, raiseAt = { 0.6, 0.6, 0.6, 0.6 }, yieldAt = { 0.25, 0.25, 0.25, 0.25 }, readSkill = 0.0 },
+			flicker = { read = 1.0, hold = 0.0, honesty = 0.5, aggression = 0.5, design = 0.5, yieldBelow = -1, raiseAt = { 0.6, 0.6, 0.6, 0.6 }, yieldAt = { 0.25, 0.25, 0.25, 0.25 }, readSkill = 0.5 },
 		},
 
 		-- ── SWITCHES: open questions and gaps, each with 2–3 readings ─────────────────────────
