@@ -9,6 +9,8 @@ local Tricks = require("../sim/Tricks")
 local Odds = require("../sim/Odds")
 local Hand = require("../sim/Hand")
 local Read = require("../sim/Read")
+local Contact = require("../sim/Contact")
+local Dial = require("../sim/Dial")
 
 local L = Cards.list
 
@@ -59,6 +61,46 @@ kit.describe("Read", function()
 		local q1, q2, q3, q4 = Read._points(Cards.parse("9s"), Cards.parse("9h"), board, 5, cfg.spec)
 		kit.expectNear(q1 + q2 + q3 + q4, pts[1] + pts[2] + pts[3] + pts[4])
 	end)
+	kit.it("Contact.plain agrees with Contact.strike on every numeric strike", function()
+		local cfg = Config.defaults()
+		local rng = rngFrom(13)
+		for _ = 1, 5000 do
+			local function fighter(): Contact.Fighter
+				local aim = if rng() < 0.1 then nil else math.floor(rng() * 16)
+				return {
+					aim = aim, h = rng(),
+					S = { 20 + rng() * 15, 20 + rng() * 15, 20 + rng() * 15, 20 + rng() * 15 },
+					buffer = if rng() < 0.5 then rng() * 3 else 0,
+					battered = if rng() < 0.3 then 0.4 * rng() else 0,
+					trick = nil, ward = 0,
+				}
+			end
+			local A, B = fighter(), fighter()
+			local arena = { street = if rng() < 0.5 then 1 else 1.25, openLists = 1, siege = 1 }
+			local s = Contact.strike(A, B, arena, cfg)
+			local dmg, clean = Contact.plain(A, B, Dial.tier(A.aim, B.aim, cfg.spec), arena, cfg)
+			kit.expectEqual(dmg, s.dmg)
+			kit.expectEqual(clean, s.cleanBlock)
+		end
+	end)
+	kit.it("the honest stance set holds exactly the aims Dial.lean scores best", function()
+		local cfg = Config.defaults()
+		local rng = rngFrom(14)
+		for _ = 1, 3000 do
+			local p = { math.floor(rng() * 4) * 1.5, math.floor(rng() * 4) * 1.5, math.floor(rng() * 4) * 1.5, math.floor(rng() * 4) * 1.5 }
+			local mask = Read._honestSet(cfg.sim.halfStepShare, p[1], p[2], p[3], p[4])
+			local best = -math.huge
+			local v = {}
+			for a = 0, 15 do
+				local w = Dial.lean(a, cfg.sim.halfStepShare)
+				v[a] = p[1] * w[1] + p[2] * w[2] + p[3] * w[3] + p[4] * w[4]
+				best = math.max(best, v[a])
+			end
+			for a = 0, 15 do
+				kit.expectEqual(bit32.band(mask, bit32.lshift(1, a)) ~= 0, v[a] >= best - 1e-9)
+			end
+		end
+	end)
 	kit.it("a street's ownership matches Tricks.status, a board trick included", function()
 		local cfg = Config.defaults()
 		local board = L("5c 6c 7c 8d 9h") -- the board's own straight
@@ -66,32 +108,24 @@ kit.describe("Read", function()
 		local st = Read.street(ctx, 5)
 		for k = 1, Read.NP do
 			if st.live[k] then
+				Read.entry(st, k)
 				local a, b = Read.pairCards(k)
 				kit.expectEqual(st.own[k], Tricks.status({ a, b }, board).ownRung)
 			end
 		end
 	end)
-	kit.it("color at full skill keeps only the pairs with the shown colors; at skill 0 it moves nothing", function()
-		local full = Read.newBelief(L("2c 3c"), 1)
-		Read.color(full, 2)
-		local none = Read.newBelief(L("2c 3c"), 0)
-		Read.color(none, 2)
-		for k = 1, Read.NP do
-			local a, b = Read.pairCards(k)
-			local red = Read.redCount({ a, b })
-			if full.w[k] > 0 then
-				kit.expectEqual(red, 2)
-			end
-			local mine = a == Cards.parse("2c") or a == Cards.parse("3c") or b == Cards.parse("2c") or b == Cards.parse("3c")
-			kit.expectEqual(none.w[k] > 0, not mine)
-		end
-		-- Two red cards: C(26, 2) = 325 pairs.
+	kit.it("color keeps only the pairs with the shown colors, and never the reader's own cards", function()
+		local b = Read.newBelief(L("2c 3c"), 1)
+		Read.color(b, 2)
 		local live = 0
 		for k = 1, Read.NP do
-			if full.w[k] > 0 then
+			if b.w[k] > 0 then
+				local a, c = Read.pairCards(k)
+				kit.expectEqual(Read.redCount({ a, c }), 2)
 				live += 1
 			end
 		end
+		-- Two red cards: C(26, 2) = 325 pairs.
 		kit.expectEqual(live, 325)
 	end)
 	kit.it("an honest all-club stance at Up raises the weight of club-heavy pairs", function()

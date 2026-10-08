@@ -163,4 +163,36 @@ function Contact.strike(A: Fighter, B: Fighter, arena: Arena, cfg: any): Strike
 	}
 end
 
+-- A strike with no trick on either side, given its tier: Contact.strike's numeric path in the same
+-- order of operations, returning (Posture damage, clean block) without building a Strike. The
+-- reading model (sim/Read.luau) replays contact for every pair a belief holds; tests check that
+-- this agrees with Contact.strike.
+function Contact.plain(A: Fighter, B: Fighter, tier: string, arena: Arena, cfg: any): (number, boolean)
+	local spec, sim = cfg.spec, cfg.sim
+	local base = if tier == "crit"
+		then spec.base.crit
+		elseif tier == "normal" then spec.base.normal
+		elseif tier == "block" then sim.blockBase
+		else spec.base.weak
+	local Sspade = A.S[2]
+	local hold = Timeline.mult(A.h, cfg)
+	if tier == "crit" then
+		hold = relieved(hold, sim.critRelief, Sspade, cfg)
+	end
+	local out = base * (A.S[1] * spec.clubRate) * hold * arena.street
+	out *= arena.siege
+	if tier == "crit" then
+		out *= Sspade / spec.statBase
+	end
+	local zone = ZONE[tier]
+	local armor = (sim.armorRate * basis(B.S[4], cfg) + sim.armorPerPoint * (B.S[4] - spec.statBase)) * sim.armorZone[zone]
+	if zone == "guard" then
+		armor *= relieved(Timeline.mult(B.h, cfg), sim.guardRelief, B.S[4], cfg)
+	end
+	local effArmor = math.max(0, armor - sim.pierceRate * basis(Sspade, cfg))
+	local through = math.max(0, out - effArmor)
+	local dmg = math.max(0, through * (1 + B.battered) - B.buffer) * arena.openLists
+	return dmg, tier == "block" and through <= 0
+end
+
 return Contact

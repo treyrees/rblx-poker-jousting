@@ -94,8 +94,9 @@ function Config.defaults()
 			betting = "off", -- off | belief: the betting rider's odds average over the belief (0090)
 			heal = "beat", -- beat | net: the ♥ heal shows as its own beat after contact, or only in the net change (0093)
 			assume = "average", -- the rider profile a reader assumes the opponent rides as
-			samples = 16, -- aim = belief: opponents sampled from the belief for a read's best response
+			samples = 8, -- aim = belief: opponents sampled from the belief for a read's best response
 			timeFloor = 0.05, -- chance a reader allows that a commit's timing breaks the assumed script
+			prune = 1e-4, -- a pair below this share of the belief's top weight is dropped (speed)
 			-- Each cue on (1) or off (0), for the per-cue report.
 			cues = { color = 1, stance = 1, timing = 1, hit = 1, heal = 1, unleash = 1 },
 		},
@@ -110,8 +111,9 @@ function Config.defaults()
 		--   raiseAt     the betting rider (switches.betting = "bands"), per bet 1–4: raise or re-raise
 		--               when the rider's odds of winning (sim/Odds.luau) are at least this
 		--   yieldAt     ...and, facing a raise, Yield when they are below this (0: never Yield)
-		--   readSkill   how much each cue moves the reader's belief: 1 exact Bayes, 0 learns nothing
-		--               (0091). Used only when the reading model is on (reading.aim or reading.betting)
+		--   readSkill   how much each cue moves the reader's belief: 1 exact Bayes, 0 keeps no belief and
+		--               rides as today (0091). Used only when the reading model is on (reading.aim or
+		--               reading.betting)
 		riders = {
 			average = { read = 0.3, hold = 0.6, honesty = 0.7, aggression = 0.5, design = 0.8, yieldBelow = -1, raiseAt = { 0.6, 0.6, 0.6, 0.6 }, yieldAt = { 0.25, 0.25, 0.25, 0.25 }, readSkill = 0.5 },
 			skilled = { read = 0.7, hold = 0.9, honesty = 0.9, aggression = 0.5, design = 1.0, yieldBelow = -1, raiseAt = { 0.6, 0.6, 0.6, 0.6 }, yieldAt = { 0.25, 0.25, 0.25, 0.25 }, readSkill = 0.9 },

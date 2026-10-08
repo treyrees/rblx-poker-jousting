@@ -259,18 +259,22 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 	local readBets = reading.betting == "belief" and bands
 	local readOn = readAim or readBets
 	local ctx: Read.Ctx? = nil
-	local beliefs: { Read.Belief } = {}
+	-- A rider at readSkill 0 keeps no belief: it reads and bets exactly as the sim always has.
+	local beliefs: { [number]: Read.Belief? } = {}
 	local assumed = cfg.riders[reading.assume]
 	local info = if opts then opts.info else nil
 	if readOn then
 		ctx = Read.newHand(cfg, board)
 		for _, r in riders do
 			local o = riders[3 - r.id]
-			local b = Read.newBelief(r.hole, r.p.readSkill or 0, info, Read.pairIndex(o.hole[1], o.hole[2]))
-			if reading.cues.color == 1 then
-				Read.color(b, Read.redCount(o.hole))
+			local skill = r.p.readSkill or 0
+			if skill > 0 then
+				local b = Read.newBelief(r.hole, skill, info, Read.pairIndex(o.hole[1], o.hole[2]), reading.prune)
+				if reading.cues.color == 1 then
+					Read.color(b, Read.redCount(o.hole))
+				end
+				beliefs[r.id] = b
 			end
-			beliefs[r.id] = b
 		end
 	end
 
@@ -328,9 +332,13 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 				local o = riders[3 - r.id]
 				local key = keys[r.id]
 				local bucket = Odds.bucket(r.posture - o.posture)
-				if readBets then
-					local kw = Read.keyWeights(beliefs[r.id], ctx :: Read.Ctx, round, #known)
-					est[r.id] = Odds.estimateBelief(cfg._odds, round, key, kw, bucket)
+				local belief = beliefs[r.id]
+				if readBets and belief then
+					-- Read skill (0091): the read's odds weighed by s, the rider's own odds by 1 − s.
+					local kw = Read.keyWeights(belief, ctx :: Read.Ctx, round, #known)
+					local s0 = belief.skill
+					est[r.id] = s0 * Odds.estimateBelief(cfg._odds, round, key, kw, bucket)
+						+ (1 - s0) * Odds.estimate(cfg._odds, round, key, bucket)
 				elseif bands then
 					est[r.id] = Odds.estimate(cfg._odds, round, key, bucket)
 				end
@@ -534,6 +542,9 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 			for _, r in riders do
 				local o = riders[3 - r.id]
 				local b = beliefs[r.id]
+				if b == nil then
+					continue
+				end
 				Read.see(b, board, SHOWN[pass])
 				Read.stance(b, ctx :: Read.Ctx, {
 					pass = pass,
@@ -554,17 +565,22 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 			local myPts = points(r, newBoard, 1, false, cfg)
 			-- The opponents a read plays against: the public estimate (an average hole card), the
 			-- exact cards (the final charge's cards up), or a sample of the reader's belief.
+			-- Each with its weight: read skill (0091) weighs the belief's sample by s, the average card by 1 − s.
 			local opps: { { number } }
+			local weights: { number }
+			local belief = beliefs[r.id]
 			if cardsUp then
 				local oPts = points(o, newBoard, 1, false, cfg)
-				opps = { oPts }
-			elseif readAim then
-				opps = {}
-				for _, k in Read.sample(beliefs[r.id], reading.samples) do
+				opps, weights = { oPts }, { 1 }
+			elseif readAim and belief then
+				local sample = Read.sample(belief, reading.samples)
+				opps, weights = { publicPoints(newBoard, cfg) }, { 1 - belief.skill }
+				for _, k in sample do
 					table.insert(opps, Read.pointsOf(ctx :: Read.Ctx, SHOWN[pass], k, 1, o.spent))
+					table.insert(weights, belief.skill / #sample)
 				end
 			else
-				opps = { publicPoints(newBoard, cfg) }
+				opps, weights = { publicPoints(newBoard, cfg) }, { 1 }
 			end
 			local arena = { street = street, openLists = 1, siege = 1 }
 			local oFs: { Contact.Fighter } = {}
@@ -586,13 +602,15 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 					battered = math.max(r.battered, r.batteredHand), trick = nil, ward = 0,
 				}
 				local v = 0
-				for _, oF in oFs do
-					v += Contact.strike(F, oF, arena, cfg).dmg
-					if not facingUnleash then
-						v -= Contact.strike(oF, F, arena, cfg).dmg
+				for i, oF in oFs do
+					local wi = weights[i]
+					if wi > 0 then
+						v += wi * Contact.strike(F, oF, arena, cfg).dmg
+						if not facingUnleash then
+							v -= wi * Contact.strike(oF, F, arena, cfg).dmg
+						end
 					end
 				end
-				v /= #oFs
 				if v > bestV + 1e-9 then
 					best, bestV = a, v
 				end
@@ -816,7 +834,11 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 		if readOn and pass <= 3 and not fires[1] and not fires[2] then
 			for _, r in riders do
 				local o = riders[3 - r.id]
-				Read.contact(beliefs[r.id], ctx :: Read.Ctx, {
+				local b = beliefs[r.id]
+				if b == nil then
+					continue
+				end
+				Read.contact(b, ctx :: Read.Ctx, {
 					n = SHOWN[pass],
 					me = F[r.id],
 					oAim = F[o.id].aim,
@@ -834,9 +856,8 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 				})
 			end
 			if info then
-				for _, r in riders do
-					local b = beliefs[r.id]
-					info["H.pass" .. pass] = (info["H.pass" .. pass] or 0) + Read.entropy(b.w)
+				for _, b in beliefs do
+					info["H.pass" .. pass] = (info["H.pass" .. pass] or 0) + Read.entropy(b)
 					info["truth.pass" .. pass] = (info["truth.pass" .. pass] or 0) + Read.truthShare(b)
 					info["obs.pass" .. pass] = (info["obs.pass" .. pass] or 0) + 1
 				end
@@ -844,8 +865,10 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 		end
 	end
 	if info and readOn then
-		info["skipped"] = (info["skipped"] or 0) + beliefs[1].skipped + beliefs[2].skipped
-		info["beliefs"] = (info["beliefs"] or 0) + 2
+		for _, b in beliefs do
+			info["skipped"] = (info["skipped"] or 0) + b.skipped
+			info["beliefs"] = (info["beliefs"] or 0) + 1
+		end
 	end
 
 	-- The river hands, for the record and the showdown.

@@ -20,14 +20,15 @@
 -- card information only through a trick played to its design, because the script ties hold to the
 -- rider, not the hand.
 --
--- Read skill (0091): readSkill s in 0..1 scales each update. A cue's likelihood L (scaled so its
--- largest value is 1) moves a pair's weight by (1 − s) + s·L: s = 1 is exact Bayes, s = 0 learns
--- nothing. An update that would leave no weight at all (the opponent rode off the assumed script)
--- is skipped.
+-- The belief itself is exact Bayes: every reader learns what the cues carry, and a cue that rules a
+-- pair out drops it, which keeps the work small. An update that would leave no weight at all (the
+-- opponent rode off the assumed script) is skipped.
 --
--- What the belief drives (0090): reading.aim = "belief" plays a read against the opponents the
--- belief holds (a systematic sample of reading.samples pairs) rather than an average hole card;
--- reading.betting = "belief" averages the betting rider's paired odds (sim/Odds.luau) over it.
+-- What the belief drives (0090), and read skill (0091): reading.aim = "belief" plays a read against
+-- the opponents the belief holds (a systematic sample of reading.samples pairs); reading.betting =
+-- "belief" averages the betting rider's paired odds (sim/Odds.luau) over it. A rider at readSkill s
+-- weighs that read by s and today's estimate (an average hole card, its own odds) by 1 − s: s = 1 is
+-- a perfect Bayesian, s = 0 rides as the sim always has (Hand keeps no belief for it).
 
 local Cards = require("./Cards")
 local Dial = require("./Dial")
@@ -262,12 +263,18 @@ end
 Read._points = points
 
 -- ── a hand's shared tables ───────────────────────────────────────────────────────────────────
--- Per street (n board cards known: 0, 3, 4, 5), for every pair that misses those cards: points,
--- category and trick ownership. Built once per hand, on first use, and shared by both readers.
+-- Per street (n board cards known: 0, 3, 4, 5), for each pair that misses those cards: points,
+-- category and trick ownership. Shared by both readers; a pair's entry is filled on first use.
 
 export type Street = {
 	n: number,
 	live: { boolean },
+	done: { boolean }, -- the pair's entry is filled (see fill)
+	spec: any,
+	board: { number },
+	known: { number },
+	boardRung: number,
+	bc: number,
 	q1: { number },
 	q2: { number },
 	q3: { number },
@@ -313,58 +320,97 @@ local function boardCategory(board: { number }, n: number): number
 	return math.min(pairs, 2)
 end
 
+local fill: (Street, number) -> ()
 function Read.street(ctx: Ctx, n: number): Street
 	local st = ctx.streets[n]
 	if st then
 		return st
 	end
-	local board, spec = ctx.board, ctx.cfg.spec
+	-- Hole cards alone don't depend on the board: that street is built once per run, filled for
+	-- every pair, and kept on the config table (as Hand keeps cfg._odds).
+	if n == 0 then
+		local cfg = ctx.cfg
+		local s0 = cfg._readStreet0
+		if s0 == nil then
+			s0 = Read.buildStreet(ctx, 0)
+			for k = 1, NP do
+				fill(s0, k)
+			end
+			cfg._readStreet0 = s0
+		end
+		ctx.streets[0] = s0
+		return s0
+	end
+	st = Read.buildStreet(ctx, n)
+	ctx.streets[n] = st
+	return st
+end
+
+function Read.buildStreet(ctx: Ctx, n: number): Street
+	local board = ctx.board
 	local seen = table.create(52, false)
 	for i = 1, n do
 		seen[board[i] + 1] = true
 	end
 	local live = table.create(NP, false)
-	local q1, q2, q3, q4 = table.create(NP, 0), table.create(NP, 0), table.create(NP, 0), table.create(NP, 0)
-	local own, fsuit, tsuit, key = table.create(NP, 0), table.create(NP, 0), table.create(NP, 0), table.create(NP, 0)
+	for k = 1, NP do
+		live[k] = not seen[PA[k] + 1] and not seen[PB[k] + 1]
+	end
 	local known = table.move(board, 1, n, 1, {})
 	-- At the river the board may make a trick of its own; then ownership needs the full comparison.
 	local boardRung = 0
 	if n == 5 then
 		boardRung = Tricks.rungOf(Cards.evaluate(known).category)
 	end
-	local bc = boardCategory(board, n)
-	for k = 1, NP do
-		local a, b = PA[k], PB[k]
-		if not seen[a + 1] and not seen[b + 1] then
-			live[k] = true
-			q1[k], q2[k], q3[k], q4[k] = points(a, b, board, n, spec)
-			local cat, top, fs, draw = evaluate(a, b, board, n)
-			local rung = Tricks.rungOf(cat)
-			if rung > 0 and boardRung > 0 then
-				local s = Tricks.status({ a, b }, known)
-				rung = s.ownRung
-			end
-			own[k] = rung
-			if rung == 2 or rung == 5 then
-				fsuit[k] = fs
-			end
-			if rung == 1 or rung == 5 then
-				tsuit[k] = Tricks.topSuit({ a, b }, known, top)
-			end
-			-- Odds.key for Bets 3–4: the rider's category, the board's own pairs, the draw flag.
-			if n >= 3 then
-				key[k] = cat * 8 + bc * 2 + (if cat < Cards.STRAIGHT and draw then 1 else 0) + 1
-			end
-		end
-	end
-	st = { n = n, live = live, q1 = q1, q2 = q2, q3 = q3, q4 = q4, own = own, fsuit = fsuit, tsuit = tsuit, key = key, honest = {} }
-	ctx.streets[n] = st
+	local st: Street = {
+		n = n, live = live, done = table.create(NP, false), spec = ctx.cfg.spec, board = board, known = known,
+		boardRung = boardRung, bc = boardCategory(board, n),
+		q1 = table.create(NP, 0), q2 = table.create(NP, 0), q3 = table.create(NP, 0), q4 = table.create(NP, 0),
+		own = table.create(NP, 0), fsuit = table.create(NP, 0), tsuit = table.create(NP, 0), key = table.create(NP, 0),
+		honest = {},
+	}
 	return st
+end
+
+-- Fills one pair's entry at a street, on first use: only pairs a belief still holds are ever built.
+function fill(st: Street, k: number)
+	st.done[k] = true
+	local a, b = PA[k], PB[k]
+	local board, n = st.board, st.n
+	st.q1[k], st.q2[k], st.q3[k], st.q4[k] = points(a, b, board, n, st.spec)
+	if n == 0 then
+		return -- hole cards alone: no trick, and Bets 1–2 key on the class
+	end
+	local cat, top, fs, draw = evaluate(a, b, board, n)
+	local rung = Tricks.rungOf(cat)
+	if rung > 0 and st.boardRung > 0 then
+		rung = Tricks.status({ a, b }, st.known).ownRung
+	end
+	st.own[k] = rung
+	if rung == 2 or rung == 5 then
+		st.fsuit[k] = fs
+	end
+	if rung == 1 or rung == 5 then
+		st.tsuit[k] = Tricks.topSuit({ a, b }, st.known, top)
+	end
+	-- Odds.key for Bets 3–4: the rider's category, the board's own pairs, the draw flag.
+	if n >= 3 then
+		st.key[k] = cat * 8 + st.bc * 2 + (if cat < Cards.STRAIGHT and draw then 1 else 0) + 1
+	end
+end
+
+function Read.entry(st: Street, k: number)
+	if not st.done[k] then
+		fill(st, k)
+	end
 end
 
 -- A pair's unleaned points with its held passive (§6 *Held behavior*), as Hand's points(): the
 -- straight's passive grows with hold h; a spent trick has none.
 local function held(st: Street, k: number, h: number, spent: boolean, spec: any): (number, number, number, number)
+	if not st.done[k] then
+		fill(st, k)
+	end
 	local p1, p2, p3, p4 = st.q1[k], st.q2[k], st.q3[k], st.q4[k]
 	local rung = st.own[k]
 	if rung == 0 or spent then
@@ -411,14 +457,16 @@ Read._held = held
 
 export type Belief = {
 	w: { number },
+	live: { number }, -- the pairs with weight, ascending: every loop over the belief walks these
 	n: number, -- board cards the belief has already excluded
-	skill: number,
+	skill: number, -- readSkill: how far the rider's decisions trust this belief (Hand)
 	skipped: number, -- updates skipped because they left no weight (the opponent rode off script)
+	prune: number, -- a pair below this share of the top weight is dropped (reading.prune)
 	tally: { [string]: number }?, -- bits learned per cue, when a report asks
 	truth: number?, -- the opponent's true pair, for the report's tally only; never read by a rider
 }
 
-function Read.newBelief(myHole: { number }, skill: number, tally: { [string]: number }?, truth: number?): Belief
+function Read.newBelief(myHole: { number }, skill: number, tally: { [string]: number }?, truth: number?, prune: number?): Belief
 	local w = table.create(NP, 1)
 	local m1, m2 = myHole[1], myHole[2]
 	for k = 1, NP do
@@ -427,19 +475,37 @@ function Read.newBelief(myHole: { number }, skill: number, tally: { [string]: nu
 			w[k] = 0
 		end
 	end
-	return { w = w, n = 0, skill = skill, skipped = 0, tally = tally, truth = truth }
+	local live = {}
+	for k = 1, NP do
+		if w[k] > 0 then
+			table.insert(live, k)
+		end
+	end
+	return { w = w, live = live, n = 0, skill = skill, skipped = 0, prune = prune or 0, tally = tally, truth = truth }
 end
 
-local function entropy(w: { number }): number
+-- Drops pairs that lost their weight from the live list.
+local function relive(b: Belief)
+	local w, out = b.w, {}
+	for _, k in b.live do
+		if w[k] > 0 then
+			table.insert(out, k)
+		end
+	end
+	b.live = out
+end
+
+local function entropy(b: Belief): number
+	local w = b.w
 	local sum = 0
-	for k = 1, NP do
+	for _, k in b.live do
 		sum += w[k]
 	end
 	if sum <= 0 then
 		return 0
 	end
 	local h = 0
-	for k = 1, NP do
+	for _, k in b.live do
 		local x = w[k]
 		if x > 0 then
 			local p = x / sum
@@ -460,20 +526,22 @@ function Read.see(b: Belief, board: { number }, n: number)
 			end
 		end
 	end
+	if n > b.n then
+		relive(b)
+	end
 	b.n = math.max(b.n, n)
 end
 
 local L: { number } = table.create(NP, 0)
+local TIME_L: { number } = table.create(NP, 0) -- scratch: stance's timing likelihoods
+local AIMS_L: { number } = table.create(NP, 0)
 
--- Apply likelihoods L[k] (any scale) to every live pair, tempered by skill. `cue` names the tally row.
+-- Apply likelihoods L[k] (any scale) to every live pair: Bayes. `cue` names the tally row.
 local function apply(b: Belief, cue: string)
-	local w, s = b.w, b.skill
-	if s <= 0 then
-		return
-	end
+	local w = b.w
 	local maxL = 0
-	for k = 1, NP do
-		if w[k] > 0 and L[k] > maxL then
+	for _, k in b.live do
+		if L[k] > maxL then
 			maxL = L[k]
 		end
 	end
@@ -482,39 +550,35 @@ local function apply(b: Belief, cue: string)
 		return
 	end
 	local tally = b.tally
-	local h0 = if tally then entropy(w) else 0
+	local prune = b.prune
+	local h0 = if tally then entropy(b) else 0
 	local total, wmax = 0, 0
-	for k = 1, NP do
-		local x = w[k]
-		if x > 0 then
-			x *= (1 - s) + s * L[k] / maxL
-			total += x
-			if x > wmax then
-				wmax = x
-			end
+	for _, k in b.live do
+		local x = w[k] * L[k] / maxL
+		total += x
+		if x > wmax then
+			wmax = x
 		end
 	end
 	if total <= 0 then
 		b.skipped += 1
 		return
 	end
-	-- Normalize to a max of 1 and drop pairs too faint to matter.
-	for k = 1, NP do
-		local x = w[k]
-		if x > 0 then
-			x = x * ((1 - s) + s * L[k] / maxL) / wmax
-			w[k] = if x < 1e-12 then 0 else x
-		end
+	-- Normalize to a max of 1 and drop pairs too faint to matter (reading.prune).
+	for _, k in b.live do
+		local x = w[k] * (L[k] / maxL) / wmax
+		w[k] = if x < prune then 0 else x
 	end
+	relive(b)
 	if tally then
-		tally["bits." .. cue] = (tally["bits." .. cue] or 0) + h0 - entropy(w)
+		tally["bits." .. cue] = (tally["bits." .. cue] or 0) + h0 - entropy(b)
 		tally["n." .. cue] = (tally["n." .. cue] or 0) + 1
 	end
 end
 
 -- color: the lance and shield show the opponent's two hole colors (§7 *Color leak*).
 function Read.color(b: Belief, red: number)
-	for k = 1, NP do
+	for _, k in b.live do
 		L[k] = if PRED[k] == red then 1 else 0
 	end
 	apply(b, "color")
@@ -526,17 +590,23 @@ end
 
 -- The honest stance set: the aims whose lean is worth most on these points (Hand's honestAim picks
 -- one of them). Returns a 16-bit mask and its size.
+-- Aim a = 4·(s − 1) + m sits at cardinal s (m = 0), a half step on (m = 1), the diagonal (m = 2)
+-- or the half step before the next cardinal (m = 3), as Dial.lean weighs them; `share` is
+-- sim.halfStepShare.
 local hv: { number } = table.create(16, 0)
-local function honestSet(lean: { { number } }, p1: number, p2: number, p3: number, p4: number): (number, number)
-	local best = -math.huge
+local function honestSet(share: number, p1: number, p2: number, p3: number, p4: number): (number, number)
 	local v = hv
-	for a = 1, 16 do
-		local w = lean[a]
-		local x = p1 * w[1] + p2 * w[2] + p3 * w[3] + p4 * w[4]
-		v[a] = x
-		if x > best then
-			best = x
-		end
+	local best = -math.huge
+	for s = 1, 4 do
+		local here = if s == 1 then p1 elseif s == 2 then p2 elseif s == 3 then p3 else p4
+		local nxt = if s == 1 then p2 elseif s == 2 then p3 elseif s == 3 then p4 else p1
+		local a = 4 * (s - 1)
+		local x0 = here
+		local x1 = here * share + nxt * (1 - share)
+		local x2 = here * 0.5 + nxt * 0.5
+		local x3 = here * (1 - share) + nxt * share
+		v[a + 1], v[a + 2], v[a + 3], v[a + 4] = x0, x1, x2, x3
+		best = math.max(best, x0, x1, x2, x3)
 	end
 	local mask, size = 0, 0
 	for a = 1, 16 do
@@ -551,21 +621,18 @@ Read._honestSet = honestSet
 
 -- The honest stance sets of every live pair at a street (passive at full hold, as Hand's stance),
 -- built once per hand and shared.
-local function honestAt(ctx: Ctx, st: Street, spent: boolean): ({ number }, { number })
+-- The honest stance set of a pair at a street (passive at full hold, as Hand's stance), cached.
+local function honestAt(ctx: Ctx, st: Street, spent: boolean, k: number): (number, number)
 	local hs = st.honest[spent]
 	if hs == nil then
-		local mask, size = table.create(NP, 0), table.create(NP, 0)
-		local spec = ctx.cfg.spec
-		for k = 1, NP do
-			if st.live[k] then
-				local p1, p2, p3, p4 = held(st, k, 1, spent, spec)
-				mask[k], size[k] = honestSet(ctx.lean, p1, p2, p3, p4)
-			end
-		end
-		hs = { mask = mask, size = size }
+		hs = { mask = table.create(NP, -1), size = table.create(NP, 0) }
 		st.honest[spent] = hs
 	end
-	return hs.mask, hs.size
+	if hs.mask[k] < 0 then
+		local p1, p2, p3, p4 = held(st, k, 1, spent, st.spec)
+		hs.mask[k], hs.size[k] = honestSet(ctx.cfg.sim.halfStepShare, p1, p2, p3, p4)
+	end
+	return hs.mask[k], hs.size[k]
 end
 
 local function inMask(mask: number, aim: number): boolean
@@ -594,19 +661,43 @@ function Read.stance(b: Belief, ctx: Ctx, obs: StanceObs, q: any)
 	local eps = cfg.reading.timeFloor
 	local planP = if obs.pass == 4 then 1 else aq
 	local w = b.w
-	local timeL = table.create(NP, 0)
-	local maskP, sizeP = honestAt(ctx, sp, obs.spent)
-	local maskN, sizeN = honestAt(ctx, sn, obs.spent)
-	for k = 1, NP do
-		if w[k] > 0 then
+	local timeL = TIME_L
+	local anyDesign = false
+	for _, k in b.live do
+		do
+			Read.entry(sp, k)
+			Read.entry(sn, k)
 			local ownP = if obs.spent then 0 else sp.own[k]
 			local ownN = sn.own[k]
 			-- Branch weights: d = planned and played to design (aim locked, committed at once).
 			local pd = if ownP == 1 or ownP == 2 or ownP == 5 then planP * dq else 0
 			local pTime = if obs.early then pd * (1 - eps) + (1 - pd) * eps else pd * eps + (1 - pd) * (1 - eps)
 			timeL[k] = pTime
-			local mP, nP = maskP[k], sizeP[k]
-			local mN, nN = maskN[k], sizeN[k]
+			if pd > 0 then
+				anyDesign = true
+			end
+			local mP, nP = honestAt(ctx, sp, obs.spent, k)
+			local mN, nN = honestAt(ctx, sn, obs.spent, k)
+			if sp.own[k] == 0 and ownN == 0 then
+				-- No trick at either street (most pairs): honest or a random aim, and an honest rider
+				-- re-stances after the reveal when its aim is no longer among the best.
+				local a0, a1 = obs.a0, obs.a1
+				local pa = 0
+				if inMask(mP, a0) then
+					local q1: number
+					if reveal and not inMask(mN, a0) then
+						q1 = if inMask(mN, a1) then 1 / nN else 0
+					else
+						q1 = if a1 == a0 then 1 else 0
+					end
+					pa += hq / nP * q1
+				end
+				if a1 == a0 then
+					pa += (1 - hq) / 16
+				end
+				L[k] = pa
+				continue
+			end
 			-- A trick that lands on this reveal: planned and played to design locks the aim, and a
 			-- flush moves home (Hand's reveal block).
 			local land = reveal and not obs.spent and ownN > 0 and sp.own[k] == 0
@@ -669,17 +760,25 @@ function Read.stance(b: Belief, ctx: Ctx, obs: StanceObs, q: any)
 			end
 			-- The aims' likelihood given the timing, so the two tallies add to the whole.
 			L[k] = if pTime > 0 then total / pTime else 0
-		else
-			timeL[k] = 0
 		end
 	end
-	-- Timing first, then the aims given the timing.
-	local aims = table.move(L, 1, NP, 1, table.create(NP, 0))
-	table.move(timeL, 1, NP, 1, L)
+	-- Timing first, then the aims given the timing. With no trick played to its design among the
+	-- pairs, the timing says nothing about the cards (the script ties hold to the rider).
 	if cfg.reading.cues.timing == 1 then
-		apply(b, "timing")
+		if anyDesign then
+			local live = b.live
+			for _, k in live do
+				AIMS_L[k], L[k] = L[k], timeL[k]
+			end
+			apply(b, "timing")
+			for _, k in live do
+				L[k] = AIMS_L[k]
+			end
+		elseif b.tally then
+			local tally = b.tally :: { [string]: number }
+			tally["n.timing"] = (tally["n.timing"] or 0) + 1
+		end
 	end
-	table.move(aims, 1, NP, 1, L)
 	if cfg.reading.cues.stance == 1 then
 		apply(b, "stance")
 	end
@@ -688,8 +787,11 @@ end
 -- unleash: an announced unleash names the rung, and a flush its suit (§6 *Unleash rules*).
 function Read.unleash(b: Belief, ctx: Ctx, n: number, rung: number, suit: number?)
 	local st = Read.street(ctx, n)
-	for k = 1, NP do
-		L[k] = if st.own[k] == rung and (suit == nil or st.fsuit[k] == suit) then 1 else 0
+	for _, k in b.live do
+		if b.w[k] > 0 then
+			Read.entry(st, k)
+			L[k] = if st.own[k] == rung and (suit == nil or st.fsuit[k] == suit) then 1 else 0
+		end
 	end
 	apply(b, "unleash")
 end
@@ -740,9 +842,12 @@ function Read.contact(b: Belief, ctx: Ctx, obs: ContactObs)
 	local base = spec.statBase
 	local restore = pips(spec.cleanBlockRestore, cfg)
 	local beat = cfg.reading.heal == "beat"
-	local healL = table.create(NP, 0)
+	local healL = TIME_L -- scratch
 	local w = b.w
-	for k = 1, NP do
+	-- Aims are public, so both tiers are known before any pair is tried.
+	local tierIn = Dial.tier(obs.oAim, obs.me.aim, spec)
+	local tierOut = Dial.tier(obs.me.aim, obs.oAim, spec)
+	for _, k in b.live do
 		if w[k] > 0 then
 			local p1, p2, p3, p4 = held(st, k, obs.oH, obs.oSpent, spec)
 			S[1] = base + p1 * (1 + lam * lw[1])
@@ -750,14 +855,14 @@ function Read.contact(b: Belief, ctx: Ctx, obs: ContactObs)
 			S[3] = base + p3 * (1 + lam * lw[3])
 			S[4] = base + p4 * (1 + lam * lw[4])
 			F.buffer = sim.heartBuffer * p3 * lam * lw[3]
-			local taken = Contact.strike(F, obs.me, obs.arena, cfg)
-			local dealt = Contact.strike(obs.me, F, obs.arena, cfg)
-			local myP = obs.myBefore - pips(taken.dmg, cfg)
-			if taken.cleanBlock then
+			local takenDmg, takenClean = Contact.plain(F, obs.me, tierIn, obs.arena, cfg)
+			local dealtDmg, dealtClean = Contact.plain(obs.me, F, tierOut, obs.arena, cfg)
+			local myP = obs.myBefore - pips(takenDmg, cfg)
+			if takenClean then
 				myP = math.min(obs.myMax, myP + restore)
 			end
-			local oP = obs.oBefore - pips(dealt.dmg, cfg)
-			if dealt.cleanBlock then
+			local oP = obs.oBefore - pips(dealtDmg, cfg)
+			if dealtClean then
 				oP = math.min(obs.oMax, oP + restore)
 			end
 			-- The heal (Hand, step 7): a share of what the contact took, by unleaned ♥ points.
@@ -794,7 +899,7 @@ end
 function Read.sample(b: Belief, m: number): { number }
 	local w = b.w
 	local total = 0
-	for k = 1, NP do
+	for _, k in b.live do
 		total += w[k]
 	end
 	local out = table.create(m, 0)
@@ -802,7 +907,7 @@ function Read.sample(b: Belief, m: number): { number }
 		return {}
 	end
 	local acc, i = 0, 1
-	for k = 1, NP do
+	for _, k in b.live do
 		local x = w[k]
 		if x > 0 then
 			acc += x
@@ -831,7 +936,7 @@ function Read.keyWeights(b: Belief, ctx: Ctx, bet: number, n: number): { [number
 	local out: { [number]: number } = {}
 	local w = b.w
 	if bet <= 2 or n < 3 then
-		for k = 1, NP do
+		for _, k in b.live do
 			local x = w[k]
 			if x > 0 then
 				local c = PCLASS[k]
@@ -839,10 +944,12 @@ function Read.keyWeights(b: Belief, ctx: Ctx, bet: number, n: number): { [number
 			end
 		end
 	else
-		local key = Read.street(ctx, n).key
-		for k = 1, NP do
+		local st = Read.street(ctx, n)
+		local key = st.key
+		for _, k in b.live do
 			local x = w[k]
 			if x > 0 then
+				Read.entry(st, k)
 				local c = key[k]
 				out[c] = (out[c] or 0) + x
 			end
@@ -858,7 +965,7 @@ function Read.truthShare(b: Belief): number
 		return 0
 	end
 	local total = 0
-	for k = 1, NP do
+	for _, k in b.live do
 		total += b.w[k]
 	end
 	return if total > 0 then b.w[t] / total else 0
