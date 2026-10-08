@@ -430,9 +430,7 @@ reshape the yard. Not built; noted for issue 6.
 Nothing here is applied.
 
 1. **Board weight ¼ vs ½:** still a small effect.
-2. **Carry in a split pot:** how does a split pot share the two riders' carry? (A rider who leaves
-   the yard keeps their carry for their next match: 0085.)
-3. **Yields under the betting rider:** a rider that Yields on its odds ends 55% of hands with a
+2. **Yields under the betting rider:** a rider that Yields on its odds ends 55% of hands with a
    Yield, mostly after the flop. If players bet the same way, most matches end in a Yield before the
    river. Is that the betting you want, or a question for the betting rules?
 
