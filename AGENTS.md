@@ -21,8 +21,9 @@ else. If you think one is missing, say so in chat or the PR and leave this secti
 
 - **Build what GAME_SPEC says.** Where it is silent, ambiguous or contradicts itself, stop and ask
   Trey with the options. Don't fill the gap yourself.
-- **Respect the §1 Status table.** *Settled*: build to it. *Proposed, needs sim*: build it as config,
-  since it is not final. *Deferred to v2*: don't build it. *Open*: don't answer it.
+- **Respect the §1 Status table.** *Settled*: build to it. *Proposed, needs sim*, *Proposed, needs
+  playtest* and *Starting values*: build it as config, since it is not final. *Deferred to v2*: don't
+  build it. *Open*: don't answer it.
 - **Tuning numbers are the §11 parameter table.** Per §11 they are the sim's config: keep them in one
   place and don't change their values.
 - **The §11 open questions stay open** until Trey answers them.

@@ -49,21 +49,21 @@ Also important: **learnability** (for example, betting is beginner-ignorable, §
 | Aim lean: the stat compass; a lean multiplies card points | §4 | Settled for v1, numbers tunable |
 | Stat meter: your own stats, live as you rotate | §4 | Settled in shape |
 | The four stats: what they are and what they do | §4 | Settled in shape |
-| Card values, board weight and hand multipliers | §4 | Proposed, needs sim |
-| Contact resolution, Posture and the showdown knockdown | §4 | Proposed, needs sim |
+| Card values, board weight and hand multipliers | §4 | Settled for v1, numbers tunable |
+| Contact resolution, Posture and the showdown knockdown | §4 | Settled for v1, numbers tunable |
 | Posture in half hearts | §4 | Settled |
 | Broadway cards: rank value only, no effects in v1 | §5 | Settled for v1 |
 | Tricks: ladder, ownership, held and unleash rules, trick vs trick | §6 | Settled in shape |
-| Trick effects on the unleash pass | §6 | Proposed, needs sim |
-| Board-made tricks | §6 | Proposed, needs sim |
+| Trick effects on the unleash pass | §6 | Settled for v1, numbers tunable |
+| Board-made tricks | §6 | Settled in shape; arena multipliers are placeholders |
 | Information design | §7 | Settled |
-| Pass timeline | §8 | Proposed, needs sim |
+| Pass timeline | §8 | Proposed, needs playtest |
 | Presentation: arena reveals, setup/counter animation | §8 | Settled in shape |
 | What we take from rblx-joust-tourney | §9 | Settled |
 | Classes and alternate dials | §10 | Deferred to v2 |
 | Spur and momentum (a second run-up currency) | §9 | Deferred to v2 |
 | Economy: currency, currency-side stakes, monetization | §11 | Open |
-| Tuning parameters | §11 | Proposed, needs sim |
+| Tuning parameters | §11 | Starting values, tuned in playtest |
 
 ## 2. Hand structure and betting
 
