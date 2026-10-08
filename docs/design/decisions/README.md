@@ -124,4 +124,6 @@ Add a row below in the same commit. Check the latest `main` for the next free id
 
 | [0096](0096-the-sim-phase-closes.md) | The sim phase closes; what the sim backs is settled for v1, the rest waits on a playtest | 2026-10-08 |
 
-Next free id: **0097**.
+| [0097](0097-first-playable-slice.md) | The first playable slice is one numeric hand against a scripted bot, with betting and cue logging | 2026-10-08 |
+
+Next free id: **0098**.

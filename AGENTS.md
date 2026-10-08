@@ -59,4 +59,6 @@ All sim values live in `sim/Config.luau`. What the sim found is in
 
 ## Next step
 
-GAME_SPEC §11: "a headless sim of one hand, using the parameters below as config."
+The first playable slice in Roblox (0097): one numeric hand against a scripted bot, with betting
+and cue logging; no tricks and no yard yet. The headless sim (`sim/`) is the rules reference, and
+its values in `sim/Config.luau` are the starting values (0096).
