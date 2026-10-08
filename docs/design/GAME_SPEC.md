@@ -81,7 +81,8 @@ matched.
 - A rider who doesn't want their hand prefolds it and is dealt a new one after a short delay
   (0080).
 - A prefold costs units. They ride with the rider as their **carry**: the carry goes into the pot
-  of the rider's next match, and that match's winner takes both riders' carry (0078).
+  of the rider's next match, and that match's winner takes both riders' carry (0078). A rider who
+  leaves the yard keeps their carry for their next match, whenever that is (0085).
 - The prefold price is set so that riders keep about 75% of the hands they are dealt (§11, 0079).
 - A rider who keeps their hand steps forward and meets their match. Matchmaking happens behind
   the scenes, among riders who kept their hands, and pairs them by how long they have waited, on

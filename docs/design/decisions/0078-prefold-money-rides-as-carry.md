@@ -70,5 +70,5 @@ Trey chose **carry**.
 - The sim models carry at its average: every kept match's pot holds 2c(1 − k)/k of carry on top of
   the bets (`switches.prefold = "carry"`, `--report yard`). The pooled purse and the sink stay as
   readings to compare.
-- Still to settle (questions for Trey, not answered here): what happens to a rider's carry if they
-  leave the yard before they keep a hand, and how a split pot shares the carry.
+- Still to settle (a question for Trey, not answered here): how a split pot shares the carry. A
+  rider who leaves the yard keeps their carry for their next match (0085).
