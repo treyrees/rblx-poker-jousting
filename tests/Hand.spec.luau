@@ -25,6 +25,23 @@ kit.describe("Hand", function()
 			kit.expectNear(r.units[1] + r.units[2], 0)
 		end
 	end)
+	kit.it("the ♠/♦ extra-time re-read (0069) is blind to seat order", function()
+		-- Before both extra times were measured once, seat 1 was checked first and seat 2 then
+		-- re-read against seat 1's new aim: in a mirror of riders who read every pass, seat 1 won
+		-- about 38%. Seat-blind, the mirror is even.
+		local c = Config.defaults()
+		local rng = rngFrom(3)
+		local wins = { 0, 0 }
+		local n = 6000
+		for i = 1, n do
+			local r = Hand.play(c, rng, c.riders.flicker, c.riders.flicker, (i % 2) + 1)
+			if r.winner > 0 then
+				wins[r.winner] += 1
+			end
+		end
+		local share = wins[1] / n
+		kit.expectTrue(share > 0.45 and share < 0.55, string.format("seat 1 won %.1f%% of a flicker mirror", share * 100))
+	end)
 	kit.it("the same seed plays the same hands", function()
 		local a, b = rngFrom(99), rngFrom(99)
 		for _ = 1, 200 do

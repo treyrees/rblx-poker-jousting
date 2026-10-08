@@ -1,5 +1,10 @@
 # Sim results: one hand
 
+**Oct 8, 2026, later: seat order (0102).** The ♠/♦ late re-read (0069) was checked in seat order,
+which gave seat 2 the last word. It is fixed; *Seat order* below has the run before and after.
+Figures elsewhere in this file were run before the fix: in the default mirror they move by under a
+point, and a matchup where one rider reads more often moves more.
+
 Oct 8, 2026. GAME_SPEC through decision 0095. The reading model (0089–0095) is new; it is off by
 default, so nothing above *What the bar's information is worth* moved. Before that, through 0083,
 and since the run of Oct 7 (through 0076):
@@ -497,7 +502,9 @@ swings more (43–52 points against 0087's 30–37). Compare readers with the "o
 0087's numbers.
 
 A reader row puts the reader in seat 1. Seat 1 wins 48.9% (ridden out) and 49.3% (betting rider) in
-the mirror with reading off, so those are the controls.
+the mirror with reading off, so those are the controls. (These rows predate the seat fix, *Seat
+order*: seat 1 now wins 50.0% ridden out and 49.9% under the betting rider. Compare each reader row
+with its own control, as before.)
 
 | Row (100k hands) | Seat 1 wins | Units/hand | Yield | P1 pooled behind / ahead | Cards swing | Lead swing | 12+ lead, worse cards |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -562,6 +569,44 @@ riders reading perfectly. At the profile skills (.9 v .1) the skilled rider's ed
 - **Pruning.** A pair below 1/10,000 of the top weight is dropped, for speed. When a bet the floor
   allowed has pushed the true pair out, a later update can find no pair left and is skipped: 12 times
   in the both-read mirror's 200k beliefs.
+
+## Seat order (0102)
+
+Seat 1 won 48.8–48.9% of an average-vs-average mirror. The sim's switches located it: with
+`riders.average.read=0` or `sim.extraTime=0` the mirror is even (49.9% each), and the other
+switches tried (honesty 0 or 1, aggression 0, the betting rider) leave it at 48.9–49.0%. So the
+asymmetry came from the late re-read of a rider leaning further into ♠ or ♦ (0069), not from the
+rules.
+
+**The cause.** When both riders read, `Hand.play` checked seat 1 first: if seat 1 had more extra
+time, it re-read and moved. Seat 2 was then checked against seat 1's *new* aim, and could re-read
+too. Seat 2 got the last word more often. In a mirror of riders who read every pass (`flicker`),
+seat 1 won 37.8%.
+
+**The fix.** Both extra times are measured once, on the aims both reads landed, and only the rider
+with more extra time re-reads (`sim/Hand.luau`). `tests/Hand.spec.luau` checks that a flicker
+mirror is even. No value changed.
+
+| 100k hands, seed 20260930 | Before | After |
+| --- | --- | --- |
+| Average mirror: seat 1 wins | 48.8% | 50.0% |
+| Average mirror, betting rider: seat 1 wins | 49.3% (the reading report's control) | 49.9% |
+| Flicker mirror (seed 3): seat 1 wins | 37.8% | 49.7% |
+| Better river category wins, gaps 1 / 2 / 3 | 77.3 / 91.4 / 95.2% | 77.3 / 91.2 / 95.8% |
+| Knockouts, Passes 1 / 2 / 3 | 0 / 1.5 / 9.0% | 0 / 1.5 / 9.1% |
+| Skilled (seat 1) beats novice with the worse category | 64.4% | 65.2% |
+| Skilled (seat 1) beats average with the worse category | 37.1% | 41.0% |
+| Skilled (seat 1) beats novice, all hands | 81.7% | 82.0% |
+| Skilled (seat 1) beats average, all hands | 66.8% | 69.0% |
+| Trick above, unleashed, to design or not | 94.8% | 94.9% |
+| Higher trick beats lower | 99.2% | 99.2% |
+
+The matchups report seats the stronger reader in seat 1, which the old order handicapped, so those
+rows move most.
+
+**For Trey.** The skill flip (pillar 2, 0054: 55–65%) reads 65.2% after the fix, 0.2 points over
+the band, on 22,469 hands (a standard error of about 0.3 points). The headline table's 64.7% is a
+sweep figure from before the fix. Nothing is changed for it.
 
 ## Questions for Trey
 
