@@ -658,14 +658,17 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 			local w = Dial.lean(r.aim, sim.halfStepShare)
 			return sim.extraTime * math.min(1, w[2] + w[4])
 		end
+		-- Both extra times are measured once, on the aims both reads landed, before either rider
+		-- re-reads: checking seat 1 first and then seat 2 against seat 1's new aim gave seat 2 the
+		-- last word more often (seat 1 won 48.9% of an average mirror).
 		if #readers == 2 then
-			for _, r in riders do
-				local o = riders[3 - r.id]
-				if extraTime(r) > extraTime(o) + 1e-9 then
-					local a = bestResponse(r, o, o.aim, o.tAim)
-					if a ~= r.aim then
-						r.aim, r.tAim = a, sim.readTime
-					end
+			local e1, e2 = extraTime(riders[1]), extraTime(riders[2])
+			local last = if e1 > e2 + 1e-9 then riders[1] elseif e2 > e1 + 1e-9 then riders[2] else nil
+			if last then
+				local o = riders[3 - last.id]
+				local a = bestResponse(last, o, o.aim, o.tAim)
+				if a ~= last.aim then
+					last.aim, last.tAim = a, sim.readTime
 				end
 			end
 		end
@@ -943,7 +946,9 @@ end
 -- the default script, which never Yields, so every spot is scored on the hand ridden to its end.
 -- Its own RNG (sim.oddsSeed) leaves the main run's stream alone. Hand.play builds it on first use
 -- and keeps it on the config table as cfg._odds.
-function Hand.calibrate(cfg: any): Odds.Table
+-- `onBatch`, if given, is called every `batch` hands so a live server can yield between batches
+-- (the slice calls task.wait there; the sim and its tests pass nothing and run straight through).
+function Hand.calibrate(cfg: any, batch: number?, onBatch: (() -> ())?): Odds.Table
 	local c = table.clone(cfg)
 	c.switches = table.clone(cfg.switches)
 	c.switches.betting = "script"
@@ -964,11 +969,18 @@ function Hand.calibrate(cfg: any): Odds.Table
 			local won = if r.winner == who then 1 elseif r.winner == 0 then 0.5 else 0
 			table.insert(spots, { s[1], s[3], s[4], won, s[5] })
 		end
+		if onBatch and batch and i % batch == 0 then
+			onBatch()
+		end
 	end
 	return Odds.build(spots)
 end
 
--- Exposed for tests.
+-- Shared with the game (the playable slice builds its riders' stats and the bot's honest stance
+-- from these) and with the tests.
+Hand.statsAt = statsAt
+Hand.honestAim = honestAim
+Hand.publicPoints = publicPoints
 Hand._statsAt = statsAt
 Hand._honestAim = honestAim
 

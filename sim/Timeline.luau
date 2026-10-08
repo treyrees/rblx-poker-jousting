@@ -46,6 +46,16 @@ function Timeline.hold(t: number?, cfg: any, hasReveal: boolean): number
 	return counted(t, lock, cfg, hasReveal) / counted(0, lock, cfg, hasReveal)
 end
 
+-- The hold meter's live reading (§3 *Held aim*: the hold meter is public): the fraction of the run-up
+-- an aim committed at t has been held by `now`. Equals Timeline.hold once now reaches aim lock.
+function Timeline.holdAt(t: number?, now: number, cfg: any, hasReveal: boolean): number
+	if t == nil then
+		return 0
+	end
+	local lock = cfg.spec.timeline.lock
+	return counted(t, math.min(now, lock), cfg, hasReveal) / counted(0, lock, cfg, hasReveal)
+end
+
 -- Strike power and Guard armor multiplier: floor + (1 − floor)·h. §11: 0.25 + 0.75 × h (0052).
 function Timeline.mult(h: number, cfg: any): number
 	local f = cfg.spec.holdFloor
