@@ -101,5 +101,11 @@ Add a row below in the same commit. Check the latest `main` for the next free id
 | [0075](0075-posture-counts-in-half-hearts.md) | Posture counts in half hearts; a trips-sized hit may say "trips" | 2026-10-07 |
 | [0076](0076-spur-and-momentum-deferred-to-v2.md) | Spur and momentum are deferred to v2 | 2026-10-07 |
 | [0077](0077-the-fixed-limit-is-the-wager-limit.md) | The fixed limit is the wager limit; no pot cap in v1 | 2026-10-08 |
+| [0078](0078-prefold-money-rides-as-carry.md) | Prefold payments ride with the rider as carry, into their next match's pot | 2026-10-08 |
+| [0079](0079-the-yard-keeps-75-percent.md) | The yard keeps 75% of dealt hands; the prefold price is set to hold it | 2026-10-08 |
+| [0080](0080-prefold-costs-units-and-a-delay.md) | A prefold costs units and a short delay | 2026-10-08 |
+| [0081](0081-yield-only-facing-a-raise.md) | A rider can Yield only when facing a raise | 2026-10-08 |
+| [0082](0082-one-stake-in-v1.md) | One stake in v1 | 2026-10-08 |
+| [0083](0083-matchmaker-pairs-on-wait-time.md) | The matchmaker pairs kept hands on wait time alone, blind to hole cards | 2026-10-08 |
 
-Next free id: **0078**.
+Next free id: **0085** (0084, the first match's button, is in its own PR).

@@ -46,8 +46,9 @@ The headless sim (`sim/`, `tools/sim.luau`) and its tests run under [Lune](https
 
 - Tests: `lune run tests/run.luau`. Set `TESTKIT_QUIET=1` to print only failures.
 - Sim, baseline report (100k hands): `lune run tools/sim.luau`.
-- Other reports: `--report sweeps|matchups|floor|gap|showdown|proto`. `--only text` runs the sweep
-  or proto rows whose label contains it; `--shard i/n` runs every n-th row.
+- Other reports: `--report sweeps|matchups|floor|gap|showdown|proto|bets|yard`. `--only text` runs
+  the sweep, proto, bets or yard rows whose label contains it; `--shard i/n` runs every n-th row.
+  The yard report wants `--hands 2000000`: it tallies by starting-hand class pair.
 - Override one config value: `--set path=value`, for example `--set sim.lean=2`.
 - Quick check that it runs: `--smoke`.
 
