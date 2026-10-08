@@ -567,14 +567,14 @@ riders reading perfectly. At the profile skills (.9 v .1) the skilled rider's ed
 
 Nothing here is applied.
 
-1. **Board weight ¼ vs ½:** still a small effect.
-2. **Should the sim's riders commit earlier with better hands?** Today hold and the first exit from
-   Neutral come from the rider's profile alone, so they carry no card information (*What the bar's
-   information is worth*). Tying them to the hand is a model choice that would give §7's hold and
-   timing tells a value. Options: leave it; commit time shifts with the rider's own odds; or both,
-   as a switch.
+1. **What makes a rider hold?** Today hold and the first exit from Neutral come from the rider's
+   profile alone, so they carry no card information (*What the bar's information is worth*). Trey
+   (Oct 8): "hold vs wild on the dial can take many inputs, hand strength can be one. not worth
+   falling on anything yet. worth considering what DOES incentivize holding, at some point." Open;
+   the playable slice's cue log (0097) will show what real riders do.
 
-Answered: Yields under the betting rider led to 0087 (the Posture bar is mostly information). No
+Answered: board weight stays ½ (0096: the sim phase closes, and §1's Status table settles what the
+sim backs). Yields under the betting rider led to 0087 (the Posture bar is mostly information). No
 rule changes; the reading model is the step that prices the information half.
 
 ## Limits of this model

@@ -21,8 +21,9 @@ else. If you think one is missing, say so in chat or the PR and leave this secti
 
 - **Build what GAME_SPEC says.** Where it is silent, ambiguous or contradicts itself, stop and ask
   Trey with the options. Don't fill the gap yourself.
-- **Respect the §1 Status table.** *Settled*: build to it. *Proposed, needs sim*: build it as config,
-  since it is not final. *Deferred to v2*: don't build it. *Open*: don't answer it.
+- **Respect the §1 Status table.** *Settled*: build to it. *Proposed, needs sim*, *Proposed, needs
+  playtest* and *Starting values*: build it as config, since it is not final. *Deferred to v2*: don't
+  build it. *Open*: don't answer it.
 - **Tuning numbers are the §11 parameter table.** Per §11 they are the sim's config: keep them in one
   place and don't change their values.
 - **The §11 open questions stay open** until Trey answers them.
@@ -58,4 +59,6 @@ All sim values live in `sim/Config.luau`. What the sim found is in
 
 ## Next step
 
-GAME_SPEC §11: "a headless sim of one hand, using the parameters below as config."
+The first playable slice in Roblox (0097): one numeric hand against a scripted bot, with betting
+and cue logging; no tricks and no yard yet. The headless sim (`sim/`) is the rules reference, and
+its values in `sim/Config.luau` are the starting values (0096).
