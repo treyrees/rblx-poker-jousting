@@ -14,6 +14,11 @@
 --   flush or to a straight, using a hole card): 1..72.
 -- The lead acts on the log-odds, the same shift for every hand key at that bet, so a sparse key still
 -- gets a sensible estimate.
+--
+-- The reading model (reading.betting = "belief", sim/Read.luau, 0090) also tallies the same spots
+-- in pairs, by the rider's key and the opponent's: the odds of this hand against that one. A reader
+-- averages them over its belief about the opponent's hand. A rare pairing leans on its prior: the
+-- two keys' own odds set against each other.
 
 local Cards = require("./Cards")
 
@@ -23,9 +28,11 @@ export type Table = {
 	base: { { [number]: number } }, -- per bet: hand key → win share (shrunk toward the bet's mean)
 	lead: { { [number]: number } }, -- per bet: lead bucket → log-odds shift
 	mean: { number }, -- per bet: overall win share
+	pair: { { [number]: { [number]: { number } } } }, -- per bet: key → opponent key → {hands, wins}
 }
 
 local PRIOR = 20 -- pseudo-hands at the bet's mean, so a rare key isn't read off a handful of hands
+local PAIR_PRIOR = 10 -- pseudo-hands at a pairing's prior (the two keys' own odds set against each other)
 
 -- Posture lead (own − opponent, in half hearts) → bucket 1..7; 4 is level.
 function Odds.bucket(lead: number): number
@@ -132,15 +139,32 @@ local function logit(p: number): number
 	return math.log(p / (1 - p))
 end
 
--- Builds the table from tallied spots: {bet, key, bucket, won} with won 1, 0.5 (split) or 0.
+-- Builds the table from tallied spots: {bet, key, bucket, won, opponent key?} with won 1, 0.5
+-- (split) or 0.
 function Odds.build(spots: { { number } }): Table
 	local n: { { [number]: number } } = { {}, {}, {}, {} }
 	local w: { { [number]: number } } = { {}, {}, {}, {} }
 	local bn: { { [number]: number } } = { {}, {}, {}, {} }
 	local bw: { { [number]: number } } = { {}, {}, {}, {} }
 	local tn, tw = { 0, 0, 0, 0 }, { 0, 0, 0, 0 }
+	local pair: { { [number]: { [number]: { number } } } } = { {}, {}, {}, {} }
 	for _, s in spots do
 		local b, k, l, won = s[1], s[2], s[3], s[4]
+		local ok = s[5]
+		if ok then
+			local row = pair[b][k]
+			if row == nil then
+				row = {}
+				pair[b][k] = row
+			end
+			local cell = row[ok]
+			if cell == nil then
+				cell = { 0, 0 }
+				row[ok] = cell
+			end
+			cell[1] += 1
+			cell[2] += won
+		end
 		n[b][k] = (n[b][k] or 0) + 1
 		w[b][k] = (w[b][k] or 0) + won
 		bn[b][l] = (bn[b][l] or 0) + 1
@@ -148,7 +172,7 @@ function Odds.build(spots: { { number } }): Table
 		tn[b] += 1
 		tw[b] += won
 	end
-	local t: Table = { base = { {}, {}, {}, {} }, lead = { {}, {}, {}, {} }, mean = { 0.5, 0.5, 0.5, 0.5 } }
+	local t: Table = { base = { {}, {}, {}, {} }, lead = { {}, {}, {}, {} }, mean = { 0.5, 0.5, 0.5, 0.5 }, pair = pair }
 	for b = 1, 4 do
 		local m = if tn[b] > 0 then tw[b] / tn[b] else 0.5
 		t.mean[b] = m
@@ -166,6 +190,34 @@ end
 -- The rider's estimated chance to win from this spot, 0..1.
 function Odds.estimate(t: Table, bet: number, key: number, bucket: number): number
 	local p = t.base[bet][key] or t.mean[bet]
+	local x = logit(p) + (t.lead[bet][bucket] or 0)
+	return 1 / (1 + math.exp(-x))
+end
+
+-- This hand's odds against one opponent hand key, with no lead: the pairing's tally, shrunk toward
+-- the two keys' own odds set against each other.
+function Odds.paired(t: Table, bet: number, key: number, oppKey: number): number
+	local m = t.mean[bet]
+	local p = t.base[bet][key] or m
+	local q = t.base[bet][oppKey] or m
+	local prior = 1 / (1 + math.exp(-(logit(p) - logit(q))))
+	local row = t.pair[bet][key]
+	local cell = if row then row[oppKey] else nil
+	if cell == nil then
+		return prior
+	end
+	return (cell[2] + PAIR_PRIOR * prior) / (cell[1] + PAIR_PRIOR)
+end
+
+-- The reader's odds (reading.betting = "belief"): the paired odds averaged over its belief's weight
+-- on each opponent key, then the same lead shift as Odds.estimate.
+function Odds.estimateBelief(t: Table, bet: number, key: number, weights: { [number]: number }, bucket: number): number
+	local num, den = 0, 0
+	for ok, w in weights do
+		num += w * Odds.paired(t, bet, key, ok)
+		den += w
+	end
+	local p = if den > 0 then num / den else (t.base[bet][key] or t.mean[bet])
 	local x = logit(p) + (t.lead[bet][bucket] or 0)
 	return 1 / (1 + math.exp(-x))
 end

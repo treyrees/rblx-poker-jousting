@@ -113,4 +113,10 @@ Add a row below in the same commit. Check the latest `main` for the next free id
 | [0087](0087-the-posture-bar-is-mostly-information.md) | The Posture bar's main value is information; its health lead is meaningful but not decisive | 2026-10-08 |
 | [0088](0088-no-preflop-redraw.md) | There is no preflop redraw; the prefold is the one hand-selection tool | 2026-10-08 |
 
-Next free id: **0089**.
+| [0089](0089-the-reader-believes-hole-pairs.md) | The sim's reader keeps a belief over the opponent's hole pair, updated by every card cue | 2026-10-08 |
+| [0090](0090-the-belief-drives-aim-and-betting.md) | The reader's belief drives both aim reads and betting, each behind its own switch | 2026-10-08 |
+| [0091](0091-read-skill-is-one-dial.md) | Read skill is one dial from 0 (learns nothing) to 1 (exact Bayes) | 2026-10-08 |
+| [0092](0092-reporting-the-bar-s-information.md) | The bar's information is reported as 0087's table plus a reader, with bits per cue | 2026-10-08 |
+| [0093](0093-the-heal-shows-as-its-own-beat.md) | The ♥ buffer nets into the hit; the ♥ heal after contact shows as its own beat | 2026-10-08 |
+
+Next free id: **0094**.

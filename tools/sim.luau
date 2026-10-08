@@ -8,10 +8,11 @@
 --   lune run tools/sim.luau --report proto           -- the showdown prototypes (docs/sim/SHOWDOWN.md)
 --   lune run tools/sim.luau --report bets            -- the betting rider's bands: pots and losses
 --   lune run tools/sim.luau --report yard            -- the yard: prefold price, kept share, kept range
+--   lune run tools/sim.luau --report info            -- the reading model: the bar's information vs its health lead
 --   lune run tools/sim.luau --set sim.lean=2 --set spec.showdownBonus=10
 --   lune run tools/sim.luau --smoke                  -- 5k hands: checks it runs; rates not citable
 --
--- Options: --hands N, --seed S, --shard i/n (sweeps, proto, bets and yard: run every n-th row, for
+-- Options: --hands N, --seed S, --shard i/n (sweeps, proto, bets, yard and info: run every n-th row, for
 -- parallel runs), --only text (the same reports: only rows whose label contains it), --set path=value (repeatable; paths as in sim/Config.luau),
 -- --p1 / --p2 rider profile for the baseline report (default average vs average).
 -- Unknown arguments are an error, so a typo never prints a confident report for the wrong run.
@@ -512,6 +513,133 @@ local YARD: { { any } } = {
 	{ "bands raise .60, yield .35", bands(flat(0.6), flat(0.35)) },
 }
 
+-- The reading model (sim/Read.luau, 0089–0092): one run per row. Mirror rows use --seed; skilled vs
+-- novice rows use seed + 1, as the other reports do. A reader row pits seat 1 at the first skill
+-- against seat 2 at the second; both are average riders otherwise.
+local AIM = { { "reading.aim", "belief" } }
+local BET = { { "switches.betting", "bands" }, { "reading.betting", "belief" } }
+local BOTH = { { "switches.betting", "bands" }, { "reading.aim", "belief" }, { "reading.betting", "belief" } }
+local BANDS = { { "switches.betting", "bands" } }
+local INFO: { { any } } = {
+	-- label, config sets, seat 1 profile, seat 2 profile, seat 1 readSkill, seat 2 readSkill, seed offset
+	{ "ridden out, mirror, reading off (0087's baseline)", {}, "average", "average", nil, nil, 0 },
+	{ "ridden out, mirror, aim reads, skill 0 both", AIM, "average", "average", 0, 0, 0 },
+	{ "ridden out, mirror, aim reads, skill .5 both", AIM, "average", "average", 0.5, 0.5, 0 },
+	{ "ridden out, mirror, aim reads, skill 1 both", AIM, "average", "average", 1, 1, 0 },
+	{ "ridden out, reader v non-reader, aim reads, .5 v 0", AIM, "average", "average", 0.5, 0, 0 },
+	{ "ridden out, reader v non-reader, aim reads, 1 v 0", AIM, "average", "average", 1, 0, 0 },
+	{ "ridden out, skilled v novice, reading off", {}, "skilled", "novice", nil, nil, 1 },
+	{ "ridden out, skilled v novice, aim reads, profile skills .9 v .1", AIM, "skilled", "novice", nil, nil, 1 },
+	{ "bands, mirror, reading off", BANDS, "average", "average", nil, nil, 0 },
+	{ "bands, mirror, betting reads, skill 0 both", BET, "average", "average", 0, 0, 0 },
+	{ "bands, mirror, betting reads, skill .5 both", BET, "average", "average", 0.5, 0.5, 0 },
+	{ "bands, mirror, betting reads, skill 1 both", BET, "average", "average", 1, 1, 0 },
+	{ "bands, mirror, aim + betting reads, skill 1 both", BOTH, "average", "average", 1, 1, 0 },
+	{ "bands, reader v non-reader, betting reads, 1 v 0", BET, "average", "average", 1, 0, 0 },
+	{ "bands, reader v non-reader, aim + betting reads, 1 v 0", BOTH, "average", "average", 1, 0, 0 },
+	{ "bands, reader v non-reader, aim + betting reads, .5 v 0", BOTH, "average", "average", 0.5, 0, 0 },
+	{ "bands, skilled v novice, reading off", BANDS, "skilled", "novice", nil, nil, 1 },
+	{ "bands, skilled v novice, aim + betting reads, profile skills .9 v .1", BOTH, "skilled", "novice", nil, nil, 1 },
+}
+
+-- Posture lead groups (own − opponent, half hearts). After Pass 1, as 0087 split it; after two
+-- passes, coarser, so each lead group has room for the three card standings.
+local function lead1(d: number): string
+	if d <= -12 then
+		return "-12"
+	elseif d <= -5 then
+		return "-5"
+	elseif d < 0 then
+		return "-1"
+	elseif d == 0 then
+		return "0"
+	elseif d < 5 then
+		return "+1"
+	elseif d < 12 then
+		return "+5"
+	end
+	return "+12"
+end
+local LEAD1 = { "-12", "-5", "-1", "0", "+1", "+5", "+12" }
+local function lead2(d: number): string
+	if d <= -12 then
+		return "-12"
+	elseif d < 0 then
+		return "-"
+	elseif d == 0 then
+		return "0"
+	elseif d < 12 then
+		return "+"
+	end
+	return "+12"
+end
+
+-- Plays one reading row: Posture leads, flop standings and wins by seat, and what readers learned.
+local function infoRun(cfg: any, prof1: any, prof2: any, n: number, s: number): (Tally, Tally)
+	local rng = makeRng(s)
+	local t: Tally = {}
+	local info: Tally = {}
+	for i = 1, n do
+		local r = Hand.play(cfg, rng, prof1, prof2, (i % 2) + 1, { trace = true, info = info })
+		inc(t, "hands")
+		inc(t, "finish." .. r.finish)
+		if r.finish == "yield" then
+			inc(t, "yield.bet" .. r.pass)
+		end
+		inc(t, "units1", r.units[1])
+		local after = r.after :: { { number } }
+		for seat = 1, 2 do
+			local o = 3 - seat
+			local won = if r.winner == seat then 1 elseif r.winner == 0 then 0.5 else 0
+			local p = "s" .. seat .. "."
+			inc(t, p .. "n")
+			inc(t, p .. "w", won)
+			local a1 = after[1]
+			if a1 then
+				local g = lead1(a1[seat] - a1[o])
+				inc(t, p .. "p1." .. g .. ".n")
+				inc(t, p .. "p1." .. g .. ".w", won)
+			end
+			local a2 = after[2]
+			if a2 and r.flopCategory then
+				local fc = r.flopCategory :: { number }
+				local cs = if fc[seat] > fc[o] then "ahead" elseif fc[seat] < fc[o] then "behind" else "level"
+				local g = lead2(a2[seat] - a2[o])
+				inc(t, p .. "p2." .. g .. "." .. cs .. ".n")
+				inc(t, p .. "p2." .. g .. "." .. cs .. ".w", won)
+			end
+		end
+	end
+	return t, info
+end
+
+-- Win rate over the given seats for a tally prefix (…".n" and …".w").
+local function wr(t: Tally, seats: { number }, key: string): (number?, number)
+	local n, w = 0, 0
+	for _, seat in seats do
+		n += t["s" .. seat .. "." .. key .. ".n"] or 0
+		w += t["s" .. seat .. "." .. key .. ".w"] or 0
+	end
+	if n == 0 then
+		return nil, 0
+	end
+	return 100 * w / n, n
+end
+local function fmtWr(x: number?): string
+	return if x then string.format("%5.1f", x) else "  n/a"
+end
+-- Several win rates' differences (a − b) as "lo–hi".
+local function span(diffs: { number }): string
+	if #diffs == 0 then
+		return "n/a"
+	end
+	local lo, hi = math.huge, -math.huge
+	for _, d in diffs do
+		lo, hi = math.min(lo, d), math.max(hi, d)
+	end
+	return string.format("%.0f–%.0f", lo, hi)
+end
+
 local RANKS = "AKQJT98765432"
 
 -- The kept range as a 13×13 chart: pairs on the diagonal, suited above, offsuit below.
@@ -763,6 +891,88 @@ elseif report == "yard" then
 					print(line)
 				end
 			end
+		end
+	end
+elseif report == "info" then
+	-- The reading model against 0087's health baseline (docs/sim/RESULTS.md, *What the bar's
+	-- information is worth*). Per row, for the seats it reports (both in a mirror, seat 1 otherwise):
+	--   P1 lead    win rate by Posture lead after Pass 1 (half hearts)
+	--   cards      after two passes, within a lead group (behind 1–11, level, ahead 1–11): win rate
+	--              ahead on the flop's category minus behind on it, the span over the three groups
+	--   lead       within a card standing (ahead, level, behind on the flop): win rate ahead 1–11 on
+	--              Posture minus behind 1–11, the span over the three standings
+	--   12+        win rate with a lead of 12+ half hearts after two passes, by card standing
+	--   bits       what readers learned per observation, by cue; P(true) = the belief's weight on the
+	--              opponent's actual hole pair after each pass
+	print(string.format("%d hands per row; mirror rows seed %d, skilled v novice rows seed %d. Win rates in %%.", hands, seed, seed + 1))
+	for _, row in selectRows(INFO) do
+		local cfg = sweepConfig(row[2])
+		local p1 = table.clone(cfg.riders[row[3]])
+		local p2 = table.clone(cfg.riders[row[4]])
+		if row[5] ~= nil then
+			p1.readSkill = row[5]
+		end
+		if row[6] ~= nil then
+			p2.readSkill = row[6]
+		end
+		local mirror = row[3] == row[4] and row[5] == row[6]
+		local seats = if mirror then { 1, 2 } else { 1 }
+		local t, info = infoRun(cfg, p1, p2, hands, seed + row[7])
+		local n = t.hands
+		print("")
+		print(string.format("%s  (%s)", row[1], if mirror then "both seats" else "seat 1"))
+		local cells = {}
+		for _, g in LEAD1 do
+			local x, cnt = wr(t, seats, "p1." .. g)
+			table.insert(cells, string.format("%s %s (%s)", g, fmtWr(x), pct(cnt, n * #seats)))
+		end
+		print("  P1 lead: " .. table.concat(cells, " | "))
+		local function pooled(keys: { string }): number?
+			local n0, w0 = 0, 0
+			for _, k in keys do
+				for _, seat in seats do
+					n0 += t["s" .. seat .. ".p1." .. k .. ".n"] or 0
+					w0 += t["s" .. seat .. ".p1." .. k .. ".w"] or 0
+				end
+			end
+			return if n0 > 0 then 100 * w0 / n0 else nil
+		end
+		print(string.format("  P1 pooled: behind 1–11 %s, level %s, ahead 1–11 %s",
+			fmtWr(pooled({ "-5", "-1" })), fmtWr(pooled({ "0" })), fmtWr(pooled({ "+1", "+5" }))))
+		local cardsSwing, leadSwing, big = {}, {}, {}
+		for _, g in { "-", "0", "+" } do
+			local a = wr(t, seats, "p2." .. g .. ".ahead")
+			local b = wr(t, seats, "p2." .. g .. ".behind")
+			if a and b then
+				table.insert(cardsSwing, a - b)
+			end
+		end
+		for _, cs in { "ahead", "level", "behind" } do
+			local a = wr(t, seats, "p2.+." .. cs)
+			local b = wr(t, seats, "p2.-." .. cs)
+			if a and b then
+				table.insert(leadSwing, a - b)
+			end
+			local x = wr(t, seats, "p2.+12." .. cs)
+			table.insert(big, string.format("%s %s", cs, fmtWr(x)))
+		end
+		local w1 = 100 * (t["s1.w"] or 0) / n
+		print(string.format("  after two passes: cards %s, lead %s | 12+: %s | seat 1 wins %.1f, units %+.3f/hand | yield %s (bet 2 %s, 3 %s, 4 %s)",
+			span(cardsSwing), span(leadSwing), table.concat(big, ", "), w1, (t.units1 or 0) / n,
+			pct(t["finish.yield"], n), pct(t["yield.bet2"], n), pct(t["yield.bet3"], n), pct(t["yield.bet4"], n)))
+		if (info.beliefs or 0) > 0 then
+			local bits = {}
+			for _, cue in { "color", "stance", "timing", "hit", "heal", "unleash" } do
+				local c = info["n." .. cue] or 0
+				table.insert(bits, string.format("%s %.2f", cue, if c > 0 then info["bits." .. cue] / c else 0))
+			end
+			local tr = {}
+			for pass = 1, 3 do
+				local c = info["obs.pass" .. pass] or 0
+				table.insert(tr, string.format("P%d %.3f (%.1f bits left)", pass,
+					if c > 0 then info["truth.pass" .. pass] / c else 0, if c > 0 then info["H.pass" .. pass] / c else 0))
+			end
+			print(string.format("  bits per observation: %s | P(true) after %s | skipped %d", table.concat(bits, ", "), table.concat(tr, ", "), info.skipped or 0))
 		end
 	end
 elseif report == "gap" then

@@ -405,8 +405,9 @@ rates (heal share, buffer per leaned point), ♦ rates (armor per unit of S♦, 
    and the rest is Posture damage to B, rounded to the nearest half heart as it lands.
 7. After contact: on Passes 1–3 a rider at 0 is unhorsed first, so the heal can't save them.
    Otherwise B heals a share of the Posture damage this contact dealt, by B's ♥, rounded up to a
-   whole half heart so every heal shows (capped at 32). If A's hit dealt damage and A was leaning
-   into ♣, B is now Battered.
+   whole half heart so every heal shows (capped at 32). The heal shows as its own beat after the
+   hit lands; the ♥ buffer (step 6) nets into the hit itself (0093). If A's hit dealt damage and A
+   was leaning into ♣, B is now Battered.
 
 ### Tracks and showdown
 
@@ -637,6 +638,7 @@ dynamic id like."
 | Clean blocks | Block outcome | Thick Guard armor (♦) | Could be hold, not cards |
 | First exit from Neutral | Timing | Eagerness or confidence | Could be habit |
 | Hit size | Half hearts lost (§4) | The striker's stat on that hit | Hold, lean, tier and your own armor all move it; only a trips-sized hit is unambiguous |
+| ♥ heal | The heal after contact, its own beat (§4, 0093) | The rider's ♥ card points | Every rider heals a base share, and the heal rounds up to a half heart |
 
 **Core read loop.** Aim is public, so everyone sees the stance. The secret is whether the
 stance is loaded. If you think the opponent's Guard is soft, strike into it and get through the armor. If

@@ -10,6 +10,9 @@
 --   4. with chance `read`, switches late (readTime) to the best aim against the opponent's public
 --      aim and hold. Reads are simultaneous and blind to each other, except that a rider whose aim
 --      leans further into ♠ or ♦ locks later (0069) and so moves last.
+-- With the reading model on (cfg.reading, sim/Read.luau), each rider also keeps a belief about the
+-- opponent's hole cards from the public cues, and a read (reading.aim) or a bet (reading.betting)
+-- can play against it.
 -- h follows from when the final aim was set (Timeline). Contact resolves both strikes at once.
 
 local Cards = require("./Cards")
@@ -18,6 +21,7 @@ local Timeline = require("./Timeline")
 local Tricks = require("./Tricks")
 local Contact = require("./Contact")
 local Odds = require("./Odds")
+local Read = require("./Read")
 
 local Hand = {}
 
@@ -30,10 +34,13 @@ type Profile = {
 	yieldBelow: number,
 	raiseAt: { number },
 	yieldAt: { number },
+	readSkill: number?,
 }
 
--- Hand.play options: `spots` records each rider's betting spot at every bet reached (Odds).
-export type Options = { spots: boolean? }
+-- Hand.play options: `spots` records each rider's betting spot at every bet reached (Odds); `trace`
+-- records Posture after each pass and the flop categories (--report info); `info` tallies what the
+-- readers learned, cue by cue (Read).
+export type Options = { spots: boolean?, trace: boolean?, info: { [string]: number }? }
 
 type Rider = {
 	id: number,
@@ -55,6 +62,8 @@ type Rider = {
 	plan: boolean, -- unleashing this pass
 	lockAim: boolean, -- playing a trick to design: doesn't move
 	status: Tricks.Status,
+	obsA0: number, -- the stance committed at the start of the pass (the reading model's cue)
+	obsEarly: boolean,
 }
 
 export type TrickRecord = {
@@ -90,7 +99,9 @@ export type Record = {
 	lanced: { boolean }, -- taken to 0 or below on Pass 4's contact (0053)
 	reads: number, -- reads taken
 	switches: number, -- reads that moved the aim (a late switch rather than staying on a held aim)
-	spots: { { number } }?, -- opts.spots: {bet, rider, hand key, lead bucket} at every bet reached
+	spots: { { number } }?, -- opts.spots: {bet, rider, hand key, lead bucket, opponent key} at every bet reached
+	after: { { number } }?, -- opts.trace: Posture {rider 1, rider 2} after each pass the hand rode on from
+	flopCategory: { number }?, -- opts.trace: each rider's category on hole cards and the flop
 }
 
 -- ── stats ──────────────────────────────────────────────────────────────────────────────────────
@@ -205,6 +216,8 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 			plan = false,
 			lockAim = false,
 			status = Tricks.status({ deck[2 * i - 1], deck[2 * i] }, {}),
+			obsA0 = 0,
+			obsEarly = false,
 		}
 		r.maxPosture = maxPosture(r, {}, cfg)
 		r.posture = spec.postureStart -- everyone starts at 32, which is also the ceiling (0070, 0075)
@@ -231,7 +244,35 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 		reads = 0,
 		switches = 0,
 		spots = if wantSpots then {} else nil,
+		after = nil,
+		flopCategory = nil,
 	}
+	local trace = opts ~= nil and opts.trace == true
+	if trace then
+		rec.after = {}
+	end
+
+	-- The reading model (sim/Read.luau): each rider's belief about the opponent's hole pair. Off by
+	-- default; it draws no random numbers, so the hand's stream is the same either way.
+	local reading = cfg.reading
+	local readAim = reading.aim == "belief"
+	local readBets = reading.betting == "belief" and bands
+	local readOn = readAim or readBets
+	local ctx: Read.Ctx? = nil
+	local beliefs: { Read.Belief } = {}
+	local assumed = cfg.riders[reading.assume]
+	local info = if opts then opts.info else nil
+	if readOn then
+		ctx = Read.newHand(cfg, board)
+		for _, r in riders do
+			local o = riders[3 - r.id]
+			local b = Read.newBelief(r.hole, r.p.readSkill or 0, info, Read.pairIndex(o.hole[1], o.hole[2]))
+			if reading.cues.color == 1 then
+				Read.color(b, Read.redCount(o.hole))
+			end
+			beliefs[r.id] = b
+		end
+	end
 
 	-- Community cards known once each pass's reveal has landed (§2 *Sequence*): Pass 1 rides on
 	-- hole cards, and the flop, turn and river flip mid-charge on Passes 2–4.
@@ -282,15 +323,19 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 		local raises, acted, i = 0, 0, button
 		local est = { 0, 0 }
 		if bands or wantSpots then
+			local keys = { Odds.key(round, riders[1].hole, known), Odds.key(round, riders[2].hole, known) }
 			for _, r in riders do
 				local o = riders[3 - r.id]
-				local key = Odds.key(round, r.hole, known)
+				local key = keys[r.id]
 				local bucket = Odds.bucket(r.posture - o.posture)
-				if bands then
+				if readBets then
+					local kw = Read.keyWeights(beliefs[r.id], ctx :: Read.Ctx, round, #known)
+					est[r.id] = Odds.estimateBelief(cfg._odds, round, key, kw, bucket)
+				elseif bands then
 					est[r.id] = Odds.estimate(cfg._odds, round, key, bucket)
 				end
 				if rec.spots then
-					table.insert(rec.spots, { round, r.id, key, bucket })
+					table.insert(rec.spots, { round, r.id, key, bucket, keys[o.id] })
 				end
 			end
 		end
@@ -378,6 +423,8 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 					r.aim = Dial.HOME[st.eval.flushSuit :: number]
 				end
 			end
+			r.obsA0 = r.aim :: number
+			r.obsEarly = (r.tAim :: number) <= sim.earliestCommit + 1e-9
 		end
 
 		-- The reveal: new stats apply now (§8).
@@ -481,15 +528,53 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 			return Timeline.hold(t, cfg, hasReveal)
 		end
 		local cardsUp = charge and proto.chargeCardsUp == "yes"
+		-- The reading model's cues before the reads: the stance each rider committed to, its timing and
+		-- any re-stance after the reveal, and an announced unleash (§7, §6 *Unleash rules*).
+		if readOn and not charge then
+			for _, r in riders do
+				local o = riders[3 - r.id]
+				local b = beliefs[r.id]
+				Read.see(b, board, SHOWN[pass])
+				Read.stance(b, ctx :: Read.Ctx, {
+					pass = pass,
+					a0 = o.obsA0,
+					early = o.obsEarly,
+					a1 = o.aim :: number,
+					prevN = SHOWN[pass - 1],
+					newN = SHOWN[pass],
+					spent = o.spent and not fires[o.id],
+				}, assumed)
+				if fires[o.id] == "unleash" and reading.cues.unleash == 1 then
+					local orung = o.status.ownRung
+					Read.unleash(b, ctx :: Read.Ctx, SHOWN[pass], orung, if orung == 2 or orung == 5 then o.status.eval.flushSuit else nil)
+				end
+			end
+		end
 		local function bestResponse(r: Rider, o: Rider, oAim: number?, oT: number?): number?
 			local myPts = points(r, newBoard, 1, false, cfg)
-			local oPts = if cardsUp then points(o, newBoard, 1, false, cfg) else publicPoints(newBoard, cfg)
+			-- The opponents a read plays against: the public estimate (an average hole card), the
+			-- exact cards (the final charge's cards up), or a sample of the reader's belief.
+			local opps: { { number } }
+			if cardsUp then
+				local oPts = points(o, newBoard, 1, false, cfg)
+				opps = { oPts }
+			elseif readAim then
+				opps = {}
+				for _, k in Read.sample(beliefs[r.id], reading.samples) do
+					table.insert(opps, Read.pointsOf(ctx :: Read.Ctx, SHOWN[pass], k, 1, o.spent))
+				end
+			else
+				opps = { publicPoints(newBoard, cfg) }
+			end
 			local arena = { street = street, openLists = 1, siege = 1 }
-			local oS, oCut = statsAt(oPts, oAim, cfg)
-			local oF: Contact.Fighter = {
-				aim = oAim, h = hOf(o, oT), S = oS, buffer = oCut,
-				battered = math.max(o.battered, o.batteredHand), trick = nil, ward = 0,
-			}
+			local oFs: { Contact.Fighter } = {}
+			for i, oPts in opps do
+				local oS, oCut = statsAt(oPts, oAim, cfg)
+				oFs[i] = {
+					aim = oAim, h = hOf(o, oT), S = oS, buffer = oCut,
+					battered = math.max(o.battered, o.batteredHand), trick = nil, ward = 0,
+				}
+			end
 			local facingUnleash = fires[o.id] == "unleash" and not clashed
 			local hSwitch = hOf(r, sim.readTime)
 			local best, bestV = r.aim, -math.huge
@@ -500,11 +585,14 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 					aim = a, h = h, S = S, buffer = cut,
 					battered = math.max(r.battered, r.batteredHand), trick = nil, ward = 0,
 				}
-				local dealt = Contact.strike(F, oF, arena, cfg).dmg
-				local v = dealt
-				if not facingUnleash then
-					v -= Contact.strike(oF, F, arena, cfg).dmg
+				local v = 0
+				for _, oF in oFs do
+					v += Contact.strike(F, oF, arena, cfg).dmg
+					if not facingUnleash then
+						v -= Contact.strike(oF, F, arena, cfg).dmg
+					end
 				end
+				v /= #oFs
 				if v > bestV + 1e-9 then
 					best, bestV = a, v
 				end
@@ -638,6 +726,7 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 		local knockdownPass = pass == 4 and cfg.switches.riverRule == "knockdown"
 		-- Posture in half hearts (0075): damage lands as whole half hearts, to the nearest; the heal
 		-- rounds up, so every heal shows (♥, 0070). switches.posture = "exact" turns rounding off.
+		local atContact, healed = { 0, 0 }, { 0, 0 } -- the reading model's cues: Posture after contact, the heal
 		local whole = cfg.switches.posture == "pips"
 		local function pips(x: number): number
 			return if whole then math.floor(x + 0.5) else x
@@ -664,6 +753,7 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 			if unbroken then
 				p = math.max(p, 1)
 			end
+			atContact[r.id] = p
 			-- Step 7, after contact (§4): a rider unhorsed on Passes 1–3 is down before any heal.
 			if knockdownPass or p > floorOf(r) then
 				if unbroken then
@@ -677,6 +767,7 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 				end
 			end
 			afterDial[r.id] = p
+			healed[r.id] = p - atContact[r.id]
 			-- riverVsTrick = warded: a rider firing a trick (unclashed) takes no hand blow.
 			if blows and not (proto.riverVsTrick == "warded" and F[r.id].trick ~= nil) then
 				p -= pips(handBlow(o.status.eval.category, own[o.id]))
@@ -714,6 +805,47 @@ function Hand.play(cfg: any, rng: () -> number, p1: Profile, p2: Profile, button
 			finish(w, "unhorse", pass)
 			break
 		end
+		if trace then
+			(rec.after :: { { number } })[pass] = { riders[1].posture, riders[2].posture }
+			if pass == 2 then
+				rec.flopCategory = { riders[1].status.eval.category, riders[2].status.eval.category }
+			end
+		end
+		-- The reading model's cues after contact: both Posture changes and the ♥ heal (0093). A pass
+		-- where a trick fired (or clashed) teaches nothing numeric: its hit isn't the cards' stats.
+		if readOn and pass <= 3 and not fires[1] and not fires[2] then
+			for _, r in riders do
+				local o = riders[3 - r.id]
+				Read.contact(beliefs[r.id], ctx :: Read.Ctx, {
+					n = SHOWN[pass],
+					me = F[r.id],
+					oAim = F[o.id].aim,
+					oH = F[o.id].h,
+					oBattered = F[o.id].battered,
+					oSpent = o.spent,
+					arena = arena,
+					myBefore = before[r.id],
+					oBefore = before[o.id],
+					myMax = r.maxPosture,
+					oMax = o.maxPosture,
+					myNet = atContact[r.id] - before[r.id],
+					oNet = atContact[o.id] - before[o.id],
+					oHeal = healed[o.id],
+				})
+			end
+			if info then
+				for _, r in riders do
+					local b = beliefs[r.id]
+					info["H.pass" .. pass] = (info["H.pass" .. pass] or 0) + Read.entropy(b.w)
+					info["truth.pass" .. pass] = (info["truth.pass" .. pass] or 0) + Read.truthShare(b)
+					info["obs.pass" .. pass] = (info["obs.pass" .. pass] or 0) + 1
+				end
+			end
+		end
+	end
+	if info and readOn then
+		info["skipped"] = (info["skipped"] or 0) + beliefs[1].skipped + beliefs[2].skipped
+		info["beliefs"] = (info["beliefs"] or 0) + 2
 	end
 
 	-- The river hands, for the record and the showdown.
@@ -777,6 +909,8 @@ function Hand.calibrate(cfg: any): Odds.Table
 	c.switches = table.clone(cfg.switches)
 	c.switches.betting = "script"
 	c._odds = nil
+	c.reading = table.clone(cfg.reading)
+	c.reading.aim, c.reading.betting = "off", "off" -- experience, not reading: the script's own odds
 	local st = cfg.sim.oddsSeed % 2147483647
 	local function rng(): number
 		st = (st * 16807) % 2147483647
@@ -789,7 +923,7 @@ function Hand.calibrate(cfg: any): Odds.Table
 		for _, s in r.spots :: { { number } } do
 			local who = s[2]
 			local won = if r.winner == who then 1 elseif r.winner == 0 then 0.5 else 0
-			table.insert(spots, { s[1], s[3], s[4], won })
+			table.insert(spots, { s[1], s[3], s[4], won, s[5] })
 		end
 	end
 	return Odds.build(spots)
