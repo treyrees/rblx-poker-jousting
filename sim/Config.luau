@@ -17,8 +17,8 @@ function Config.defaults()
 	return {
 		-- ── SPEC: GAME_SPEC §11 tuning parameters (v1 values) ─────────────────────────────────
 		spec = {
-			postureStart = 80, -- 0054
-			base = { weak = 4, normal = 10, crit = 30 },
+			postureStart = 32, -- 16 hearts; 1 is a half heart (0075)
+			base = { weak = 2, normal = 4, crit = 12 }, -- 1, 2 and 6 hearts (0075)
 			statBase = 20, -- cardless floor, S_suit = 20 + points
 			rankBase = 1, -- card value 1 + (r − 2) / 6
 			rankSlope = 1 / 6,
@@ -27,8 +27,8 @@ function Config.defaults()
 			clubRate = 1 / 20, -- ♣ scales hits by S♣ / 20
 			holdFloor = 0.25, -- hold multiplier 0.25 + 0.75·h (0052; the slope is 1 − floor)
 			street = { 1.0, 1.0, 1.0, 1.25 }, -- 0054; 0051's last-pass bonus is removed
-			showdownBonus = 20, -- showdown: Posture per step of hand category (0050)
-			cleanBlockRestore = 3,
+			showdownBonus = 8, -- showdown: Posture per step of hand category, 4 hearts (0050, 0075)
+			cleanBlockRestore = 1, -- a half heart (0075)
 			aimLock = 0.3,
 			passLength = 8.0,
 			-- Standard dial, half steps from aim: E exposure, O ordinary, G Guard.
@@ -48,18 +48,18 @@ function Config.defaults()
 		sim = {
 			lean = 1.0, -- λ: a stat leaned into at weight w counts points × (1 + λw)
 			halfStepShare = 0.75, -- a half step's share to the nearer cardinal
-			heartBuffer = 1.5, -- buffer per leaned ♥ point (the lean's extra points): absorbs damage first
+			heartBuffer = 0.6, -- buffer per leaned ♥ point (the lean's extra points): absorbs damage first
 			healBase = 0.1, -- after contact, heal this share of the damage taken (0070)...
 			healPerPoint = 0.02, -- ...plus this much per unleaned ♥ point
 			battered = 0.4, -- Battered: +x damage taken, × the striker's ♣ lean weight (0068)
 			critRelief = 0.03, -- on a Crit, this share per ♠ point of the hold multiplier's shortfall is restored (0069)
 			guardRelief = 0.03, -- the same for Guard armor, per ♦ point (0069)
 			extraTime = 0.15, -- s past the aim lock at a full lean into ♠ or ♦ (0069)
-			armorRate = 0.25, -- armor per ♦ stat unit (see switches.statBasis)
-			armorPerPoint = 1.5, -- extra armor per ♦ card point, on top (so ♦ cards pull their weight)
+			armorRate = 0.1, -- armor per ♦ stat unit (see switches.statBasis)
+			armorPerPoint = 0.6, -- extra armor per ♦ card point, on top (so ♦ cards pull their weight)
 			armorZone = { guard = 1.0, ordinary = 0.5, exposure = 0.2 },
-			pierceRate = 0.05, -- piercing per ♠ stat unit
-			blockBase = 10, -- a Block is a Normal hit into thick armor (c2, 0058)
+			pierceRate = 0.02, -- piercing per ♠ stat unit
+			blockBase = 4, -- a Block is a Normal hit into thick armor (c2, 0058)
 			earliestCommit = 0.3, -- the earliest a rider leaves Neutral (s)
 			readTime = 7.4, -- when a read's late switch lands (s)
 			-- Trick hits and wards per rung (SANITY_CHECK §2: a chain that meets §6). A hit must
@@ -68,11 +68,11 @@ function Config.defaults()
 			-- today's (×1.0 and ×1.25) with room.
 			-- The straight's hit is the meter (0073: the power is in the hold):
 			-- straightK · straightX ^ (cards unlocked) · (1 + straightRank · (top card − 5)).
-			straightK = 5.5,
+			straightK = 2.2,
 			straightX = 2,
 			straightRank = 0.1,
-			hit = { flush = 600, fullHouse = 13000, quads = 20000, straightFlush = 60000 },
-			ward = { straight = 0, flush = 6500, fullHouse = 9000, quads = 22000, straightFlush = 33000 },
+			hit = { flush = 240, fullHouse = 5200, quads = 8000, straightFlush = 24000 },
+			ward = { straight = 0, flush = 2600, fullHouse = 3600, quads = 8800, straightFlush = 13200 },
 			flushExplode = 4, -- flush suit's S × this at home (× half on the diagonals beside it)
 			flushExplodeF2 = 60, -- the explosion when switches.flushHit = "F2"
 		},
@@ -112,12 +112,17 @@ function Config.defaults()
 			-- hand's showdown effect lands on Posture, even below 0, and the lower rider falls. "unhorse" is
 			-- the rule before 0053 (a rider at 0 falls on contact), kept for the SHOWDOWN.md prototypes.
 			riverRule = "knockdown", -- knockdown | unhorse
+			-- Posture in half hearts (0075): a hit's damage (and a reflect) rounds to the nearest half heart
+			-- as it lands, and the ♥ heal rounds up; the showdown compares whole half hearts, and kickers
+			-- break a level result. "exact" keeps fractional Posture, for comparison.
+			posture = "pips", -- pips | exact
+			healRound = "up", -- up | nearest: how the ♥ heal rounds
 		},
 
 		-- ── PROTO: values the showdown prototypes use (SHOWDOWN.md). None is a §11 value. ─────
 		proto = {
 			mult = 0.2, -- mult: Posture × (1 + mult × steps)
-			riverPerStep = 20, -- riverHit: Posture per step, before the tier factor
+			riverPerStep = 8, -- riverHit: Posture per step, before the tier factor
 			riverTier = { crit = 1.5, normal = 1.0, block = 0.25, weak = 0.25 }, -- riverHit: by the tier you land
 			riverKnockdown = "posture", -- riverHit: posture | bonus — what decides if no one falls
 			riverVsTrick = "lands", -- riverHit: lands | warded — a rider firing a trick takes the blow, or not

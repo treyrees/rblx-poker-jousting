@@ -49,6 +49,7 @@ Also important: **learnability** (for example, betting is beginner-ignorable, §
 | The four stats: what they are and what they do | §4 | Settled in shape |
 | Card values, board weight and hand multipliers | §4 | Proposed, needs sim |
 | Contact resolution, Posture and the showdown knockdown | §4 | Proposed, needs sim |
+| Posture in half hearts | §4 | Settled |
 | Broadway cards: rank value only, no effects in v1 | §5 | Settled for v1 |
 | Tricks: ladder, ownership, held and unleash rules, trick vs trick | §6 | Settled in shape |
 | Trick effects on the unleash pass | §6 | Proposed, needs sim |
@@ -58,6 +59,7 @@ Also important: **learnability** (for example, betting is beginner-ignorable, §
 | Presentation: arena reveals, setup/counter animation | §8 | Settled in shape |
 | What we take from rblx-joust-tourney | §9 | Settled |
 | Classes and alternate dials | §10 | Deferred to v2 |
+| Spur and momentum (a second run-up currency) | §9 | Deferred to v2 |
 | Economy: currency, wager limits, monetization | §11 | Open |
 | Tuning parameters | §11 | Proposed, needs sim |
 
@@ -113,7 +115,8 @@ the river; some end on the turn, and fewer still on the flop.
 3. Pass 4's contact unhorses no one. After it, a knockdown is forced at showdown: each rider's
    hand bonus is added to their Posture, even Posture the river's lance took below 0, and the
    rider lower on the total is knocked down (§4).
-4. Showdown tie (equal Posture after the hand bonus): compare poker hands with kickers. Still
+4. Showdown tie (level on half hearts after the hand bonus, §4): compare poker hands with
+   kickers, shown to both riders. Still
    tied: split the pot.
 5. A rider who Yields forfeits the pot.
 
@@ -252,8 +255,9 @@ about one ping earlier.
 | Board cards and arena effects | |
 | Lance and shield colors (see Information design) | |
 
-A hit's size is public, so after contact it shows the attacker's stat on that hit. Whether
-one hit can identify a hand's rank at display precision is open (§11).
+A hit's size is public: it lands on the Posture bar in half hearts (§4), so after contact it
+shows roughly the attacker's stat on that hit. At that precision one hit almost never names the
+exact hand. A hit big enough that only trips can deal it says "trips", by design (§7).
 
 ## 4. Suits, stats and stances
 
@@ -285,8 +289,8 @@ time and does more when you aim at it (*Stances*).
   (§3); when both riders lean into ♠ or ♦, their extra times offset.
 - **Armor** erases a grind of small hits and barely dents the crit that finds your exposure. A
   Block is a hit into thick armor, and Guard armor scales with hold.
-- **Posture.** Every rider starts at 80, which is also the ceiling. ♥ doesn't raise it: ♥ is the
-  buffer you aim for and the heal after contact.
+- **Posture.** Every rider starts at 32 (16 hearts), which is also the ceiling. ♥ doesn't raise
+  it: ♥ is the buffer you aim for and the heal after contact.
 
 ### Stances
 
@@ -369,7 +373,7 @@ rates (heal share, buffer per leaned point), ♦ rates (armor per unit of S♦, 
 
 1. Find the tier: look up A's aim position on B's sectors (§3). Guard = Block, exposure =
    Crit, ordinary = Normal. A in Neutral = Weak.
-2. Base values: Weak 4, Normal 10, Crit 30. A Block is a Normal hit into thick armor.
+2. Base values: Weak 2, Normal 4, Crit 12. A Block is a Normal hit into thick armor.
 3. Hit output, scaled by ♣:
    ```
    Out = Base · (S_♣,A / 20) · Hold_A · Street · Mods
@@ -380,21 +384,29 @@ rates (heal share, buffer per leaned point), ♦ rates (armor per unit of S♦, 
 5. Armor: B's ♦ armor at the sector hit, less A's piercing, is subtracted from the output:
    thick on the Guard (scaled by B's hold multiplier, which B's ♦ lets reach full armor with less
    hold), thin on ordinary positions, a sliver on the exposure. A Block that nothing gets through
-   is a clean block: B restores 3 Posture.
+   is a clean block: B restores 1 Posture (a half heart).
 6. If B is Battered, what gets through is raised by x%. B's ♥ buffer (*Stances*) absorbs it first,
-   and the rest is Posture damage to B.
+   and the rest is Posture damage to B, rounded to the nearest half heart as it lands.
 7. After contact: on Passes 1–3 a rider at 0 is unhorsed first, so the heal can't save them.
-   Otherwise B heals a share of the Posture damage this contact dealt, by B's ♥ (capped at 80). If A's hit dealt damage and A was leaning into ♣, B is now Battered.
+   Otherwise B heals a share of the Posture damage this contact dealt, by B's ♥, rounded up to a
+   whole half heart so every heal shows (capped at 32). If A's hit dealt damage and A was leaning
+   into ♣, B is now Battered.
 
 ### Tracks and showdown
 
-- **Posture:** starts at 80 for every rider, and 80 is the ceiling. Reaches 0 on Passes 1–3 =
+- **Posture:** starts at 32 for every rider, and 32 is the ceiling. Reaches 0 on Passes 1–3 =
   unhorsed. On Pass 4 it can fall below 0, and the showdown counts it. Heals from the ♥ heal after
-  contact and from clean blocks, capped at 80.
+  contact and from clean blocks, capped at 32.
+- **Half hearts.** Posture counts in half hearts: 1 Posture is a half heart, and a full bar is 16
+  hearts, shown as two rows of 8. Posture is always a whole number of half hearts. It rounds only
+  when it changes: a hit's damage (and a reflect) rounds to the nearest half heart as it lands, and
+  the ♥ heal rounds up. Everything before that (stats, hold, armor, Battered) stays exact. Close
+  results land on the same half heart, so near-identical actions look the same.
 - **Showdown:** after Pass 4's contact, a knockdown is always forced. Each rider's hand bonus is
-  added to their Posture, below 0 included: 20 Posture per step of hand category above high card
-  (pair +20, two pair +40, trips +60, and so on up the categories). Riders in the same category
-  get the same bonus, so Posture decides between them; kickers break only an exact tie (§2). The
+  added to their Posture, below 0 included: 8 Posture (4 hearts) per step of hand category above
+  high card (pair +8, two pair +16, trips +24, and so on up the categories). Riders in the same
+  category get the same bonus, so Posture decides between them; when the riders are level on half
+  hearts, kickers decide, shown to both (§2). The
   rider lower on Posture after the bonus is knocked down, even above 0, and a rider the lance took
   below 0 can still stay up if their bonus lifts them past the opponent. The bonus is shown
   landing on the Posture bar before the knockdown (§8).
@@ -404,11 +416,11 @@ rates (heal share, buffer per leaned point), ♦ rates (armor per unit of S♦, 
 These leave out the aim lean, armor and piercing.
 
 
-- Pass 1 normal hit, high card, half hold: about 10 × 1.0 × 0.625 × 1.0 = 6.3 Posture. Early
-  knockouts are near impossible.
-- Pass 3 crit, trips-loaded ♣, full hold: about 30 × 1.45 × 1.0 × 1.0 = 43 Posture. Two such
-  reads unhorse.
-- Pass 4 crit with the same: about 30 × 1.45 × 1.25 = 54 Posture.
+- Pass 1 normal hit, high card, half hold: about 4 × 1.0 × 0.625 × 1.0 = 2.5, landing as 3
+  (1½ hearts). Early knockouts are near impossible.
+- Pass 3 crit, trips-loaded ♣, full hold: about 12 × 1.45 × 1.0 × 1.0 = 17.4, landing as 17
+  (8½ hearts). Two such reads unhorse.
+- Pass 4 crit with the same: about 12 × 1.45 × 1.25 = 21.75, landing as 22 (11 hearts).
 
 ## 5. Broadway cards
 
@@ -581,6 +593,11 @@ are placeholders; their numbers come later.
 Every visible cue should narrow the opponent's range without identifying the hand.
 Design rule: each tell must have at least two plausible causes.
 
+One exception, by design: a hit big enough that only trips can deal it says "trips". It never
+names the exact trips. It's the trips rider's moment: an early, overwhelming hit on the Posture
+bar. Trey: "you know i have trips, but i just hit you with a huge strike early on, thats the
+dynamic id like."
+
 ### Color leak
 
 - The lance shows one hole card's color and the shield shows the other's. Assignment is
@@ -599,6 +616,7 @@ Design rule: each tell must have at least two plausible causes.
 | Lance/shield color | Hole card colors | Offense vs defense lean | Suit hidden |
 | Clean blocks | Block outcome | Thick Guard armor (♦) | Could be hold, not cards |
 | First exit from Neutral | Timing | Eagerness or confidence | Could be habit |
+| Hit size | Half hearts lost (§4) | The striker's stat on that hit | Hold, lean, tier and your own armor all move it; only a trips-sized hit is unambiguous |
 
 **Core read loop.** Aim is public, so everyone sees the stance. The secret is whether the
 stance is loaded. If you think the opponent's Guard is soft, strike into it and get through the armor. If
@@ -632,10 +650,11 @@ decision. On Pass 4 the river lands mid-charge, unused tricks auto-fire, and the
 follows contact.
 
 **Showdown.** After Pass 4's contact, the hole cards flip and each rider's hand bonus pours into
-their Posture bar ("PAIR +20"), and only then is the rider lower on Posture knocked down. A bar
+their Posture bar ("PAIR +4 hearts"), and only then is the rider lower on Posture knocked down. A bar
 the river's lance took past empty shows how far below 0 it went, and the bonus fills up from
 there. The fall is sized to the gap: a clean unhorse for a wide gap, a stagger and fall for a
-middling one, a photo finish for a few points.
+middling one, a photo finish for a half heart or two. Riders level on half hearts show their
+hands side by side, and the better poker hand, kickers included, stays up (§2).
 
 **Arena reveals.** Each revealed card changes the environment: suit sets the sky and
 lighting color (hearts and diamonds red-toned, clubs and spades dark-toned), face cards
@@ -686,7 +705,7 @@ we take mechanics and code that fit the poker spirit.
 | Supershield | Its job (hard Guard) is now ♦ Armor and hold |
 | Balance teeter roll | Replaced by deterministic Posture |
 | Breaking and the mortal ladder | Deferred; not needed for v1 |
-| Spur and momentum | Deferred; hold is the only run-up currency in v1 |
+| Spur and momentum | Deferred to v2; hold is the only run-up currency in v1 |
 | One duel to unhorse | A hand is 4 passes; an unhorse on Passes 1–3 ends it, and otherwise the forced knockdown after the river decides |
 | "Never a wager" (ADR 0015) | Betting is core here, within limits (see Open questions) |
 | Reads always beat rarity | Replaced by the trick vs read arms race |
@@ -758,15 +777,13 @@ whether a trick above the opponent wins overwhelmingly.
 - Roblox policy on simulated gambling and maturity labels. Stake only earned currency,
   never purchasable currency, until checked.
 - Ghost betting: which public and private inputs a ghost's betting habits condition on.
-- Should spur and momentum return as a second run-up currency?
-- A hit's size is public: can one hit identify a hand's rank at display precision?
 
 ### Tuning parameters (sim config)
 
 | Parameter | v1 value |
 | --- | --- |
-| Posture start | 80 |
-| Base: Weak / Normal / Crit | 4 / 10 / 30 |
+| Posture start | 32 (16 hearts; 1 Posture is a half heart) |
+| Base: Weak / Normal / Crit | 2 / 4 / 12 |
 | Stat base (cardless floor) | 20 |
 | Card value by rank r | 1 + (r − 2) / 6 points: 2 = 1, 8 = 2, A = 3 |
 | Board card weight | ½ of a hole card; the sim tries lower |
@@ -774,7 +791,7 @@ whether a trick above the opponent wins overwhelmingly.
 | Stat rates per point | ♣ +5% on a hit (S_♣ / 20); ♥ heal share, ♥ buffer per leaned point, ♦ armor, ♦ Guard hold relief, ♠ piercing, ♠ crit scale and crit hold relief set by the sim |
 | Hold multiplier | 0.25 + 0.75 × h |
 | Street multipliers (Passes 1–4) | 1.0 / 1.0 / 1.0 / 1.25 |
-| Clean block restore | 3 Posture |
+| Clean block restore | 1 Posture (a half heart) |
 | Aim lock before contact | 0.3 s |
 | Pass length | 8 s |
 | Standard dial layout (half steps from aim) | Exposure 0–4, ordinary 5–7, Guard 8, ordinary 9, Guard 10–12, ordinary 13–15 |
@@ -782,7 +799,8 @@ whether a trick above the opponent wins overwhelmingly.
 | Battered: extra damage taken | +x%, set by the sim |
 | Extra time past the lock when leaning into ♠ or ♦ | Set by the sim |
 | Aim lean: multiplier on card points, and the half-step share | Set by the sim |
-| Showdown hand bonus | 20 Posture per step of hand category |
+| Showdown hand bonus | 8 Posture (4 hearts) per step of hand category |
+| Posture rounding | A hit's damage rounds to the nearest half heart as it lands; the ♥ heal rounds up |
 | Trick hit, per rung | Set by the sim: unhorses from full Posture when played to its design |
 | Trick ward, per rung | Set by the sim |
 | Straight meter: base x, and how y maps to hit size | Set by the sim |

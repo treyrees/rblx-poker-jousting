@@ -98,5 +98,7 @@ Add a row below in the same commit. Check the latest `main` for the next free id
 | [0072](0072-flushes-are-the-stat-at-its-limit.md) | Each flush is its suit's stat at its limit | 2026-10-01 |
 | [0073](0073-the-straight-charges-straight.md) | The straight's power comes from charging straight without changing aim | 2026-10-01 |
 | [0074](0074-defense-is-not-weaker.md) | Defense isn't weaker than offense; the four suits are roughly even in value | 2026-10-02 |
+| [0075](0075-posture-counts-in-half-hearts.md) | Posture counts in half hearts; a trips-sized hit may say "trips" | 2026-10-07 |
+| [0076](0076-spur-and-momentum-deferred-to-v2.md) | Spur and momentum are deferred to v2 | 2026-10-07 |
 
-Next free id: **0075**.
+Next free id: **0077**.
